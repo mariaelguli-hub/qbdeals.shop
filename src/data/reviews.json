@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "productId": 1,
+    "name": "David",
+    "rating": 5,
+    "date": "2024-07-15",
+    "text": "Amazing product, activated immediately!"
+  }
+]

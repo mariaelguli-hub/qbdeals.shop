@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #1a1a1a;
+    background: #ffffff;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-700 text-white px-7 py-3.5 rounded-lg font-semibold text-sm 
+           hover:bg-brand-800 transition-colors inline-flex items-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300 px-7 py-3.5 rounded-lg 
+           font-medium text-sm hover:bg-gray-50 transition-colors;
+  }
+  .card {
+    @apply bg-white rounded-2xl border border-gray-200 overflow-hidden;
+  }
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+  }
+  .badge-green {
+    @apply badge bg-brand-100 text-brand-800;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* FAQ accordion animation */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] summary ~ * {
+  animation: sweep 0.2s ease-in-out;
+}
+@keyframes sweep {
+  0%    { opacity: 0; transform: translateY(-6px); }
+  100%  { opacity: 1; transform: translateY(0); }
+}

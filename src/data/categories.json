@@ -1,0 +1,6 @@
+[
+  { "id": "all", "name": "All Products" },
+  { "id": "pro", "name": "Pro" },
+  { "id": "mac", "name": "Mac" },
+  { "id": "enterprise", "name": "Enterprise" }
+]

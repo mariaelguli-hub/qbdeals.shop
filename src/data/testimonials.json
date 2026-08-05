@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "David",
+    "initials": "D",
+    "location": "Tampa, FL",
+    "title": "A fantastic experience",
+    "rating": 5,
+    "text": "What can I say....but, wow! The software runs perfectly and I didn't have to sell my house to purchase QBooks Enterprise. Did have an issue with getting the multi user interface to work properly. Tech support responded via WhatsApp within a minute. The issue was my network multiple IP addresses. The tech worked with me to get troubleshooting done and all workstations functioning!! Love it!!",
+    "verified": true
+  },
+  {
+    "id": 2,
+    "name": "Saul K",
+    "initials": "SK",
+    "location": "West Palm Beach, FL",
+    "title": "Business Owner",
+    "rating": 5,
+    "text": "This company, unlikely many others, is totally legitimate. I had troubles installing (my own errors) an they stayed with it until it got resolved. Cant thank them enough! So good I bookmarked this site for future needs.",
+    "verified": true
+  },
+  {
+    "id": 3,
+    "name": "Sarah M.",
+    "initials": "SM",
+    "location": "Chicago, IL",
+    "title": "Fast and genuine",
+    "rating": 5,
+    "text": "License arrived by email in under 2 minutes and activated first try. Exactly what I needed for my small business.",
+    "verified": true
+  },
+  {
+    "id": 4,
+    "name": "David L.",
+    "initials": "DL",
+    "location": "Austin, TX",
+    "title": "Saved a fortune",
+    "rating": 5,
+    "text": "One-time payment instead of a yearly subscription — and support walked me through installation. Highly recommend.",
+    "verified": true
+  },
+  {
+    "id": 5,
+    "name": "Priya R.",
+    "initials": "PR",
+    "location": "Denver, CO",
+    "title": "Smooth experience",
+    "rating": 5,
+    "text": "Checkout was secure and the download link worked perfectly. The Premier reports are exactly what my team needed.",
+    "verified": true
+  },
+  {
+    "id": 6,
+    "name": "James K.",
+    "initials": "JK",
+    "location": "Seattle, WA",
+    "title": "Great for my firm",
+    "rating": 5,
+    "text": "The Accountant edition makes managing multiple clients so much easier. Delivery was instant.",
+    "verified": true
+  }
+]

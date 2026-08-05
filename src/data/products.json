@@ -1,0 +1,73 @@
+[
+  {
+    "id": 1,
+    "slug": "quickbooks-desktop-pro-plus-2024",
+    "name": "QuickBooks Desktop Pro Plus 2024 (3 Users)",
+    "category": "PRO",
+    "tag": "Most Popular",
+    "description": "Powerful desktop accounting for up to 3 users. One-time purchase, genuine license key, instant email delivery.",
+    "features": [
+      "Up to 3 simultaneous users",
+      "Track income, expenses & cash flow",
+      "Create & send professional invoices"
+    ],
+    "variants": [
+      { "id": "pro-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": false },
+      { "id": "pro-3users", "label": "3 Users", "price": 153, "comparePrice": 799, "users": 3, "bestselling": true }
+    ],
+    "image": "/images/products/qb-pro-plus.png"
+  },
+  {
+    "id": 2,
+    "slug": "quickbooks-desktop-mac-plus-2024",
+    "name": "QuickBooks Desktop Mac Plus 2024",
+    "category": "MAC",
+    "tag": "For macOS",
+    "description": "Native QuickBooks Desktop accounting for macOS. One-time purchase, genuine license, instant delivery.",
+    "features": [
+      "Native macOS experience",
+      "Track income, expenses & bills",
+      "Create & send invoices"
+    ],
+    "variants": [
+      { "id": "mac-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": true }
+    ],
+    "image": "/images/products/qb-mac-plus.png"
+  },
+  {
+    "id": 3,
+    "slug": "quickbooks-desktop-enterprise-accountant-2024",
+    "name": "QuickBooks Desktop Enterprise Accountant 2024",
+    "category": "ENTERPRISE",
+    "tag": "Enterprise + Accountant",
+    "description": "Enterprise power plus accountant-only tools for firms serving larger clients. One-time purchase.",
+    "features": [
+      "All Enterprise features + accountant tools",
+      "Accountant Center & client data review",
+      "Advanced inventory & reporting"
+    ],
+    "variants": [
+      { "id": "ent-acc-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": false },
+      { "id": "ent-acc-5users", "label": "5 Users", "price": 153, "comparePrice": 899, "users": 5, "bestselling": true }
+    ],
+    "image": "/images/products/qb-enterprise-accountant.png"
+  },
+  {
+    "id": 4,
+    "slug": "quickbooks-desktop-enterprise-solutions-2024",
+    "name": "QuickBooks Desktop Enterprise Solutions 2024",
+    "category": "ENTERPRISE",
+    "tag": "For Larger Teams",
+    "description": "Scalable accounting with advanced inventory and reporting for larger businesses. One-time purchase.",
+    "features": [
+      "Supports more simultaneous users",
+      "Advanced inventory & advanced pricing",
+      "Advanced reporting with templates"
+    ],
+    "variants": [
+      { "id": "ent-sol-single", "label": "Single User", "price": 145, "comparePrice": 725, "users": 1, "bestselling": false },
+      { "id": "ent-sol-5users", "label": "5 Users", "price": 157, "comparePrice": 949, "users": 5, "bestselling": true }
+    ],
+    "image": "/images/products/qb-enterprise-solutions.png"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "question": "Is this a one-time purchase or a subscription?",
+    "answer": "This is a genuine one-time purchase. You pay once and own the license forever. No recurring fees, no subscriptions, no hidden charges."
+  },
+  {
+    "id": 2,
+    "question": "How fast is delivery?",
+    "answer": "Instant! Your license key and download link are sent to your email within minutes of completing your payment."
+  },
+  {
+    "id": 3,
+    "question": "Are the licenses genuine?",
+    "answer": "Yes, 100%. All our license keys are authentic and come with full activation support. We offer a 30-day money-back guarantee if anything doesn't work."
+  },
+  {
+    "id": 4,
+    "question": "Which payment methods do you accept?",
+    "answer": "We accept all major credit/debit cards via Stripe, PayPal, Apple Pay, and Google Pay. All transactions are encrypted and PCI-compliant."
+  },
+  {
+    "id": 5,
+    "question": "Do you offer a money-back guarantee?",
+    "answer": "Absolutely. We offer a 30-day money-back guarantee. If your license doesn't activate or you're not satisfied for any reason, we'll refund you in full."
+  },
+  {
+    "id": 6,
+    "question": "Is there support if I need help installing?",
+    "answer": "Yes! We offer 24/7 human support via email and WhatsApp. Our tech team will walk you through installation and activation step by step."
+  }
+]
