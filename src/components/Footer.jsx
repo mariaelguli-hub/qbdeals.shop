@@ -37,7 +37,7 @@ export default function Footer() {
             </p>
             <div className="space-y-2.5 text-sm text-gray-500">
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4" /> support@taxusa.shop
+                <Mail className="w-4 h-4" /> support@qbdeals.shop
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" /> +1 (505) 399-7162
