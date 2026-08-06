@@ -44,7 +44,7 @@ export default function Footer() {
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>4479 New Creek Road Birmingham Alabama 35203 United States</span>
+                <span>Alexanderstraße 40, 10179 Berlin, Germany Berlin Berlin 10179</span>
               </div>
             </div>
           </div>
