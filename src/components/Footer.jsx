@@ -90,10 +90,10 @@ export default function Footer() {
             <span>30-Day Money-Back</span>
             <span>Genuine License</span>
           </div>
-          <div>&copy; 2026 TaxUSA. All rights reserved.</div>
+          <div>&copy; 2026 QB DEALS. All rights reserved.</div>
         </div>
         <div className="mt-2 text-right text-[11px] text-gray-400">
-          QuickBooks and Intuit are trademarks of Intuit Inc. TaxUSA is an independent retailer and is not affiliated with Intuit.
+          QuickBooks and Intuit are trademarks of Intuit Inc. QB DEALS is an independent retailer and is not affiliated with Intuit.
         </div>
       </div>
     </footer>
