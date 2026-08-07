@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import faqs from '../data/faq.json'
 
 function FAQItem({ question, answer, isOpen, onClick }) {
@@ -48,9 +49,9 @@ export default function FAQAccordion() {
         </div>
         <p className="mt-6 text-sm text-gray-500">
           Still have questions?{' '}
-          <a href="/faq" className="text-brand-700 font-semibold underline">See all FAQs</a>{' '}
+          <Link to="/faq" className="text-brand-700 font-semibold underline">See all FAQs</Link>{' '}
           or{' '}
-          <a href="/contact" className="text-brand-700 font-semibold underline">contact us</a>.
+          <Link to="/contact" className="text-brand-700 font-semibold underline">contact us</Link>.
         </p>
       </div>
     </section>
