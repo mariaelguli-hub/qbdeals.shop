@@ -28,9 +28,9 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 font-bold text-xl text-brand-700 mb-4">
               <div className="w-8 h-8 bg-brand-700 text-white rounded-md flex items-center justify-center text-sm font-extrabold">
-                TU
+                QB
               </div>
-              Tax USA
+              QB DEALS
             </Link>
             <p className="text-sm text-gray-500 mb-5">
               Genuine QuickBooks Desktop licenses. One-time purchase, instant delivery.
