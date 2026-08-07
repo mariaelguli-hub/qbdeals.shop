@@ -8,7 +8,7 @@ export default function TermsConditions() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Terms & Conditions</h1>
           <p className="text-gray-600 leading-relaxed mb-4">
-            By accessing and using TaxUSA, you accept and agree to be bound by the terms and provisions of this agreement.
+            By accessing and using QB DEALS, you accept and agree to be bound by the terms and provisions of this agreement.
           </p>
           <h2 className="text-xl font-bold text-gray-900 mt-6 mb-3">License</h2>
           <p className="text-gray-600 leading-relaxed mb-4">
