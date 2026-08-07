@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin, ShieldCheck, Lock, RotateCcw, CheckCircle2 } from 'lucide-react'
 
 const shopLinks = [
   { to: '/shop', label: 'All Products' },
@@ -83,18 +83,55 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-          <div className="flex flex-wrap justify-center gap-5">
-            <span>SSL Secured</span>
-            <span>Secure Payment</span>
-            <span>30-Day Money-Back</span>
-            <span>Genuine License</span>
+        {/* Trust Badges & Payment Methods */}
+        <div className="mt-10 pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+          
+          {/* Trust Badges */}
+          <div className="flex flex-wrap justify-center gap-5 font-medium">
+            <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-emerald-600" /> SSL Secured</span>
+            <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Secure Payment</span>
+            <span className="flex items-center gap-1.5"><RotateCcw className="w-3.5 h-3.5 text-emerald-600" /> 30-Day Money-Back</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Genuine License</span>
           </div>
+
+          {/* Payment Logos */}
+          <div className="flex items-center gap-2">
+            {/* Visa */}
+            <div className="h-8 px-2.5 bg-white border border-gray-200 rounded flex items-center justify-center shadow-xs">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3.5 object-contain" />
+            </div>
+
+            {/* Mastercard */}
+            <div className="h-8 px-2.5 bg-white border border-gray-200 rounded flex items-center justify-center shadow-xs">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5 object-contain" />
+            </div>
+
+            {/* PayPal */}
+            <div className="h-8 px-2.5 bg-white border border-gray-200 rounded flex items-center justify-center shadow-xs">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-3.5 object-contain" />
+            </div>
+
+            {/* Apple Pay */}
+            <div className="h-8 px-2.5 bg-white border border-gray-200 rounded flex items-center justify-center shadow-xs">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" className="h-3.5 object-contain" />
+            </div>
+
+            {/* Google Pay */}
+            <div className="h-8 px-2.5 bg-white border border-gray-200 rounded flex items-center justify-center shadow-xs">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" className="h-3.5 object-contain" />
+            </div>
+          </div>
+
+        </div>
+
+        {/* Copyright & Disclaimer */}
+        <div className="mt-6 pt-4 border-t border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-400">
           <div>&copy; 2026 QB DEALS. All rights reserved.</div>
+          <div className="text-right text-[11px] text-gray-400">
+            QuickBooks and Intuit are trademarks of Intuit Inc. QB DEALS is an independent retailer and is not affiliated with Intuit.
+          </div>
         </div>
-        <div className="mt-2 text-right text-[11px] text-gray-400">
-          QuickBooks and Intuit are trademarks of Intuit Inc. QB DEALS is an independent retailer and is not affiliated with Intuit.
-        </div>
+
       </div>
     </footer>
   )
