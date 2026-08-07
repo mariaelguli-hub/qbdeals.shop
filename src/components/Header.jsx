@@ -23,7 +23,7 @@ export default function Header() {
             <div className="w-8 h-8 bg-brand-700 text-white rounded-md flex items-center justify-center text-sm font-extrabold">
               TU
             </div>
-            Tax USA
+            QB DEALS
           </Link>
 
           {/* Desktop Nav */}
