@@ -2,25 +2,25 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, Infinity as InfinityIcon, CheckCircle, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle } from 'lucide-react'
 import products from '../data/products.json'
 
 const whyUsFeatures = [
   {
     id: 0,
-    icon: InfinityIcon,
+    icon: Zap,
     title: 'One-Time Purchase',
     desc: 'Pay once. No subscription, no monthly fees, no annual fees.',
   },
   {
     id: 1,
-    icon: Zap,
+    icon: CheckCircle,
     title: 'Instant Email Delivery',
     desc: 'Receive your license key and download link within minutes.',
   },
   {
     id: 2,
-    icon: CheckCircle,
+    icon: Check,
     title: 'Genuine License',
     desc: 'Authentic license keys with full activation support.',
   },
@@ -55,6 +55,8 @@ export default function ProductDetails() {
       </div>
     )
   }
+
+  const ActiveIcon = whyUsFeatures[activeTab].icon
 
   return (
     <>
@@ -121,7 +123,7 @@ export default function ProductDetails() {
                       className="w-full flex items-start gap-4 py-2"
                     >
                       <div className="p-3.5 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 shrink-0">
-                        {React.createElement(whyUsFeatures[activeTab].icon, { className: "w-6 h-6 stroke-[2]" })}
+                        <ActiveIcon className="w-6 h-6 stroke-[2]" />
                       </div>
                       <div>
                         <h4 className="font-extrabold text-gray-900 text-sm mb-1">
