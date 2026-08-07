@@ -21,7 +21,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-xl text-brand-700">
             <div className="w-8 h-8 bg-brand-700 text-white rounded-md flex items-center justify-center text-sm font-extrabold">
-              TU
+              QD
             </div>
             QB DEALS
           </Link>
