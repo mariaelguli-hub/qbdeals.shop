@@ -1,5 +1,5 @@
 {
-  "name": "taxusa-shop",
+  "name": "qbdeals.shop",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -20,6 +20,7 @@
     "swiper": "^11.1.0",
     "react-hook-form": "^7.52.0",
     "react-hot-toast": "^2.4.1"
+    
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
