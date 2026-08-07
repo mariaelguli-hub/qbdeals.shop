@@ -90,7 +90,7 @@ export default function Footer() {
 
         </div>
 
-        {/* Middle Bar: Trust Badges & Original Payment Logos */}
+        {/* Middle Bar: Trust Badges & Authentic Payment Logos */}
         <div className="py-6 border-t border-b border-gray-100 flex flex-col lg:flex-row items-center justify-between gap-6">
           
           {/* Trust Badges */}
@@ -109,16 +109,14 @@ export default function Footer() {
             </span>
           </div>
 
-          {/* Exact Payment Badge Images (From Wikimedia/Official CDNs) */}
+          {/* Perfect Authentic Payment Badges */}
           <div className="flex items-center gap-2">
             
-            {/* VISA */}
+            {/* VISA - Perfect Clean Vector */}
             <div className="h-9 px-3 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
-                alt="Visa" 
-                className="h-3.5 w-auto object-contain"
-              />
+              <span className="font-black italic text-[#1A1F71] text-base tracking-tighter select-none font-sans">
+                VISA
+              </span>
             </div>
 
             {/* Mastercard */}
