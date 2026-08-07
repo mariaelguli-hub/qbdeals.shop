@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>TaxUSA — Genuine QuickBooks Desktop Licenses | One-Time Payment</title>
+        <title>QB DEALS — Genuine QuickBooks Desktop Licenses | One-Time Payment</title>
         <meta name="description" content="Buy genuine QuickBooks Desktop 2024 licenses with one-time payment. Instant email delivery, 30-day money-back guarantee. No subscription." />
       </Helmet>
       <Hero />
