@@ -1,4 +1,3 @@
-import CookiePolicy from './pages/CookiePolicy'
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import MainLayout from './layouts/MainLayout'
@@ -13,6 +12,7 @@ import FAQ from './pages/FAQ'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsConditions from './pages/TermsConditions'
 import RefundPolicy from './pages/RefundPolicy'
+import CookiePolicy from './pages/CookiePolicy'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -37,7 +37,7 @@ export default function App() {
           <Route path="/terms-conditions" element={<TermsConditions />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/return-policy" element={<RefundPolicy />} />
-          <Route path="/cookie-policy" element={<PrivacyPolicy />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/gdpr-policy" element={<PrivacyPolicy />} />
           <Route path="/legal-notice" element={<TermsConditions />} />
           <Route path="/shipping-delivery" element={<FAQ />} />
