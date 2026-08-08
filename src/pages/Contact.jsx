@@ -23,16 +23,26 @@ export default function Contact() {
     setLoading(true)
 
     try {
-      // 🌐 جلب الـ IP والموقع الجغرافي للمرسل تلقائياً
       let userIp = 'Unknown'
       let userLocation = 'Unknown'
 
+      // 🌐 جلب الـ IP من API أسرع وبدون مشاكل CORS
       try {
-        const ipRes = await fetch('https://ipapi.co/json/')
+        const ipRes = await fetch('https://api.ipify.org?format=json')
         const ipData = await ipRes.json()
         if (ipData.ip) {
           userIp = ipData.ip
-          userLocation = `${ipData.city || ''}, ${ipData.country_name || ''}`.trim()
+          
+          // جلب المدينة والبلد بواسطة الـ IP
+          try {
+            const locRes = await fetch(`https://ipapi.co/${userIp}/json/`)
+            const locData = await locRes.json()
+            if (locData.country_name) {
+              userLocation = `${locData.city || ''}, ${locData.country_name || ''}`.trim()
+            }
+          } catch (e) {
+            console.log('Location fetch skipped')
+          }
         }
       } catch (ipErr) {
         console.error('Could not fetch IP:', ipErr)
