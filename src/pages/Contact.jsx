@@ -1,6 +1,6 @@
 import React from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Mail, Phone, MapPin, Send, ArrowLeft, MessageSquareHorizontal } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, ArrowLeft, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function Contact() {
@@ -43,8 +43,8 @@ export default function Contact() {
                 </div>
                 <div className="font-bold text-gray-900 text-sm mb-1">Email Us</div>
                 <p className="text-xs text-gray-500 mb-2">Our team usually responds within a few hours.</p>
-                <a href="mailto:contact@bigdealsqb.com" className="text-sm font-semibold text-emerald-700 hover:underline">
-                  contact@bigdealsqb.com
+                <a href="mailto:contact@qbdeals.shop" className="text-sm font-semibold text-emerald-700 hover:underline">
+                  contact@qbdeals.shop
                 </a>
               </div>
 
@@ -75,7 +75,7 @@ export default function Contact() {
             {/* Form Side / Cadre */}
             <div className="md:col-span-2 bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/60">
               <div className="flex items-center gap-2.5 mb-6 border-b border-gray-100 pb-4">
-                <MessageSquareHorizontal className="w-6 h-6 text-emerald-600" />
+                <MessageSquare className="w-6 h-6 text-emerald-600" />
                 <h2 className="text-xl font-bold text-gray-900">Send us a message</h2>
               </div>
 
