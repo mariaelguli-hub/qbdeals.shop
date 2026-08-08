@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Mail, Trash2, CheckCircle, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, ShieldAlert } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
@@ -10,12 +10,14 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  
+  const [activeTab, setActiveTab] = useState('visitors')
   const [messages, setMessages] = useState([])
+  const [visitors, setVisitors] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const savedAuth = localStorage.getItem('qb_admin_auth')
-    if (savedAuth === 'true') {
+    if (localStorage.getItem('qb_admin_auth') === 'true') {
       setIsAuthenticated(true)
     }
   }, [])
@@ -37,65 +39,59 @@ export default function AdminDashboard() {
     toast.success('Logged out')
   }
 
-  const fetchMessages = async () => {
+  const fetchData = async () => {
     setLoading(true)
-    const { data, error } = await supabase
+    
+    const { data: msgData } = await supabase
       .from('messages')
       .select('*')
       .order('created_at', { ascending: false })
+    setMessages(msgData || [])
 
-    if (error) {
-      toast.error('Error fetching messages')
-    } else {
-      setMessages(data || [])
-    }
+    const { data: visData } = await supabase
+      .from('visitors')
+      .select('*')
+      .order('last_seen', { ascending: false })
+      .limit(50)
+    setVisitors(visData || [])
+
     setLoading(false)
   }
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchMessages()
+      fetchData()
+      const interval = setInterval(fetchData, 8000)
+      return () => clearInterval(interval)
     }
   }, [isAuthenticated])
 
-  const markAsRead = async (id) => {
-    const { error } = await supabase
-      .from('messages')
-      .update({ status: 'read' })
-      .eq('id', id)
-
+  const deleteVisitor = async (id) => {
+    const { error } = await supabase.from('visitors').delete().eq('id', id)
     if (!error) {
-      setMessages(messages.map(m => m.id === id ? { ...m, status: 'read' } : m))
-      toast.success('Marked as read')
+      setVisitors(visitors.filter(v => v.id !== id))
+      toast.success('Visitor removed')
     }
   }
 
-  const deleteMessage = async (id) => {
-    if (!window.confirm('Delete this message?')) return
-    const { error } = await supabase
-      .from('messages')
-      .delete()
-      .eq('id', id)
-
-    if (!error) {
-      setMessages(messages.filter(m => m.id !== id))
-      toast.success('Message deleted')
-    }
+  const formatTime = (seconds) => {
+    if (!seconds) return '0s'
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
   }
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 px-4">
-        <Helmet>
-          <title>Admin Login — QB DEALS</title>
-        </Helmet>
+        <Helmet><title>Admin Login — QB DEALS</title></Helmet>
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl max-w-md w-full text-center space-y-6">
           <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
             <Lock className="w-8 h-8" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Admin Restricted Access</h1>
-            <p className="text-xs text-gray-500 mt-1">Enter your secret password to manage messages.</p>
+            <p className="text-xs text-gray-500 mt-1">Enter your secret password to manage your dashboard.</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="relative">
@@ -104,7 +100,7 @@ export default function AdminDashboard() {
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder="Enter password..."
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm pr-10 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm pr-10 outline-none focus:ring-2 focus:ring-emerald-500/20"
                 required
               />
               <button 
@@ -129,26 +125,19 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <Helmet>
-        <title>Admin Dashboard — QB DEALS</title>
-      </Helmet>
+      <Helmet><title>Admin Control Panel — QB DEALS</title></Helmet>
 
       <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-emerald-100 text-emerald-700 rounded-2xl">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Admin Messages Dashboard</h1>
-                <p className="text-xs text-gray-500">Total Messages: {messages.length}</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Live Panel</h1>
+              <p className="text-xs text-gray-500">Real-time visitor tracking & contact management</p>
             </div>
             <div className="flex items-center gap-2">
               <button 
-                onClick={fetchMessages}
+                onClick={fetchData}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
@@ -162,71 +151,108 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="text-center py-20 text-gray-500">Loading messages...</div>
-          ) : messages.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center text-gray-500 border border-gray-100">
-              No messages received yet.
+          <div className="flex gap-3 border-b border-gray-200 pb-2">
+            <button
+              onClick={() => setActiveTab('visitors')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'visitors' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Users className="w-4 h-4" /> Live Visitors ({visitors.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'messages' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" /> Contact Messages ({messages.length})
+            </button>
+          </div>
+
+          {activeTab === 'visitors' && (
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-emerald-600" /> Live Tracking
+                </h2>
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-bold">
+                  Auto-refreshes every 8s
+                </span>
+              </div>
+
+              {visitors.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">No visitors tracked yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                        <th className="p-4">Visitor IP</th>
+                        <th className="p-4">Location</th>
+                        <th className="p-4">Active Page</th>
+                        <th className="p-4">Time Spent</th>
+                        <th className="p-4">Last Active</th>
+                        <th className="p-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {visitors.map((v) => (
+                        <tr key={v.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 font-mono text-xs font-semibold text-gray-900">
+                            {v.ip_address || 'Unknown'}
+                          </td>
+                          <td className="p-4 text-gray-600">
+                            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg text-xs font-medium">
+                              <Globe className="w-3.5 h-3.5 text-emerald-600" /> {v.location || 'Unknown'}
+                            </span>
+                          </td>
+                          <td className="p-4 font-medium text-emerald-700">
+                            <span className="bg-gray-100 px-2.5 py-1 rounded-md text-xs font-mono">
+                              {v.current_page || '/'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-gray-600 font-medium">
+                            <span className="inline-flex items-center gap-1 text-xs">
+                              <Clock className="w-3.5 h-3.5 text-gray-400" /> {formatTime(v.time_spent)}
+                            </span>
+                          </td>
+                          <td className="p-4 text-xs text-gray-400">
+                            {new Date(v.last_seen).toLocaleTimeString()}
+                          </td>
+                          <td className="p-4 text-right">
+                            <button 
+                              onClick={() => deleteVisitor(v.id)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          ) : (
+          )}
+
+          {activeTab === 'messages' && (
             <div className="grid gap-4">
               {messages.map((msg) => (
-                <div 
-                  key={msg.id} 
-                  className={`bg-white rounded-2xl p-6 border transition-all shadow-sm ${
-                    msg.status === 'unread' ? 'border-emerald-500 bg-emerald-50/10' : 'border-gray-200'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gray-900">{msg.name}</span>
-                      <a href={`mailto:${msg.email}`} className="text-xs text-emerald-600 font-semibold underline">
-                        {msg.email}
-                      </a>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <span>{new Date(msg.created_at).toLocaleString()}</span>
-                      {msg.status === 'unread' ? (
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Unread</span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600">Read</span>
-                      )}
-                    </div>
+                <div key={msg.id} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                  <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-3">
+                    <span className="font-bold text-gray-900">{msg.name} ({msg.email})</span>
+                    <span className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleString()}</span>
                   </div>
-
                   <h3 className="font-semibold text-gray-800 text-sm mb-2">Subject: {msg.subject}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap">{msg.message}</p>
-
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3 text-xs">
-                    <div className="flex flex-wrap items-center gap-2 text-gray-500">
-                      {msg.ip_address && (
-                        <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg font-mono text-[11px]">
-                          <ShieldAlert className="w-3.5 h-3.5 text-gray-400" /> IP: {msg.ip_address}
-                        </span>
-                      )}
-                      {msg.location && (
-                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg font-medium text-[11px]">
-                          <Globe className="w-3.5 h-3.5 text-emerald-600" /> {msg.location}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {msg.status === 'unread' && (
-                        <button 
-                          onClick={() => markAsRead(msg.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" /> Mark Read
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => deleteMessage(msg.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Delete
-                      </button>
-                    </div>
+                  <p className="text-gray-600 text-sm mb-4">{msg.message}</p>
+                  <div className="flex justify-between items-center border-t border-gray-100 pt-3 text-xs text-gray-500">
+                    <span>🌐 IP: {msg.ip_address} | {msg.location}</span>
                   </div>
                 </div>
               ))}
