@@ -1,12 +1,43 @@
 import React, { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Mail, Trash2, CheckCircle, RefreshCw, MessageSquare } from 'lucide-react'
+import { Mail, Trash2, CheckCircle, RefreshCw, MessageSquare, Lock, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
+// 🔑 اختر كلمة السر الخاصة بك هنا (يمكنك تغييرها في أي وقت)
+const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
+
 export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [messages, setMessages] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+
+  // Check login session from localStorage
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('qb_admin_auth')
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true)
+    }
+  }, [])
+
+  const handleLogin = (e) => {
+    e.preventDefault()
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true)
+      localStorage.setItem('qb_admin_auth', 'true')
+      toast.success('Access Granted!')
+    } else {
+      toast.error('Incorrect Password!')
+    }
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    localStorage.removeItem('qb_admin_auth')
+    toast.success('Logged out')
+  }
 
   const fetchMessages = async () => {
     setLoading(true)
@@ -24,8 +55,10 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    fetchMessages()
-  }, [])
+    if (isAuthenticated) {
+      fetchMessages()
+    }
+  }, [isAuthenticated])
 
   const markAsRead = async (id) => {
     const { error } = await supabase
@@ -52,6 +85,52 @@ export default function AdminDashboard() {
     }
   }
 
+  // 🔒 إذا لم يقم بإدخال كلمة السر، تظهر صفحة القفل
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 px-4">
+        <Helmet>
+          <title>Admin Login — QB DEALS</title>
+        </Helmet>
+        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl max-w-md w-full text-center space-y-6">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Admin Restricted Access</h1>
+            <p className="text-xs text-gray-500 mt-1">Enter your secret password to manage messages.</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"}
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter password..."
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm pr-10 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                required
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <button 
+              type="submit" 
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20"
+            >
+              Unlock Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  // 🔓 الداشبورد بعد كتابة كلمة السر الصح
   return (
     <>
       <Helmet>
@@ -61,7 +140,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           
-          <div className="flex items-center justify-between bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-emerald-100 text-emerald-700 rounded-2xl">
                 <MessageSquare className="w-6 h-6" />
@@ -71,12 +150,20 @@ export default function AdminDashboard() {
                 <p className="text-xs text-gray-500">Total Messages: {messages.length}</p>
               </div>
             </div>
-            <button 
-              onClick={fetchMessages}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={fetchMessages}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-medium transition-all"
+              >
+                Logout
+              </button>
+            </div>
           </div>
 
           {loading ? (
