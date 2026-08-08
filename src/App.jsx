@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import ScrollToTop from './components/ScrollToTop'
 import MainLayout from './layouts/MainLayout'
 import Home from './pages/Home'
 import Shop from './pages/Shop'
@@ -20,6 +21,7 @@ import NotFound from './pages/NotFound'
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Toaster position="top-right" toastOptions={{
         style: { borderRadius: '10px', fontSize: '14px' }
       }} />
