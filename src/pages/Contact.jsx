@@ -23,6 +23,22 @@ export default function Contact() {
     setLoading(true)
 
     try {
+      // 🌐 جلب الـ IP والموقع الجغرافي للمرسل تلقائياً
+      let userIp = 'Unknown'
+      let userLocation = 'Unknown'
+
+      try {
+        const ipRes = await fetch('https://ipapi.co/json/')
+        const ipData = await ipRes.json()
+        if (ipData.ip) {
+          userIp = ipData.ip
+          userLocation = `${ipData.city || ''}, ${ipData.country_name || ''}`.trim()
+        }
+      } catch (ipErr) {
+        console.error('Could not fetch IP:', ipErr)
+      }
+
+      // 📤 إرسال البيانات إلى Supabase
       const { error } = await supabase
         .from('messages')
         .insert([
@@ -31,7 +47,9 @@ export default function Contact() {
             email: formData.email,
             subject: formData.subject,
             message: formData.message,
-            status: 'unread'
+            status: 'unread',
+            ip_address: userIp,
+            location: userLocation
           }
         ])
 
