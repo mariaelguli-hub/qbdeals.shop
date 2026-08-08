@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Mail, Trash2, CheckCircle, RefreshCw, MessageSquare, Lock, Eye, EyeOff } from 'lucide-react'
+import { Mail, Trash2, CheckCircle, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, ShieldAlert } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
-// 🔑 اختر كلمة السر الخاصة بك هنا (يمكنك تغييرها في أي وقت)
-const ADMIN_PASSWORD = "Abubakrwinwinavatar"
+const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -14,7 +13,6 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Check login session from localStorage
   useEffect(() => {
     const savedAuth = localStorage.getItem('qb_admin_auth')
     if (savedAuth === 'true') {
@@ -85,7 +83,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // 🔒 إذا لم يقم بإدخال كلمة السر، تظهر صفحة القفل
   if (!isAuthenticated) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 px-4">
@@ -130,7 +127,6 @@ export default function AdminDashboard() {
     )
   }
 
-  // 🔓 الداشبورد بعد كتابة كلمة السر الصح
   return (
     <>
       <Helmet>
@@ -201,21 +197,36 @@ export default function AdminDashboard() {
                   <h3 className="font-semibold text-gray-800 text-sm mb-2">Subject: {msg.subject}</h3>
                   <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap">{msg.message}</p>
 
-                  <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
-                    {msg.status === 'unread' && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 text-gray-500">
+                      {msg.ip_address && (
+                        <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg font-mono text-[11px]">
+                          <ShieldAlert className="w-3.5 h-3.5 text-gray-400" /> IP: {msg.ip_address}
+                        </span>
+                      )}
+                      {msg.location && (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg font-medium text-[11px]">
+                          <Globe className="w-3.5 h-3.5 text-emerald-600" /> {msg.location}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {msg.status === 'unread' && (
+                        <button 
+                          onClick={() => markAsRead(msg.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" /> Mark Read
+                        </button>
+                      )}
                       <button 
-                        onClick={() => markAsRead(msg.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                        onClick={() => deleteMessage(msg.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                       >
-                        <CheckCircle className="w-3.5 h-3.5" /> Mark Read
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
                       </button>
-                    )}
-                    <button 
-                      onClick={() => deleteMessage(msg.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </button>
+                    </div>
                   </div>
                 </div>
               ))}
