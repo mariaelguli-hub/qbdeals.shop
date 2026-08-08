@@ -83,7 +83,7 @@ export default function PrivacyPolicy() {
               </p>
               <div className="inline-flex items-center gap-2 p-3.5 bg-emerald-50 rounded-xl text-emerald-900 font-semibold text-sm border border-emerald-200/60">
                 <Mail className="w-4 h-4 text-emerald-600" />
-                <span>Email: <a href="mailto:contact@bigdealsqb.com" className="underline hover:text-emerald-700">contact@bigdealsqb.com</a></span>
+                <span>Email: <a href="mailto:contact@qbdeals.shop" className="underline hover:text-emerald-700">contact@qbdeals.shop</a></span>
               </div>
             </div>
 
