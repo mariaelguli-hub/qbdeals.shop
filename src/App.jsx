@@ -1,3 +1,4 @@
+import CookiePolicy from './pages/CookiePolicy'
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import MainLayout from './layouts/MainLayout'
