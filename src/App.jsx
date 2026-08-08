@@ -18,6 +18,7 @@ import GdprPolicy from './pages/GdprPolicy'
 import Disclaimer from './pages/Disclaimer'
 import ShippingDelivery from './pages/Shipping&Delivery'
 import NotFound from './pages/NotFound'
+import AdminDashboard from './pages/AdminDashboard'
 
 export default function App() {
   return (
@@ -47,6 +48,9 @@ export default function App() {
           <Route path="/legal-notice" element={<TermsConditions />} />
           <Route path="/shipping-delivery" element={<ShippingDelivery />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
+
+          {/* Admin Dashboard */}
+          <Route path="/admin-messages-panel" element={<AdminDashboard />} />
 
           <Route path="*" element={<NotFound />} />
         </Route>
