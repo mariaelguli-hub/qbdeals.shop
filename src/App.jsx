@@ -13,6 +13,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsConditions from './pages/TermsConditions'
 import RefundPolicy from './pages/RefundPolicy'
 import CookiePolicy from './pages/CookiePolicy'
+import Disclaimer from './pages/Disclaimer'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -41,7 +42,7 @@ export default function App() {
           <Route path="/gdpr-policy" element={<PrivacyPolicy />} />
           <Route path="/legal-notice" element={<TermsConditions />} />
           <Route path="/shipping-delivery" element={<FAQ />} />
-          <Route path="/disclaimer" element={<TermsConditions />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
 
           <Route path="*" element={<NotFound />} />
         </Route>
