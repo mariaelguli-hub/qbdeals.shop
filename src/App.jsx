@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import ScrollToTop from './components/ScrollToTop'
+import VisitorTracker from './components/VisitorTracker'
 import MainLayout from './layouts/MainLayout'
 import Home from './pages/Home'
 import Shop from './pages/Shop'
@@ -23,6 +24,7 @@ import AdminDashboard from './pages/AdminDashboard'
 export default function App() {
   return (
     <>
+      <VisitorTracker />
       <ScrollToTop />
       <Toaster position="top-right" toastOptions={{
         style: { borderRadius: '10px', fontSize: '14px' }
