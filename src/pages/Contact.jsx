@@ -1,65 +1,139 @@
+import React from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Mail, Phone, MapPin, Send } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, ArrowLeft, MessageSquareHorizontal } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export default function Contact() {
   return (
     <>
       <Helmet>
-        <title>Contact Us — TaxUSA</title>
-        <meta name="description" content="Get in touch with TaxUSA support. We're here to help 24/7." />
+        <title>Contact Us — QB DEALS</title>
+        <meta name="description" content="Get in touch with QB DEALS support team. We are here to help you 24/7 with your software license inquiries." />
       </Helmet>
-      <section className="py-16 lg:py-24 bg-gray-50 min-h-[60vh]">
+
+      <section className="py-12 lg:py-20 bg-gray-50/50 min-h-[70vh]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-3">Contact Us</h1>
-            <p className="text-gray-500">Have questions? We're here to help 24/7.</p>
+          
+          {/* Back Button */}
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-emerald-700 mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </Link>
+
+          {/* Header section */}
+          <div className="text-center mb-10">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-3">
+              Contact Us
+            </h1>
+            <p className="text-base text-gray-500 max-w-lg mx-auto">
+              Have questions or need assistance with your order? We're here to help!
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-1 space-y-6">
-              <div className="bg-white p-6 rounded-xl border border-gray-200">
-                <Mail className="w-5 h-5 text-brand-700 mb-3" />
-                <div className="font-semibold text-gray-900 text-sm mb-1">Email</div>
-                <div className="text-sm text-gray-500">support@taxusa.shop</div>
+            
+            {/* Info Cards Side */}
+            <div className="md:col-span-1 space-y-4">
+              
+              <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 transition-all hover:border-emerald-200">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div className="font-bold text-gray-900 text-sm mb-1">Email Us</div>
+                <p className="text-xs text-gray-500 mb-2">Our team usually responds within a few hours.</p>
+                <a href="mailto:contact@bigdealsqb.com" className="text-sm font-semibold text-emerald-700 hover:underline">
+                  contact@bigdealsqb.com
+                </a>
               </div>
-              <div className="bg-white p-6 rounded-xl border border-gray-200">
-                <Phone className="w-5 h-5 text-brand-700 mb-3" />
-                <div className="font-semibold text-gray-900 text-sm mb-1">Phone</div>
-                <div className="text-sm text-gray-500">+1 (505) 399-7162</div>
+
+              <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 transition-all hover:border-emerald-200">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <div className="font-bold text-gray-900 text-sm mb-1">Phone Support</div>
+                <p className="text-xs text-gray-500 mb-2">Mon - Sat from 9am to 6pm EST.</p>
+                <span className="text-sm font-semibold text-gray-800">
+                  +1 (505) 399-7162
+                </span>
               </div>
-              <div className="bg-white p-6 rounded-xl border border-gray-200">
-                <MapPin className="w-5 h-5 text-brand-700 mb-3" />
-                <div className="font-semibold text-gray-900 text-sm mb-1">Address</div>
-                <div className="text-sm text-gray-500">4479 New Creek Road, Birmingham, AL 35203</div>
+
+              <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 transition-all hover:border-emerald-200">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div className="font-bold text-gray-900 text-sm mb-1">Office Address</div>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  4479 New Creek Road,<br />
+                  Birmingham, AL 35203
+                </p>
               </div>
+
             </div>
 
-            <div className="md:col-span-2 bg-white p-8 rounded-xl border border-gray-200">
-              <h2 className="font-bold text-gray-900 mb-6">Send us a message</h2>
+            {/* Form Side / Cadre */}
+            <div className="md:col-span-2 bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/60">
+              <div className="flex items-center gap-2.5 mb-6 border-b border-gray-100 pb-4">
+                <MessageSquareHorizontal className="w-6 h-6 text-emerald-600" />
+                <h2 className="text-xl font-bold text-gray-900">Send us a message</h2>
+              </div>
+
               <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <input type="text" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Your name" />
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                      Your Name
+                    </label>
+                    <input 
+                      type="text" 
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all bg-gray-50/50 focus:bg-white" 
+                      placeholder="John Doe" 
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="you@example.com" />
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                      Email Address
+                    </label>
+                    <input 
+                      type="email" 
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all bg-gray-50/50 focus:bg-white" 
+                      placeholder="you@example.com" 
+                    />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                  <input type="text" className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="How can we help?" />
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Subject
+                  </label>
+                  <input 
+                    type="text" 
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all bg-gray-50/50 focus:bg-white" 
+                    placeholder="How can we help you?" 
+                  />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                  <textarea rows={5} className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none resize-none" placeholder="Tell us more..." />
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Message
+                  </label>
+                  <textarea 
+                    rows={5} 
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all bg-gray-50/50 focus:bg-white resize-none" 
+                    placeholder="Provide details about your query or order..." 
+                  />
                 </div>
-                <button type="submit" className="btn-primary">
-                  <Send className="w-4 h-4" /> Send message
+
+                <button 
+                  type="submit" 
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-3.5 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95"
+                >
+                  <Send className="w-4 h-4" /> Send Message
                 </button>
               </form>
             </div>
+
           </div>
         </div>
       </section>
