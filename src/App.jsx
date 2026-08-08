@@ -14,6 +14,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsConditions from './pages/TermsConditions'
 import RefundPolicy from './pages/RefundPolicy'
 import CookiePolicy from './pages/CookiePolicy'
+import GdprPolicy from './pages/GdprPolicy'
 import Disclaimer from './pages/Disclaimer'
 import ShippingDelivery from './pages/Shipping&Delivery'
 import NotFound from './pages/NotFound'
@@ -42,7 +43,7 @@ export default function App() {
           <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/return-policy" element={<RefundPolicy />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route path="/gdpr-policy" element={<PrivacyPolicy />} />
+          <Route path="/gdpr-policy" element={<GdprPolicy />} />
           <Route path="/legal-notice" element={<TermsConditions />} />
           <Route path="/shipping-delivery" element={<ShippingDelivery />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
