@@ -5,7 +5,7 @@ import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
 // 🔑 اختر كلمة السر الخاصة بك هنا (يمكنك تغييرها في أي وقت)
-const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
+const ADMIN_PASSWORD = "Abubakrwinwinavatar"
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
