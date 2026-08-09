@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star } from 'lucide-react'
+import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn } from 'lucide-react'
 import products from '../data/products.json'
 
 const whyUsFeatures = [
@@ -37,6 +37,19 @@ export default function ProductDetails() {
   const product = products.find((p) => p.slug === slug)
   const [activeTab, setActiveTab] = useState(0)
 
+  // Zoom States
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
+  const [isHovered, setIsHovered] = useState(false)
+  const imgRef = useRef(null)
+
+  const handleMouseMove = (e) => {
+    if (!imgRef.current) return
+    const { left, top, width, height } = imgRef.current.getBoundingClientRect()
+    const x = ((e.clientX - left) / width) * 100
+    const y = ((e.clientY - top) / height) * 100
+    setZoomPos({ x, y })
+  }
+
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
@@ -56,8 +69,6 @@ export default function ProductDetails() {
   }
 
   const ActiveIcon = whyUsFeatures[activeTab].icon
-
-  // Rating and Reviews fallback values
   const ratingValue = product.rating || 4.95
   const reviewsCount = product.reviewsCount || 128
 
@@ -77,25 +88,39 @@ export default function ProductDetails() {
 
           <div className="grid lg:grid-cols-12 gap-10 items-start">
             
-            {/* Left Side: Image + Horizontal Slide Widget */}
+            {/* Left Side: Interactive Zoom Image + Horizontal Slide Widget */}
             <div className="lg:col-span-5 space-y-6">
               
-              {/* Product Image Container (Sized & Standardized for All Products) */}
+              {/* Product Image Container with Interactive Zoom */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl border border-gray-200/80 p-6 flex items-center justify-center shadow-sm h-80 sm:h-96 w-full aspect-square relative overflow-hidden"
+                ref={imgRef}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onMouseMove={handleMouseMove}
+                className="bg-white rounded-3xl border border-gray-200/80 p-2 flex items-center justify-center shadow-sm relative overflow-hidden cursor-crosshair group h-[380px] sm:h-[420px]"
               >
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300"
+                  style={{
+                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                    transform: isHovered ? 'scale(2.2)' : 'scale(1)',
+                  }}
+                  className="w-full h-full object-cover object-center rounded-2xl transition-transform duration-200 ease-out"
                   onError={(e) => {
                     e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
                   }}
                 />
+
+                {/* Hover Zoom Badge */}
+                <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
+                  <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
+                </div>
               </motion.div>
 
+              {/* Horizontal Slide Widget */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -179,7 +204,7 @@ export default function ProductDetails() {
                 {product.name}
               </h1>
 
-              {/* ⭐️ High Quality Golden Star Rating Section */}
+              {/* Golden Star Rating Section */}
               <div className="flex items-center gap-2 mb-5">
                 <div className="flex items-center gap-0.5 text-amber-400">
                   {[...Array(5)].map((_, i) => (
@@ -233,7 +258,7 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* ⚡ Buy Now Button with Motion & Mirror / Glossy Shine Animation */}
+              {/* Buy Now Button */}
               <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
@@ -249,10 +274,8 @@ export default function ProductDetails() {
                 </button>
               </motion.div>
 
-              {/* 💳 Payment Badges & Trust Board (Using Footer's Exact Proven Structure) */}
+              {/* Payment Badges & Trust Board */}
               <div className="mt-6 space-y-6">
-                
-                {/* Authentic Payment Badges Grid */}
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -262,15 +285,12 @@ export default function ProductDetails() {
                   </div>
 
                   <div className="grid grid-cols-5 gap-2">
-                    
-                    {/* VISA */}
                     <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
                       <span className="font-black italic text-[#1A1F71] text-sm tracking-tighter select-none font-sans">
                         VISA
                       </span>
                     </div>
 
-                    {/* Mastercard */}
                     <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
                       <img 
                         src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
@@ -279,7 +299,6 @@ export default function ProductDetails() {
                       />
                     </div>
 
-                    {/* PayPal */}
                     <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
                       <img 
                         src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
@@ -288,7 +307,6 @@ export default function ProductDetails() {
                       />
                     </div>
 
-                    {/* Apple Pay */}
                     <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
                       <img 
                         src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" 
@@ -297,7 +315,6 @@ export default function ProductDetails() {
                       />
                     </div>
 
-                    {/* Google Pay */}
                     <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
                       <img 
                         src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" 
@@ -305,13 +322,10 @@ export default function ProductDetails() {
                         className="h-4 w-auto object-contain"
                       />
                     </div>
-
                   </div>
                 </div>
 
-                {/* Trust Board */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
-                  
                   <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
                   <div className="absolute -left-12 -bottom-12 w-36 h-36 bg-blue-400/10 rounded-full blur-3xl"></div>
 
@@ -364,7 +378,6 @@ export default function ProductDetails() {
                     <span className="text-emerald-400">•</span>
                     <span>Trusted by thousands</span>
                   </div>
-
                 </div>
 
               </div>
