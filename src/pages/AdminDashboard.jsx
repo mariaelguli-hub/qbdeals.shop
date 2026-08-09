@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState([])
   const [visitors, setVisitors] = useState([])
   
-  // 💬 إضافة States الشات الدعم المباشر
+  // 💬 States الشات المباشر
   const [chatSessions, setChatSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true)
     
-    // 1. جلب رسائل الـ Contact Form
+    // 1. جلب رسائل Contact Form
     const { data: msgData } = await supabase
       .from('messages')
       .select('*')
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       .limit(100)
     setVisitors(visData || [])
 
-    // 3. جلب جلسات الشات المباشر
+    // 3. جلب جلسات الشات
     const { data: chatData } = await supabase
       .from('chat_sessions')
       .select('*')
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated])
 
-  // جلب رسائل المحادثة المختارة مع Realtime
+  // جلب رسائل المحادثة المحددة والاشتراك في Realtime
   useEffect(() => {
     if (!selectedSession) return
 
@@ -105,7 +105,10 @@ export default function AdminDashboard() {
         table: 'chat_messages',
         filter: `session_id=eq.${selectedSession.id}`
       }, (payload) => {
-        setChatMessages(prev => [...prev, payload.new])
+        setChatMessages(prev => {
+          if (prev.some(m => m.id === payload.new.id)) return prev
+          return [...prev, payload.new]
+        })
       })
       .subscribe()
 
@@ -116,25 +119,46 @@ export default function AdminDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
-  // إرسال رد من الأدمن للعميل
+  // 🛠️ دالة إرسال الرد المصححة والمضمونة
   const handleSendAgentReply = async (e) => {
     e.preventDefault()
     if (!replyInput.trim() || !selectedSession) return
 
+    const messageText = replyInput.trim()
+    setReplyInput('')
+
     const agentMsg = {
       session_id: selectedSession.id,
       sender: 'agent',
-      message: replyInput.trim(),
+      message: messageText,
       created_at: new Date().toISOString()
     }
 
-    setReplyInput('')
-    await supabase.from('chat_messages').insert([agentMsg])
+    // تحديث الشات فوراً أمامك
+    setChatMessages(prev => [...prev, agentMsg])
 
-    await supabase
+    // إرسال الرسالة لـ Supabase مع معالجة الأخطاء
+    const { error: msgError } = await supabase
+      .from('chat_messages')
+      .insert([agentMsg])
+
+    if (msgError) {
+      console.error('Error sending agent reply:', msgError)
+      toast.error(`Failed to send: ${msgError.message}`)
+      return
+    }
+
+    // تحديث حالة المحادثة إلى Agent
+    const { error: sessionError } = await supabase
       .from('chat_sessions')
       .update({ status: 'agent', updated_at: new Date().toISOString() })
       .eq('id', selectedSession.id)
+
+    if (sessionError) {
+      console.error('Error updating session status:', sessionError)
+    } else {
+      toast.success('Reply sent successfully!')
+    }
   }
 
   const deleteVisitor = async (id) => {
@@ -231,7 +255,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* أزرار التبويبات (Tabs) */}
           <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
             <button
               onClick={() => setActiveTab('visitors')}
@@ -342,7 +365,6 @@ export default function AdminDashboard() {
           {activeTab === 'livechat' && (
             <div className="grid md:grid-cols-3 gap-6 h-[600px]">
               
-              {/* قائمة الجلسات والمحادثات */}
               <div className="md:col-span-1 bg-white rounded-3xl border border-gray-100 p-4 overflow-y-auto space-y-2 shadow-sm">
                 <h3 className="font-bold text-gray-900 text-sm mb-3">Chat Conversations ({chatSessions.length})</h3>
                 {chatSessions.length === 0 ? (
@@ -374,7 +396,6 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* نافذة الشات والرد للعملاء */}
               <div className="md:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
                 {selectedSession ? (
                   <>
@@ -386,8 +407,8 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50/30 text-xs">
-                      {chatMessages.map((m) => (
-                        <div key={m.id} className={`flex ${m.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
+                      {chatMessages.map((m, idx) => (
+                        <div key={m.id || idx} className={`flex ${m.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[75%] p-3 rounded-2xl ${
                             m.sender === 'agent' 
                               ? 'bg-emerald-600 text-white rounded-br-none' 
@@ -418,7 +439,7 @@ export default function AdminDashboard() {
                       />
                       <button
                         type="submit"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <Send className="w-3.5 h-3.5" /> Reply
                       </button>
