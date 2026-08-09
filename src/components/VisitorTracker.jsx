@@ -13,40 +13,37 @@ export default function VisitorTracker() {
       let userIp = 'Unknown'
       let userLoc = 'Unknown'
 
-      // 🌐 جلب الـ IP من خدمة BigDataCloud الموثوقة والتي لا تتأثر بـ AdBlock
+      // 🌐 1️⃣ جلب الـ IP والمدينة والبلد معاً في طلب واحد عبر ip-api.com
       try {
-        const res = await fetch('https://api.bigdatacloud.net/data/client-ip', { 
-          signal: AbortSignal.timeout(3000) 
+        const res = await fetch('https://ip-api.com/json/?fields=status,country,city,regionName,query', { 
+          signal: AbortSignal.timeout(3500) 
         })
         const data = await res.json()
-        if (data?.ipString) {
-          userIp = data.ipString
+        if (data && data.status === 'success') {
+          userIp = data.query || 'Unknown'
+          const city = data.city || data.regionName || ''
+          userLoc = `${city ? city + ', ' : ''}${data.country || ''}`.trim()
         }
       } catch (e) {
+        console.log('Primary visitor tracker failed, trying backup...')
+      }
+
+      // 🌐 2️⃣ محاولة احتياطية ثانية عبر ipapi.co إذا لم يرجع الموقع في الأولى
+      if (userLoc === 'Unknown') {
         try {
-          const res2 = await fetch('https://api.ipify.org?format=json', { 
-            signal: AbortSignal.timeout(3000) 
+          const res2 = await fetch('https://ipapi.co/json/', { 
+            signal: AbortSignal.timeout(3500) 
           })
           const data2 = await res2.json()
-          if (data2?.ip) userIp = data2.ip
+          if (data2 && data2.ip) {
+            userIp = data2.ip
+            const city = data2.city || data2.region || ''
+            userLoc = `${city ? city + ', ' : ''}${data2.country_name || ''}`.trim()
+          }
         } catch (e2) {}
       }
 
-      // 📍 جلب البلد والمدينة
-      if (userIp !== 'Unknown') {
-        try {
-          const locRes = await fetch(`https://api.bigdatacloud.net/data/ip-geolocation?ip=${userIp}&localityLanguage=en`, { 
-            signal: AbortSignal.timeout(3000) 
-          })
-          const locData = await locRes.json()
-          if (locData?.country?.name) {
-            const city = locData.city || locData.locality || ''
-            userLoc = `${city ? city + ', ' : ''}${locData.country.name}`.trim()
-          }
-        } catch (e) {}
-      }
-
-      // 📝 إدخال السجل الجديد في قاعدة البيانات Supabase
+      // 📝 إدخال السجل الجديد في Supabase
       const { data } = await supabase
         .from('visitors')
         .insert([
