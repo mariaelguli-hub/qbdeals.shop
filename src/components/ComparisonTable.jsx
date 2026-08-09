@@ -1,3 +1,7 @@
+import React from 'react'
+import { Check, X, Sparkles, ShieldCheck } from 'lucide-react'
+import { motion } from 'framer-motion'
+
 const rows = [
   { feature: 'One-time payment', us: true, retail: false, other: 'Sometimes' },
   { feature: 'No subscription / no yearly fees', us: true, retail: false, other: 'Sometimes' },
@@ -8,40 +12,134 @@ const rows = [
   { feature: 'Save up to 90%', us: true, retail: false, other: 'Varies' },
 ]
 
-function Cell({ value }) {
-  if (value === true) return <span className="text-brand-700 font-bold text-lg">✓</span>
-  if (value === false) return <span className="text-red-500 font-bold text-lg">✕</span>
-  return <span className="text-gray-500 text-sm">{value}</span>
+function Cell({ value, isUs }) {
+  if (value === true) {
+    return (
+      <div className="flex justify-center">
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-110 ${
+          isUs ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700'
+        }`}>
+          <Check className="w-4 h-4 stroke-[3]" />
+        </div>
+      </div>
+    )
+  }
+  if (value === false) {
+    return (
+      <div className="flex justify-center">
+        <div className="w-7 h-7 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
+          <X className="w-4 h-4 stroke-[2.5]" />
+        </div>
+      </div>
+    )
+  }
+  return <span className="font-semibold text-gray-400 text-xs sm:text-sm">{value}</span>
 }
 
 export default function ComparisonTable() {
   return (
-    <section className="py-16 lg:py-24 bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Why we're the smarter choice</h2>
-        <p className="text-gray-500 mb-10">See how we compare to yearly subscriptions and other stores.</p>
-        <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="text-left py-3.5 px-5 font-semibold text-gray-900 border-b border-gray-200">Feature</th>
-                <th className="py-3.5 px-4 font-bold text-brand-700 border-b border-gray-200">Our Store</th>
-                <th className="py-3.5 px-4 font-semibold text-gray-500 border-b border-gray-200">Retail Subscription</th>
-                <th className="py-3.5 px-4 font-semibold text-gray-500 border-b border-gray-200">Other Stores</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => (
-                <tr key={i} className={i < rows.length - 1 ? 'border-b border-gray-100' : ''}>
-                  <td className="py-3.5 px-5 text-left font-medium text-gray-800">{row.feature}</td>
-                  <td className="py-3.5 px-4"><Cell value={row.us} /></td>
-                  <td className="py-3.5 px-4"><Cell value={row.retail} /></td>
-                  <td className="py-3.5 px-4"><Cell value={row.other} /></td>
+    <section className="py-20 lg:py-28 bg-gradient-to-b from-white via-gray-50/50 to-white relative overflow-hidden">
+      
+      {/* Background Decorative Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        
+        {/* Header Badge & Title */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="max-w-2xl mx-auto mb-14"
+        >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-xs font-black uppercase tracking-widest mb-4 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+            <span>Smart Comparison</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight mb-4">
+            Why we're the smarter choice
+          </h2>
+          
+          <p className="text-gray-500 text-base sm:text-lg font-medium leading-relaxed">
+            See how we compare to yearly subscriptions and other stores.
+          </p>
+        </motion.div>
+
+        {/* 📊 High-Level Comparison Table Card */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="bg-white rounded-3xl border border-gray-200/80 shadow-xl shadow-gray-200/50 overflow-hidden"
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              
+              {/* Table Header */}
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/60 text-xs sm:text-sm">
+                  <th className="py-5 px-6 font-extrabold text-gray-900 w-2/5">
+                    Feature
+                  </th>
+                  
+                  {/* Our Store Highlighted Header */}
+                  <th className="py-5 px-6 font-black text-emerald-700 bg-emerald-500/10 text-center relative border-x border-emerald-500/20">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm sm:text-base">Our Store</span>
+                    </div>
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full shadow-xs uppercase tracking-wider">
+                      Best Choice
+                    </span>
+                  </th>
+
+                  <th className="py-5 px-6 font-bold text-gray-500 text-center">
+                    Retail Subscription
+                  </th>
+
+                  <th className="py-5 px-6 font-bold text-gray-500 text-center">
+                    Other Stores
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              {/* Table Rows */}
+              <tbody className="divide-y divide-gray-100 text-xs sm:text-sm">
+                {rows.map((row, i) => (
+                  <tr 
+                    key={i} 
+                    className="hover:bg-gray-50/80 transition-colors group"
+                  >
+                    {/* Feature Title */}
+                    <td className="py-4 px-6 font-bold text-gray-800 group-hover:text-emerald-900 transition-colors">
+                      {row.feature}
+                    </td>
+
+                    {/* Our Store Result (Highlighted Column) */}
+                    <td className="py-4 px-6 text-center bg-emerald-500/5 border-x border-emerald-500/15">
+                      <Cell value={row.us} isUs={true} />
+                    </td>
+
+                    {/* Retail Subscription Result */}
+                    <td className="py-4 px-6 text-center text-gray-500">
+                      <Cell value={row.retail} isUs={false} />
+                    </td>
+
+                    {/* Other Stores Result */}
+                    <td className="py-4 px-6 text-center text-gray-500">
+                      <Cell value={row.other} isUs={false} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
+          </div>
+        </motion.div>
+
       </div>
     </section>
   )
