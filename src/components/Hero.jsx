@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Zap, ShieldCheck, CheckCircle, Star, ArrowRight, Sparkles } from 'lucide-react'
 
-// الكلمات المتغيرة بـ Animation فـ العنوان
+// الكلمات المتغيرة
 const animatedWords = ['one-time payment', 'no subscription', 'instant delivery', 'lifetime key']
 
 const whyUsFeatures = [
@@ -39,15 +39,15 @@ export default function Hero() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  // 🔄 Auto-switch animated words every 2.5s
+  // 🔄 Auto-switch animated words every 2.8s
   useEffect(() => {
     const wordInterval = setInterval(() => {
       setWordIndex((prev) => (prev + 1) % animatedWords.length)
-    }, 2500)
+    }, 2800)
     return () => clearInterval(wordInterval)
   }, [])
 
-  // 🔄 Auto-slide for the right card every 4s
+  // 🔄 Auto-slide for the right card
   useEffect(() => {
     const cardInterval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
@@ -124,18 +124,18 @@ export default function Hero() {
               <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
-            {/* Main Title with Animated Swapping Font/Text */}
+            {/* Main Title with Clean Inline-Flex Text Switcher */}
             <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.15]">
               Genuine QuickBooks Desktop 2024 —{' '}
-              <span className="inline-block relative min-w-[200px] h-[1.2em] vertical-align-bottom">
+              <span className="inline-flex items-center">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={wordIndex}
-                    initial={{ opacity: 0, y: 15, rotateX: -90 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    exit={{ opacity: 0, y: -15, rotateX: 90 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className="absolute left-0 top-0 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic underline decoration-emerald-300/60 underline-offset-4 whitespace-nowrap"
+                    initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic underline decoration-emerald-300/60 underline-offset-4"
                   >
                     {animatedWords[wordIndex]}
                   </motion.span>
