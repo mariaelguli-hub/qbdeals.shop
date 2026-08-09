@@ -6,7 +6,7 @@ export default function Checkout() {
   return (
     <>
       <Helmet>
-        <title>Checkout — TaxUSA</title>
+        <title>Checkout — qbdeals</title>
       </Helmet>
       <section className="py-12 lg:py-20 bg-gray-50 min-h-[60vh]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
