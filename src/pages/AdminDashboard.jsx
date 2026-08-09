@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon, LogOut } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
-  // 🛠️ دالة إرسال الرد المصححة والمضمونة
+  // 🛠️ دالة إرسال رد الـ Agent
   const handleSendAgentReply = async (e) => {
     e.preventDefault()
     if (!replyInput.trim() || !selectedSession) return
@@ -134,10 +134,8 @@ export default function AdminDashboard() {
       created_at: new Date().toISOString()
     }
 
-    // تحديث الشات فوراً أمامك
     setChatMessages(prev => [...prev, agentMsg])
 
-    // إرسال الرسالة لـ Supabase مع معالجة الأخطاء
     const { error: msgError } = await supabase
       .from('chat_messages')
       .insert([agentMsg])
@@ -149,15 +147,43 @@ export default function AdminDashboard() {
     }
 
     // تحديث حالة المحادثة إلى Agent
-    const { error: sessionError } = await supabase
+    await supabase
       .from('chat_sessions')
       .update({ status: 'agent', updated_at: new Date().toISOString() })
       .eq('id', selectedSession.id)
 
-    if (sessionError) {
-      console.error('Error updating session status:', sessionError)
-    } else {
-      toast.success('Reply sent successfully!')
+    setSelectedSession(prev => ({ ...prev, status: 'agent' }))
+    toast.success('Reply sent successfully!')
+  }
+
+  // 🛑 🔴 دالة جديدة: إغلاق المحادثة من طرف الأدمن
+  const handleEndSessionFromAdmin = async () => {
+    if (!selectedSession) return
+
+    if (window.confirm("Are you sure you want to end this live conversation?")) {
+      // إرسال رسالة توضيحية للعميل
+      const closeMsg = {
+        session_id: selectedSession.id,
+        sender: 'agent',
+        message: 'This conversation has been closed by live support. Thank you for contacting QB DEALS!',
+        created_at: new Date().toISOString()
+      }
+
+      await supabase.from('chat_messages').insert([closeMsg])
+
+      // تحديث حالة المحادثة إلى ended
+      const { error } = await supabase
+        .from('chat_sessions')
+        .update({ status: 'ended', updated_at: new Date().toISOString() })
+        .eq('id', selectedSession.id)
+
+      if (!error) {
+        setSelectedSession(prev => ({ ...prev, status: 'ended' }))
+        setChatSessions(prev => prev.map(s => s.id === selectedSession.id ? { ...s, status: 'ended' } : s))
+        toast.success("Conversation ended!")
+      } else {
+        toast.error("Failed to end chat.")
+      }
     }
   }
 
@@ -385,9 +411,9 @@ export default function AdminDashboard() {
                           Session #{s.id.substring(0, 6)}
                         </span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                          s.status === 'agent' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                          s.status === 'ended' ? 'bg-red-100 text-red-700' : s.status === 'agent' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
                         }`}>
-                          {s.status === 'agent' ? 'Agent Replying' : 'AI Bot'}
+                          {s.status === 'ended' ? 'Ended' : s.status === 'agent' ? 'Agent Active' : 'AI Bot'}
                         </span>
                       </div>
                       <p className="text-[11px] text-gray-400">{new Date(s.updated_at).toLocaleString()}</p>
@@ -402,8 +428,18 @@ export default function AdminDashboard() {
                     <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                       <div>
                         <h4 className="font-bold text-sm text-gray-900">Session ID: {selectedSession.id}</h4>
-                        <p className="text-xs text-emerald-600 font-medium">Status: {selectedSession.status.toUpperCase()}</p>
+                        <p className="text-xs text-emerald-600 font-medium">Status: {selectedSession.status?.toUpperCase()}</p>
                       </div>
+
+                      {/* 🛑🔴 زر إنهاء المحادثة من طرف الأدمن */}
+                      {selectedSession.status !== 'ended' && (
+                        <button
+                          onClick={handleEndSessionFromAdmin}
+                          className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <LogOut className="w-3.5 h-3.5" /> End Conversation
+                        </button>
+                      )}
                     </div>
 
                     <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50/30 text-xs">
@@ -429,21 +465,27 @@ export default function AdminDashboard() {
                       <div ref={chatEndRef} />
                     </div>
 
-                    <form onSubmit={handleSendAgentReply} className="p-3 border-t border-gray-100 flex gap-2">
-                      <input
-                        type="text"
-                        value={replyInput}
-                        onChange={(e) => setReplyInput(e.target.value)}
-                        placeholder="Reply to visitor as Live Agent..."
-                        className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
-                      />
-                      <button
-                        type="submit"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Send className="w-3.5 h-3.5" /> Reply
-                      </button>
-                    </form>
+                    {selectedSession.status === 'ended' ? (
+                      <div className="p-3 bg-gray-100 text-center text-xs text-gray-500 font-semibold">
+                        This session has been closed.
+                      </div>
+                    ) : (
+                      <form onSubmit={handleSendAgentReply} className="p-3 border-t border-gray-100 flex gap-2">
+                        <input
+                          type="text"
+                          value={replyInput}
+                          onChange={(e) => setReplyInput(e.target.value)}
+                          placeholder="Reply to visitor as Live Agent..."
+                          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        />
+                        <button
+                          type="submit"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Send className="w-3.5 h-3.5" /> Reply
+                        </button>
+                      </form>
+                    )}
                   </>
                 ) : (
                   <div className="flex-1 flex items-center justify-center text-gray-400 text-xs">
