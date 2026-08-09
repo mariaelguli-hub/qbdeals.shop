@@ -17,7 +17,7 @@
       { "id": "pro-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": false },
       { "id": "pro-3users", "label": "3 Users", "price": 153, "comparePrice": 799, "users": 3, "bestselling": true }
     ],
-    "image": "/images/QuickBooks-Desktop-Enterprise-2024.png"
+    "image": "/images/qb-pro-plus-2024.webp"
   },
   {
     "id": 2,
