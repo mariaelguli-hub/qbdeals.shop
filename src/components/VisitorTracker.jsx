@@ -10,38 +10,43 @@ export default function VisitorTracker() {
     let timer = null
 
     const recordNewVisit = async () => {
-      let userIp = 'Private/AdBlock'
+      let userIp = 'Unknown'
       let userLoc = 'Unknown'
 
-      // 🌐 المحاولة الأولى: ipify + ipapi
+      // 🌐 جلب الـ IP من خدمة BigDataCloud الموثوقة والتي لا تتأثر بـ AdBlock
       try {
-        const ipRes = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2500) })
-        const ipData = await ipRes.json()
-        if (ipData?.ip) {
-          userIp = ipData.ip
-          try {
-            const locRes = await fetch(`https://ipapi.co/${userIp}/json/`, { signal: AbortSignal.timeout(2500) })
-            const locData = await locRes.json()
-            if (locData?.country_name) {
-              userLoc = `${locData.city || ''}, ${locData.country_name || ''}`.trim()
-            }
-          } catch (e) {}
+        const res = await fetch('https://api.bigdatacloud.net/data/client-ip', { 
+          signal: AbortSignal.timeout(3000) 
+        })
+        const data = await res.json()
+        if (data?.ipString) {
+          userIp = data.ipString
         }
-      } catch (e1) {
-        // 🌐 المحاولة الثانية الاحتياطية (في حال حظر AdBlock للأولى)
+      } catch (e) {
         try {
-          const altRes = await fetch('https://ip-api.com/json/?fields=query,city,country', { signal: AbortSignal.timeout(2500) })
-          const altData = await altRes.json()
-          if (altData?.query) {
-            userIp = altData.query
-            userLoc = `${altData.city || ''}, ${altData.country || ''}`.trim()
-          }
-        } catch (e2) {
-          console.log('All IP providers bypassed or blocked')
-        }
+          const res2 = await fetch('https://api.ipify.org?format=json', { 
+            signal: AbortSignal.timeout(3000) 
+          })
+          const data2 = await res2.json()
+          if (data2?.ip) userIp = data2.ip
+        } catch (e2) {}
       }
 
-      // تسجل الزيارة تلقائياً
+      // 📍 جلب البلد والمدينة
+      if (userIp !== 'Unknown') {
+        try {
+          const locRes = await fetch(`https://api.bigdatacloud.net/data/ip-geolocation?ip=${userIp}&localityLanguage=en`, { 
+            signal: AbortSignal.timeout(3000) 
+          })
+          const locData = await locRes.json()
+          if (locData?.country?.name) {
+            const city = locData.city || locData.locality || ''
+            userLoc = `${city ? city + ', ' : ''}${locData.country.name}`.trim()
+          }
+        } catch (e) {}
+      }
+
+      // 📝 إدخال السجل الجديد في قاعدة البيانات Supabase
       const { data } = await supabase
         .from('visitors')
         .insert([
@@ -62,7 +67,7 @@ export default function VisitorTracker() {
 
     recordNewVisit()
 
-    // تحديث وقت البقاء كل 5 ثوانٍ
+    // ⏱️ تحديث الوقت المتبقي في الموقع كل 5 ثوانٍ
     let spent = 0
     timer = setInterval(async () => {
       if (currentLogId) {
