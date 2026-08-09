@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Zap, Minus, Plus, Check, Star, Sparkles, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function ProductCard({ product }) {
+  const navigate = useNavigate()
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0])
   const [qty, setQty] = useState(1)
 
@@ -11,6 +12,11 @@ export default function ProductCard({ product }) {
   
   const ratingValue = product.rating || 4.95
   const reviewsCount = product.reviewsCount || 128
+
+  const handleBuyNow = () => {
+    // Redirection direct vers la page du produit
+    navigate(`/product/${product.slug}`)
+  }
 
   return (
     <motion.div 
@@ -40,7 +46,8 @@ export default function ProductCard({ product }) {
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out"
+          className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out cursor-pointer"
+          onClick={handleBuyNow}
           onError={(e) => {
             e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
           }}
@@ -67,7 +74,10 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Title */}
-        <h3 className="font-extrabold text-gray-900 mb-2 leading-snug text-base group-hover:text-emerald-700 transition-colors">
+        <h3 
+          onClick={handleBuyNow}
+          className="font-extrabold text-gray-900 mb-2 leading-snug text-base group-hover:text-emerald-700 transition-colors cursor-pointer"
+        >
           {product.name}
         </h3>
         
@@ -151,14 +161,16 @@ export default function ProductCard({ product }) {
           </div>
         </div>
 
-        {/* ⚡ Unique Glowing Buy Now Button with Shiny Animation */}
+        {/* ⚡ Unique Glowing Buy Now Button linked to Product Page */}
         <motion.div 
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="relative overflow-hidden rounded-2xl shadow-lg shadow-emerald-600/25 group/btn mb-2"
         >
-          <button className="w-full relative py-3.5 px-5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white font-extrabold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-300">
-            
+          <button 
+            onClick={handleBuyNow}
+            className="w-full relative py-3.5 px-5 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white font-extrabold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-300"
+          >
             {/* Shimmer / Glossy Beam */}
             <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform transform skew-x-12" />
             
