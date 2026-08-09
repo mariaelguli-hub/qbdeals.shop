@@ -19,7 +19,12 @@ export default function Home() {
       <Hero />
       <TrustBadges />
       <Features />
-      <ProductGrid />
+      
+      {/* 🎯 إضافة الـ ID المباشر لقسم المنتجات لضمان السكورل السلس */}
+      <div id="products" className="scroll-mt-20">
+        <ProductGrid />
+      </div>
+
       <HowItWorks />
       <ComparisonTable />
       <Testimonials />
