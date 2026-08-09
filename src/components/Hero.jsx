@@ -3,6 +3,9 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Zap, ShieldCheck, CheckCircle, Star, ArrowRight, Sparkles } from 'lucide-react'
 
+// الكلمات المتغيرة بـ Animation فـ العنوان
+const animatedWords = ['one-time payment', 'no subscription', 'instant delivery', 'lifetime key']
+
 const whyUsFeatures = [
   {
     id: 0,
@@ -32,8 +35,25 @@ const whyUsFeatures = [
 
 export default function Hero() {
   const [activeTab, setActiveTab] = useState(0)
+  const [wordIndex, setWordIndex] = useState(0)
   const navigate = useNavigate()
   const { pathname } = useLocation()
+
+  // 🔄 Auto-switch animated words every 2.5s
+  useEffect(() => {
+    const wordInterval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % animatedWords.length)
+    }, 2500)
+    return () => clearInterval(wordInterval)
+  }, [])
+
+  // 🔄 Auto-slide for the right card every 4s
+  useEffect(() => {
+    const cardInterval = setInterval(() => {
+      setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
+    }, 4000)
+    return () => clearInterval(cardInterval)
+  }, [])
 
   const scrollToProducts = (e) => {
     e.preventDefault()
@@ -57,13 +77,6 @@ export default function Hero() {
       setTimeout(doScroll, 300)
     }
   }
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [])
 
   const ActiveIcon = whyUsFeatures[activeTab].icon
 
@@ -89,32 +102,53 @@ export default function Hero() {
 
   return (
     <section className="relative py-10 lg:py-20 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/50 overflow-hidden">
+      
+      {/* Background Decorative Mesh Glow */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
+          {/* Left Side: Animated Hero Content */}
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="lg:col-span-7 text-left"
           >
+            {/* Rating Badge */}
             <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 mb-5 shadow-2xs">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
               <span className="text-xs font-black text-emerald-950 tracking-tight">4.8/5 from 22 verified reviews</span>
               <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
+            {/* Main Title with Animated Swapping Font/Text */}
             <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.15]">
               Genuine QuickBooks Desktop 2024 —{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 inline-block">
-                one-time payment
+              <span className="inline-block relative min-w-[200px] h-[1.2em] vertical-align-bottom">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={wordIndex}
+                    initial={{ opacity: 0, y: 15, rotateX: -90 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    exit={{ opacity: 0, y: -15, rotateX: 90 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="absolute left-0 top-0 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic underline decoration-emerald-300/60 underline-offset-4 whitespace-nowrap"
+                  >
+                    {animatedWords[wordIndex]}
+                  </motion.span>
+                </AnimatePresence>
               </span>
             </motion.h1>
             
+            {/* Subtitle */}
             <motion.p variants={itemVariants} className="text-gray-600 text-sm sm:text-base lg:text-lg font-medium leading-relaxed mb-7 max-w-2xl">
               Stop paying yearly. Get an authentic QuickBooks Desktop license key delivered to your inbox in minutes — no subscription, no monthly fees, backed by a 30-day money-back guarantee.
             </motion.p>
 
+            {/* Perks List */}
             <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm font-extrabold text-gray-800 mb-8">
               <span className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-3 py-1 rounded-lg border border-emerald-200/50">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> No subscription
@@ -127,6 +161,7 @@ export default function Hero() {
               </span>
             </motion.div>
 
+            {/* CTAs */}
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4">
               <button
                 onClick={scrollToProducts}
@@ -145,8 +180,10 @@ export default function Hero() {
                 <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
+
           </motion.div>
 
+          {/* Right Side: Animated Horizontal Slide Card */}
           <motion.div 
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -154,6 +191,8 @@ export default function Hero() {
             className="lg:col-span-5"
           >
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/10 border border-gray-200/80 relative overflow-hidden">
+              
+              {/* Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                 <h3 className="font-extrabold text-gray-900 text-base sm:text-lg">
                   Why buy from us
@@ -164,6 +203,7 @@ export default function Hero() {
                 </span>
               </div>
 
+              {/* Horizontal Slide Content */}
               <div className="relative min-h-[110px] flex items-center overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -189,6 +229,7 @@ export default function Hero() {
                 </AnimatePresence>
               </div>
 
+              {/* Dots Navigation */}
               <div className="flex items-center justify-between pt-5 mt-2 border-t border-gray-100">
                 <div className="flex items-center gap-1.5">
                   {whyUsFeatures.map((_, idx) => (
@@ -206,6 +247,7 @@ export default function Hero() {
                   0{activeTab + 1} / 0{whyUsFeatures.length}
                 </span>
               </div>
+
             </div>
           </motion.div>
 
