@@ -227,7 +227,7 @@ export default function ProductDetails() {
               {/* 💳 Payment Cards & Unchanged Trust Board */}
               <div className="mt-6 space-y-6">
                 
-                {/* Payment Cards Grid with Fixed Apple Pay & Aligned Logos */}
+                {/* Payment Cards Grid (Clean, Aligned & Perfect Brand Look) */}
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -239,37 +239,34 @@ export default function ProductDetails() {
                   <div className="grid grid-cols-5 gap-2">
                     {/* Visa */}
                     <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <svg className="h-5 w-auto" viewBox="0 0 38 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14.135 0.35L8.91 11.95H5.45L3.385 2.5C3.25 1.965 3.12 1.785 2.705 1.55C1.47 0.885 0.38 0.61 0 0.525L0.12 0.35H5.21C5.88 0.35 6.47 0.8 6.64 1.55L7.84 8.01L10.98 0.35H14.135ZM26.24 8.16C26.24 5.06 21.84 4.9 21.89 3.52C21.91 3.09 22.31 2.65 23.2 2.54C23.65 2.49 24.9 2.45 26.35 3.14L26.91 0.57C26.16 0.31 25.17 0.05 23.95 0.05C20.67 0.05 18.39 1.79 18.37 4.24C18.35 6.02 19.96 7 21.18 7.59C22.42 8.19 22.83 8.58 22.82 9.13C22.8 9.99 21.78 10.37 20.84 10.39C19.38 10.42 18.53 10.01 17.88 9.71L17.3 12.41C18.04 12.75 19.41 13.06 20.89 13.05C24.37 13.05 26.24 11.33 26.24 8.16ZM33.91 12.01H37.01L34.19 0.35H31.34C30.79 0.35 30.31 0.68 30.1 1.2L25.68 11.95H29.28L29.99 9.92H34.33L33.91 12.01ZM30.95 7.51L32.69 2.76L33.68 7.51H30.95ZM17.48 0.35H14.54L11.84 11.95H15.31L17.48 0.35Z" fill="#1434CB"/>
-                      </svg>
+                      <span className="font-black italic text-blue-700 tracking-tighter text-sm">VISA</span>
                     </div>
 
                     {/* Mastercard */}
                     <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <div className="flex items-center scale-110">
-                        <div className="w-5 h-5 rounded-full bg-[#EB001B] opacity-95"></div>
-                        <div className="w-5 h-5 rounded-full bg-[#F79E1B] opacity-95 -ml-2.5"></div>
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 rounded-full bg-[#EB001B] opacity-95"></div>
+                        <div className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-95 -ml-2"></div>
                       </div>
                     </div>
 
                     {/* PayPal */}
                     <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-extrabold text-[#003087] text-sm tracking-tighter">Pay<span className="text-[#0079C1]">Pal</span></span>
+                      <span className="font-extrabold text-[#003087] text-xs tracking-tighter">Pay<span className="text-[#0079C1]">Pal</span></span>
                     </div>
 
-                    {/* Apple Pay (Corrected & Perfectly Aligned SVG) */}
+                    {/* Apple Pay (Clean, Perfect & Aligned) */}
                     <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <svg className="h-5 w-auto" viewBox="0 0 98 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M33.24 16.32c-.03-2.61 2.13-3.87 2.23-3.93-1.22-1.78-3.12-2.03-3.79-2.08-1.61-.16-3.15.95-3.96.95-.81 0-2.06-.92-3.39-.9-1.74.03-3.34 1.01-4.23 2.58-1.81 3.14-.46 7.78 1.3 10.31.87 1.25 1.9 2.65 3.26 2.6 1.31-.05 1.81-.84 3.4-.84 1.59 0 2.05.84 3.41.81 1.4-.03 2.27-1.26 3.13-2.52.99-1.46 1.4-2.88 1.42-2.95-.03-.01-2.73-1.05-2.77-4.33zM30.63 9.47c.72-.88 1.21-2.11 1.08-3.34-1.04.04-2.31.7-3.05 1.57-.67.78-1.26 2.03-1.1 3.23 1.16.09 2.35-.58 3.07-1.46z" fill="#000"/>
-                        <path d="M44.11 21.57c-1.25 0-2.12-.51-2.67-1.53l-7.46-15.08h3.94l5.12 11.23h.11l5.13-11.23h3.87l-7.53 15.08c-.6 1.02-1.47 1.53-2.51 1.53z" fill="#000"/>
-                        <path d="M64.08 21.85c-2.31 0-3.88-1.47-3.88-3.73V9.01h3.61v8.83c0 .87.49 1.42 1.42 1.42.92 0 1.42-.55 1.42-1.42V9.01h3.61v9.11c0 2.26-1.57 3.73-3.78 3.73z" fill="#000"/>
-                        <path d="M79.46 21.85c-2.31 0-3.88-1.47-3.88-3.73V9.01h3.61v8.83c0 .87.49 1.42 1.42 1.42.92 0 1.42-.55 1.42-1.42V9.01h3.61v9.11c0 2.26-1.57 3.73-3.78 3.73z" fill="#000"/>
-                      </svg>
+                      <span className="font-extrabold text-gray-900 text-xs tracking-tight flex items-center gap-0.5">
+                        <span className="text-sm font-sans"></span>Pay
+                      </span>
                     </div>
 
                     {/* Google Pay */}
                     <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-bold text-gray-800 text-sm tracking-tight"><span className="text-blue-500 font-black text-base">G</span>Pay</span>
+                      <span className="font-bold text-gray-900 text-xs tracking-tight flex items-center">
+                        <span className="text-blue-500 font-extrabold text-sm">G</span>Pay
+                      </span>
                     </div>
                   </div>
                 </div>
