@@ -21,6 +21,30 @@ export default function ChatWidget() {
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
+  // دالة لجلب الرسائل وتحديث الـ State
+  const fetchMessages = async (currentSessionId) => {
+    if (!currentSessionId) return
+    const { data: existingMsg } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('session_id', currentSessionId)
+      .order('created_at', { ascending: true })
+
+    if (existingMsg) {
+      setMessages(existingMsg)
+    }
+
+    const { data: sessionData } = await supabase
+      .from('chat_sessions')
+      .select('status')
+      .eq('id', currentSessionId)
+      .single()
+
+    if (sessionData?.status) {
+      setSessionStatus(sessionData.status)
+    }
+  }
+
   const initChat = async (forceNew = false) => {
     let savedSessionId = localStorage.getItem('qb_chat_session')
     
@@ -39,24 +63,13 @@ export default function ChatWidget() {
     setSessionId(savedSessionId)
 
     if (savedSessionId && !forceNew) {
-      const { data: sessionData } = await supabase
-        .from('chat_sessions')
-        .select('status')
-        .eq('id', savedSessionId)
-        .single()
-
-      if (sessionData) {
-        setSessionStatus(sessionData.status)
-      }
-
+      await fetchMessages(savedSessionId)
       const { data: existingMsg } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('session_id', savedSessionId)
-        .order('created_at', { ascending: true })
 
       if (existingMsg && existingMsg.length > 0) {
-        setMessages(existingMsg)
         return
       }
     } else {
@@ -76,9 +89,14 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 📡 الاستماع الفوري الحقيقي: يجلب أي رسالة جديدة فوراً وبدون أي Refresh
+  // 📡 دمج Realtime مع التحديث التلقائي (Polling) لضمان ظهور الرسائل فوراً بدون Refresh
   useEffect(() => {
     if (!sessionId) return
+
+    // تحديث دوري كل ثانيتين لضمان ظهور رسائل الأدمن والعميل فوراً حتى لو توقف الـ Realtime
+    const interval = setInterval(() => {
+      fetchMessages(sessionId)
+    }, 2000)
 
     const channel = supabase
       .channel(`widget_chat_${sessionId}`)
@@ -100,13 +118,13 @@ export default function ChatWidget() {
         filter: `id=eq.${sessionId}`
       }, (payload) => {
         if (payload.new?.status) {
-          const newStatus = payload.new.status
-          setSessionStatus(newStatus)
+          setSessionStatus(payload.new.status)
         }
       })
       .subscribe()
 
     return () => {
+      clearInterval(interval)
       supabase.removeChannel(channel)
     }
   }, [sessionId])
@@ -214,10 +232,14 @@ export default function ChatWidget() {
     setInputMessage('')
     setSelectedImage(null)
 
+    // إرسال الرسالة لقاعدة البيانات
     await supabase.from('chat_messages').insert([userMessage])
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
+    
+    // جلب الرسائل فوراً لتظهر للمستخدم في الحين
+    await fetchMessages(sessionId)
 
-    // الروبوت يجيب فقط إذا كانت الحالة 'bot'
+    // الـ Chatbot يجيب فقط إذا كانت الحالة 'bot'
     if (sessionStatus === 'bot') {
       setIsTyping(true)
 
@@ -232,6 +254,7 @@ export default function ChatWidget() {
 
       setIsTyping(false)
       await supabase.from('chat_messages').insert([botMessage])
+      await fetchMessages(sessionId)
     }
   }
 
@@ -315,7 +338,6 @@ export default function ChatWidget() {
           {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-gray-50/50 text-xs">
             {messages.map((msg, index) => {
-              // التحقق واش المرسل هو الموظف أو الأدمن بأي صيغة (agent, admin, support)
               const isAgentOrAdmin = msg.sender === 'agent' || msg.sender === 'admin' || msg.sender === 'support'
 
               return (
