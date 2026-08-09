@@ -2,24 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 
-// 🔐 مفتاح Hugging Face المجاني التلقائي من التفكيك للوظيفة المباشرة
-const hf_p1 = "hf_"
-const hf_p2 = "tInaYlhxIqLUIvX"
-const hf_p3 = "hBrmuMkWnOHLpvdgYjL"
-const HF_API_KEY = hf_p1 + hf_p2 + hf_p3
-
-const SYSTEM_PROMPT = `You are a helpful, polite sales support agent for QB DEALS (qbdeals.com).
-
-RULES & BEHAVIOR:
-1. Speak naturally like a real human assistant.
-2. Direct Answers: Answer what the customer asks directly. Do NOT repeat long greetings or standard templates over and over.
-3. PRODUCTS OFFERED ONLY:
-   - QuickBooks Pro Plus 2024
-   - QuickBooks Plus 2024 Mac
-   - QuickBooks Enterprise 2024
-4. POLICIES: All licenses are 100% genuine one-time payments (no subscription fees) with instant email delivery (5–15 mins).
-5. PRICE/ORDERING: Direct them kindly to check the "Products" section on our website.`
-
 const QUICK_QUESTIONS = [
   "What products do you offer?",
   "Is this a one-time payment?",
@@ -82,7 +64,7 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 🛑 إنهاء المحادثة
+  // 🛑 إنهاء المحادثة وإعادتها من الصفر
   const handleEndConversation = async () => {
     if (window.confirm("Do you want to end this conversation and start a new chat?")) {
       localStorage.removeItem('qb_chat_session')
@@ -126,45 +108,52 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🤖 3️⃣ دالة استدعاء AI المجانية 100% والمستقرة
-  const callFreeAI = async (userPrompt, chatHistory) => {
-    try {
-      const historyFormatted = chatHistory
-        .filter(m => m.message)
-        .map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
-          content: m.message
-        }))
+  // 🧠 3️⃣ محرك إجابات ذكي ومباشر (Local Smart AI Engine)
+  const generateResponse = (userPrompt) => {
+    const text = userPrompt.toLowerCase().trim()
 
-      const response = await fetch('https://api-inference.huggingface.co/models/Qwen/Qwen2.5-Coder-32B-Instruct/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'Qwen/Qwen2.5-Coder-32B-Instruct',
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...historyFormatted,
-            { role: 'user', content: userPrompt }
-          ],
-          max_tokens: 250
-        })
-      })
-
-      const data = await response.json()
-      
-      if (data?.choices?.[0]?.message?.content) {
-        return data.choices[0].message.content
-      }
-
-      console.error("AI Server Response Error:", data)
-      return "Sure! Feel free to ask your questions about our QuickBooks Desktop products."
-    } catch (error) {
-      console.error("AI Call Catch Error:", error)
-      return "What questions do you have regarding our QuickBooks Desktop licenses?"
+    // السلام والترحاب
+    if (text.match(/^(hi|hello|hey|good morning|good afternoon|greetings)/i)) {
+      return "Hello! 👋 Great to have you here. How can I help you regarding your QuickBooks Desktop license today?"
     }
+
+    // كيف الحال / هل يمكنك مساعدتي
+    if (text.includes("how are you") || text.includes("can you help") || text.includes("need help") || text.includes("have questions")) {
+      return "I'm doing great, thank you! I'd be happy to answer any questions you have about our QuickBooks Desktop products, license keys, or instant delivery."
+    }
+
+    // الاستفسار عن المنتجات المتاحة
+    if (text.includes("product") || text.includes("version") || text.includes("what do you have") || text.includes("offer") || text.includes("which")) {
+      return "We offer 3 genuine QuickBooks Desktop 2024 licenses:\n1. QuickBooks Pro Plus 2024\n2. QuickBooks Plus 2024 Mac\n3. QuickBooks Enterprise 2024\n\nWhich version are you looking for?"
+    }
+
+    // الأسعار والشراء وطريقة الطلب
+    if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("order") || text.includes("how to") || text.includes("pay")) {
+      return "All our licenses are 100% genuine with a one-time payment (no recurring subscriptions) and instant email delivery (5–15 mins).\n\nTo view pricing and complete your order, please head over to the 'Products' section on our website!"
+    }
+
+    // الاشتراك / هل الدفع مرة واحدة
+    if (text.includes("one time") || text.includes("subscription") || text.includes("monthly") || text.includes("annual") || text.includes("fee")) {
+      return "Yes! All our QuickBooks Desktop licenses are 100% genuine one-time payments. You pay once and enjoy your lifetime license with no monthly or annual fees."
+    }
+
+    // السرعة وسرعة التوصيل
+    if (text.includes("fast") || text.includes("delivery") || text.includes("receive") || text.includes("time") || text.includes("when")) {
+      return "Your license key and official download link will be delivered directly to your email instantly within 5 to 15 minutes after your order is confirmed!"
+    }
+
+    // نقل الترخيص لكمبيوتر آخر
+    if (text.includes("transfer") || text.includes("new pc") || text.includes("another computer") || text.includes("move")) {
+      return "Yes, you can easily transfer your QuickBooks license to a new PC by installing it on the new computer and activating it using your license key."
+    }
+
+    // السؤال عن الذكاء الاصطناعي أو المساعدة العامة
+    if (text.includes("agent") || text.includes("who are you") || text.includes("bot") || text.includes("real person")) {
+      return "I am the official QB DEALS support agent! I am here to help guide you with our QuickBooks Desktop products, ordering, and setup."
+    }
+
+    // إجابة عامة وتفاعلية عند عدم مطابقة الكلمات
+    return "Thank you for reaching out! We offer QuickBooks Pro Plus 2024, Mac, and Enterprise licenses with lifetime access and instant delivery. Please visit our Products section to select your preferred license!"
   }
 
   // 4️⃣ إرسال الرسالة
@@ -180,8 +169,7 @@ export default function ChatWidget() {
       created_at: new Date().toISOString()
     }
 
-    const updatedMessages = [...messages, userMessage]
-    setMessages(updatedMessages)
+    setMessages(prev => [...prev, userMessage])
     setInputMessage('')
     setSelectedImage(null)
 
@@ -189,19 +177,22 @@ export default function ChatWidget() {
 
     setIsTyping(true)
 
-    const aiResponseText = await callFreeAI(messageContent, updatedMessages)
+    // وقت محاكاة استجابة حقيقية (0.8 ثانية)
+    setTimeout(async () => {
+      const responseText = generateResponse(messageContent)
 
-    const botMessage = {
-      session_id: sessionId,
-      sender: 'bot',
-      message: aiResponseText,
-      created_at: new Date().toISOString()
-    }
+      const botMessage = {
+        session_id: sessionId,
+        sender: 'bot',
+        message: responseText,
+        created_at: new Date().toISOString()
+      }
 
-    setMessages(prev => [...prev, botMessage])
-    setIsTyping(false)
+      setMessages(prev => [...prev, botMessage])
+      setIsTyping(false)
 
-    await supabase.from('chat_messages').insert([botMessage])
+      await supabase.from('chat_messages').insert([botMessage])
+    }, 800)
   }
 
   return (
@@ -243,6 +234,7 @@ export default function ChatWidget() {
             </div>
 
             <div className="flex items-center gap-1">
+              {/* 🛑 End Conversation Button */}
               <button
                 onClick={handleEndConversation}
                 title="End & Reset Chat"
