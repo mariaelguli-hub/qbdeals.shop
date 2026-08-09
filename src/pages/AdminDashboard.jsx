@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
@@ -14,7 +14,14 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('visitors')
   const [messages, setMessages] = useState([])
   const [visitors, setVisitors] = useState([])
+  
+  // 💬 إضافة States الشات الدعم المباشر
+  const [chatSessions, setChatSessions] = useState([])
+  const [selectedSession, setSelectedSession] = useState(null)
+  const [chatMessages, setChatMessages] = useState([])
+  const [replyInput, setReplyInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const chatEndRef = useRef(null)
 
   useEffect(() => {
     if (localStorage.getItem('qb_admin_auth') === 'true') {
@@ -42,20 +49,27 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true)
     
-    // Fetch Contact Messages
+    // 1. جلب رسائل الـ Contact Form
     const { data: msgData } = await supabase
       .from('messages')
       .select('*')
       .order('created_at', { ascending: false })
     setMessages(msgData || [])
 
-    // Fetch Visitors Log History
+    // 2. جلب سجل الزوار
     const { data: visData } = await supabase
       .from('visitors')
       .select('*')
       .order('last_seen', { ascending: false })
       .limit(100)
     setVisitors(visData || [])
+
+    // 3. جلب جلسات الشات المباشر
+    const { data: chatData } = await supabase
+      .from('chat_sessions')
+      .select('*')
+      .order('updated_at', { ascending: false })
+    setChatSessions(chatData || [])
 
     setLoading(false)
   }
@@ -67,6 +81,61 @@ export default function AdminDashboard() {
       return () => clearInterval(interval)
     }
   }, [isAuthenticated])
+
+  // جلب رسائل المحادثة المختارة مع Realtime
+  useEffect(() => {
+    if (!selectedSession) return
+
+    const fetchSessionMessages = async () => {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', selectedSession.id)
+        .order('created_at', { ascending: true })
+      setChatMessages(data || [])
+    }
+
+    fetchSessionMessages()
+
+    const channel = supabase
+      .channel(`admin_chat_${selectedSession.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `session_id=eq.${selectedSession.id}`
+      }, (payload) => {
+        setChatMessages(prev => [...prev, payload.new])
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
+  }, [selectedSession])
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+  // إرسال رد من الأدمن للعميل
+  const handleSendAgentReply = async (e) => {
+    e.preventDefault()
+    if (!replyInput.trim() || !selectedSession) return
+
+    const agentMsg = {
+      session_id: selectedSession.id,
+      sender: 'agent',
+      message: replyInput.trim(),
+      created_at: new Date().toISOString()
+    }
+
+    setReplyInput('')
+    await supabase.from('chat_messages').insert([agentMsg])
+
+    await supabase
+      .from('chat_sessions')
+      .update({ status: 'agent', updated_at: new Date().toISOString() })
+      .eq('id', selectedSession.id)
+  }
 
   const deleteVisitor = async (id) => {
     const { error } = await supabase.from('visitors').delete().eq('id', id)
@@ -144,7 +213,7 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Control Panel</h1>
-              <p className="text-xs text-gray-500">Visitor logs history & contact management</p>
+              <p className="text-xs text-gray-500">Visitor logs, live chat & contact management</p>
             </div>
             <div className="flex items-center gap-2">
               <button 
@@ -162,7 +231,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="flex gap-3 border-b border-gray-200 pb-2">
+          {/* أزرار التبويبات (Tabs) */}
+          <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
             <button
               onClick={() => setActiveTab('visitors')}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
@@ -171,8 +241,20 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <Users className="w-4 h-4" /> All Visitor Logs ({visitors.length})
+              <Users className="w-4 h-4" /> Visitor Logs ({visitors.length})
             </button>
+
+            <button
+              onClick={() => setActiveTab('livechat')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'livechat' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" /> Live Chat Support ({chatSessions.length})
+            </button>
+
             <button
               onClick={() => setActiveTab('messages')}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
@@ -181,11 +263,11 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <MessageSquare className="w-4 h-4" /> Contact Messages ({messages.length})
+              <MessageSquare className="w-4 h-4" /> Contact Forms ({messages.length})
             </button>
           </div>
 
-          {/* Tab 1: Visitors History Logs */}
+          {/* TAB 1: VISITORS LOGS */}
           {activeTab === 'visitors' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -256,7 +338,103 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Tab 2: Contact Messages */}
+          {/* TAB 2: LIVE CHAT SUPPORT PANEL */}
+          {activeTab === 'livechat' && (
+            <div className="grid md:grid-cols-3 gap-6 h-[600px]">
+              
+              {/* قائمة الجلسات والمحادثات */}
+              <div className="md:col-span-1 bg-white rounded-3xl border border-gray-100 p-4 overflow-y-auto space-y-2 shadow-sm">
+                <h3 className="font-bold text-gray-900 text-sm mb-3">Chat Conversations ({chatSessions.length})</h3>
+                {chatSessions.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-8">No live chats yet.</p>
+                ) : (
+                  chatSessions.map((s) => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedSession(s)}
+                      className={`p-3.5 rounded-2xl cursor-pointer border transition-all ${
+                        selectedSession?.id === s.id
+                          ? 'bg-emerald-50 border-emerald-300 shadow-sm'
+                          : 'bg-gray-50/60 hover:bg-gray-100 border-gray-100'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-mono text-xs font-bold text-gray-800">
+                          Session #{s.id.substring(0, 6)}
+                        </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          s.status === 'agent' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {s.status === 'agent' ? 'Agent Replying' : 'AI Bot'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-400">{new Date(s.updated_at).toLocaleString()}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* نافذة الشات والرد للعملاء */}
+              <div className="md:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+                {selectedSession ? (
+                  <>
+                    <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900">Session ID: {selectedSession.id}</h4>
+                        <p className="text-xs text-emerald-600 font-medium">Status: {selectedSession.status.toUpperCase()}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50/30 text-xs">
+                      {chatMessages.map((m) => (
+                        <div key={m.id} className={`flex ${m.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[75%] p-3 rounded-2xl ${
+                            m.sender === 'agent' 
+                              ? 'bg-emerald-600 text-white rounded-br-none' 
+                              : m.sender === 'user' 
+                              ? 'bg-gray-800 text-white rounded-bl-none' 
+                              : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
+                          }`}>
+                            <div className="text-[10px] opacity-75 font-bold mb-1 uppercase">
+                              {m.sender === 'agent' ? 'You (Agent)' : m.sender === 'user' ? 'Visitor' : 'AI Bot'}
+                            </div>
+                            {m.image_url && (
+                              <img src={m.image_url} alt="Uploaded" className="rounded-xl max-h-40 w-full object-cover mb-2" />
+                            )}
+                            <p>{m.message}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    <form onSubmit={handleSendAgentReply} className="p-3 border-t border-gray-100 flex gap-2">
+                      <input
+                        type="text"
+                        value={replyInput}
+                        onChange={(e) => setReplyInput(e.target.value)}
+                        placeholder="Reply to visitor as Live Agent..."
+                        className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                      <button
+                        type="submit"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Reply
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-gray-400 text-xs">
+                    Select a conversation from the left panel to start chatting.
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 3: CONTACT FORM MESSAGES */}
           {activeTab === 'messages' && (
             <div className="grid gap-4">
               {messages.length === 0 ? (
