@@ -48,27 +48,31 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100/80 shadow-xs">
       
-      {/* TOP BAR */}
+      {/* TOP BAR (Clean Mobile Responsive Layout) */}
       <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-emerald-100 text-xs py-2 border-b border-emerald-800/40 shadow-xs relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center sm:justify-between gap-y-2 gap-x-6 text-[11px] sm:text-xs font-semibold tracking-wide">
+          <div className="flex items-center justify-center sm:justify-between gap-y-2 gap-x-4 text-[11px] sm:text-xs font-semibold tracking-wide">
             
-            <div className="flex items-center gap-1.5 text-emerald-100/90 hover:text-white transition-colors cursor-default group">
+            {/* Item 1: Visible everywhere */}
+            <div className="flex items-center gap-1.5 text-emerald-100/90 cursor-default group">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
               <span>Secure Checkout</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-emerald-100/90 hover:text-white transition-colors cursor-default group">
+            {/* Item 2: Visible everywhere */}
+            <div className="flex items-center gap-1.5 text-emerald-100/90 cursor-default group">
               <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30 group-hover:scale-110 transition-transform shrink-0" />
               <span>Instant Email Delivery</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-emerald-100/90 hover:text-white transition-colors cursor-default group">
+            {/* Item 3: Hidden on mobile, visible from sm screen */}
+            <div className="hidden sm:flex items-center gap-1.5 text-emerald-100/90 hover:text-white transition-colors cursor-default group">
               <CreditCard className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
               <span>One-Time Payment</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-emerald-100/90 hover:text-white transition-colors cursor-default group">
+            {/* Item 4: Hidden on mobile, visible from md screen */}
+            <div className="hidden md:flex items-center gap-1.5 text-emerald-100/90 hover:text-white transition-colors cursor-default group">
               <RotateCcw className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
               <span>30-Day Money-Back Guarantee</span>
             </div>
