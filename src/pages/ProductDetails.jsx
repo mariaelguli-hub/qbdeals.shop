@@ -208,23 +208,27 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* ⚡ Buy Now Button with Motion & Mirror / Glossy Shine Effect */}
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative overflow-hidden w-full justify-center py-4 text-base font-extrabold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white rounded-xl shadow-xl shadow-emerald-600/30 transition-all flex items-center gap-2 group cursor-pointer"
+              {/* ⚡ High-End Buy Now Button with Motion & Mirror / Glossy Shine Animation */}
+              <motion.div
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
+                className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer"
               >
-                {/* Mirror / Glossy Shine Sweep Effect */}
-                <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine" />
-                
-                <Zap className="w-5 h-5 fill-current animate-pulse" /> 
-                <span className="tracking-wide">Buy now</span>
-              </motion.button>
+                <button className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-base tracking-wide flex items-center justify-center gap-3 transition-all duration-300">
+                  {/* Glossy Mirror Sweep Light Effect */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
+                  
+                  <div className="p-1.5 bg-white/20 rounded-xl">
+                    <Zap className="w-5 h-5 fill-white text-white animate-bounce" />
+                  </div>
+                  <span>Buy Now — Instant Delivery</span>
+                </button>
+              </motion.div>
 
-              {/* 💳 Payment Cards (Fixed Logos & Clean SVG/Text Styling) & Unchanged Trust Board */}
+              {/* 💳 Payment Cards & Unchanged Trust Board */}
               <div className="mt-6 space-y-6">
                 
-                {/* Payment Cards Grid */}
+                {/* Payment Cards Grid with Clean SVGs (No More Text Bug / Missing Symbols) */}
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -235,34 +239,40 @@ export default function ProductDetails() {
 
                   <div className="grid grid-cols-5 gap-2">
                     {/* Visa */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-black italic text-blue-800 tracking-tighter text-sm">VISA</span>
+                    <div className="bg-white border border-gray-200/90 rounded-xl py-2 px-1 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
+                      <svg className="h-4 w-auto" viewBox="0 0 38 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.135 0.35L8.91 11.95H5.45L3.385 2.5C3.25 1.965 3.12 1.785 2.705 1.55C1.47 0.885 0.38 0.61 0 0.525L0.12 0.35H5.21C5.88 0.35 6.47 0.8 6.64 1.55L7.84 8.01L10.98 0.35H14.135ZM26.24 8.16C26.24 5.06 21.84 4.9 21.89 3.52C21.91 3.09 22.31 2.65 23.2 2.54C23.65 2.49 24.9 2.45 26.35 3.14L26.91 0.57C26.16 0.31 25.17 0.05 23.95 0.05C20.67 0.05 18.39 1.79 18.37 4.24C18.35 6.02 19.96 7 21.18 7.59C22.42 8.19 22.83 8.58 22.82 9.13C22.8 9.99 21.78 10.37 20.84 10.39C19.38 10.42 18.53 10.01 17.88 9.71L17.3 12.41C18.04 12.75 19.41 13.06 20.89 13.05C24.37 13.05 26.24 11.33 26.24 8.16ZM33.91 12.01H37.01L34.19 0.35H31.34C30.79 0.35 30.31 0.68 30.1 1.2L25.68 11.95H29.28L29.99 9.92H34.33L33.91 12.01ZM30.95 7.51L32.69 2.76L33.68 7.51H30.95ZM17.48 0.35H14.54L11.84 11.95H15.31L17.48 0.35Z" fill="#1434CB"/>
+                      </svg>
                     </div>
+
                     {/* Mastercard */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <div className="flex -space-x-1.5">
-                        <div className="w-3.5 h-3.5 rounded-full bg-red-600 opacity-95"></div>
-                        <div className="w-3.5 h-3.5 rounded-full bg-orange-500 opacity-95"></div>
+                    <div className="bg-white border border-gray-200/90 rounded-xl py-2 px-1 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 rounded-full bg-[#EB001B] opacity-90"></div>
+                        <div className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-90 -ml-2"></div>
                       </div>
                     </div>
+
                     {/* PayPal */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-extrabold text-blue-700 text-xs tracking-tighter">Pay<span className="text-cyan-500">Pal</span></span>
+                    <div className="bg-white border border-gray-200/90 rounded-xl py-2 px-1 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
+                      <span className="font-extrabold text-[#003087] text-xs tracking-tighter">Pay<span className="text-[#0079C1]">Pal</span></span>
                     </div>
-                    {/* Apple Pay (Fixed Unicode & Clean Font) */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-black text-gray-900 text-xs tracking-tight flex items-center">
-                        <span className="text-sm font-sans"></span>Pay
-                      </span>
+
+                    {/* Apple Pay (Fixed & Clean SVG Icon) */}
+                    <div className="bg-white border border-gray-200/90 rounded-xl py-2 px-1 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
+                      <svg className="h-4 w-auto text-gray-900" viewBox="0 0 55 24" fill="currentColor">
+                        <path d="M18.87 15.34c-.45 1.3-1.07 2.54-1.85 3.69-.88 1.28-1.74 2.14-2.58 2.58-.59.31-1.25.47-1.97.47-.51 0-1.08-.12-1.71-.35-.63-.23-1.26-.35-1.89-.35-.66 0-1.31.12-1.96.35-.65.23-1.21.35-1.68.35-.74 0-1.47-.18-2.2-.53-.73-.35-1.58-1.29-2.54-2.82C.55 16.59 0 14.52 0 12.09c0-2.47.66-4.51 1.98-6.11 1.32-1.6 2.97-2.4 4.96-2.4.74 0 1.45.15 2.13.45.68.3 1.24.45 1.68.45.38 0 .93-.15 1.65-.45.72-.3 1.44-.45 2.16-.45 1.67 0 3.09.53 4.25 1.59-1.3 1.05-1.95 2.45-1.95 4.19 0 1.44.52 2.68 1.57 3.72 1.04 1.04 2.29 1.56 3.75 1.56-.25.88-.58 1.76-.99 2.64zm-5.69-14.7c0-.58.21-1.12.63-1.62.42-.5.95-.75 1.6-.75.25 0 .54.06.87.18.33.12.63.29.9.51.27.22.48.49.63.81.15.32.22.68.22 1.08 0 .56-.21 1.1-.63 1.62-.42.5-.96.75-1.62.75-.24 0-.53-.06-.87-.18-.34-.12-.64-.29-.9-.51-.26-.22-.47-.49-.63-.81-.16-.32-.24-.68-.24-1.09z"/>
+                      </svg>
                     </div>
+
                     {/* Google Pay */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
+                    <div className="bg-white border border-gray-200/90 rounded-xl py-2 px-1 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
                       <span className="font-bold text-gray-800 text-xs tracking-tight"><span className="text-blue-500 font-black">G</span>Pay</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Unchanged Trust Board (As Requested) */}
+                {/* Unchanged Trust Board */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
                   
                   <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
