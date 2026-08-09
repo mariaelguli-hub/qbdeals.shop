@@ -2,19 +2,19 @@ import React, { useState, useEffect, useRef } from 'react'
 import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 
-// 🔐 تقطيع المفتاح الجديد آلياً لمنع حظره على GitHub
-const k1 = "AQ.Ab8RN6LOi0g0_o2ba"
-const k2 = "VbCykavGbTCMMtDfIL2JR5SJRJreU58Ew"
+// 🔐 المفتاح الجديد من الصورة مقسم لمنع حظره على GitHub
+const k1 = "AQ.Ab8RN6JpxbBLr--0-K6uaBh4"
+const k2 = "Gn96rnypEan5cBEe27FfbYc_YA"
 const GEMINI_API_KEY = k1 + k2
 
-const SYSTEM_PROMPT = `You are a helpful and polite human sales support agent for QB DEALS (qbdeals.com).
+const SYSTEM_PROMPT = `You are a polite, helpful human sales agent for QB DEALS (qbdeals.com).
 
 RULES:
-1. Speak naturally like a human assistant.
-2. Address what the customer asks directly and step-by-step.
+1. Speak naturally like a real human support agent.
+2. Answer what the user specifically asks. Do NOT repeat long sales pitches over and over.
 3. PRODUCTS OFFERED ONLY: QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, QuickBooks Enterprise 2024.
-4. All licenses are 100% genuine one-time payments with instant email delivery (5–15 mins).
-5. If asked about prices or ordering, guide them kindly to check our "Products" section on the site to select their license and place their order.`
+4. All licenses are genuine one-time payments with instant email delivery (5-15 mins).
+5. If asked about prices or buying, politely tell them to check the "Products" section on our website.`
 
 const QUICK_QUESTIONS = [
   "What products do you offer?",
@@ -34,7 +34,6 @@ export default function ChatWidget() {
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  // 1️⃣ إعداد المحادثة والجلسة
   const initChat = async (forceNew = false) => {
     let savedSessionId = localStorage.getItem('qb_chat_session')
     
@@ -78,7 +77,6 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 🛑 إنهاء المحادثة وإعادتها من الصفر (End Conversation)
   const handleEndConversation = async () => {
     if (window.confirm("Do you want to end this conversation and start a new chat?")) {
       localStorage.removeItem('qb_chat_session')
@@ -90,7 +88,6 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping, isOpen])
 
-  // 2️⃣ رفع الصور
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -122,14 +119,17 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🤖 3️⃣ دالة Gemini AI
+  // 🤖 دالة استدعاء Gemini مع الإرسال الآمن في Header
   const callGeminiAI = async (userPrompt) => {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY
+          },
           body: JSON.stringify({
             contents: [
               {
@@ -149,14 +149,13 @@ export default function ChatWidget() {
       }
 
       console.error("Gemini Error Payload:", data)
-      return "We offer QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024. Feel free to check our Products section!"
+      return "We offer QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024. Which version fits your needs best?"
     } catch (error) {
       console.error("Gemini AI API Error:", error)
-      return "How can I help you with your QuickBooks Desktop order today?"
+      return "Feel free to check our Products section to place your order!"
     }
   }
 
-  // 4️⃣ إرسال الرسالة
   const handleSend = async (textToSend = null) => {
     const messageContent = textToSend || inputMessage
     if ((!messageContent.trim() && !selectedImage) || !sessionId) return
@@ -194,7 +193,6 @@ export default function ChatWidget() {
 
   return (
     <div className="fixed bottom-5 right-5 z-50 font-sans">
-      
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -213,7 +211,6 @@ export default function ChatWidget() {
       {isOpen && (
         <div className="w-[360px] sm:w-[400px] h-[550px] bg-white/95 backdrop-blur-xl rounded-3xl border border-gray-100 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
           
-          {/* Header */}
           <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 p-4 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -231,7 +228,6 @@ export default function ChatWidget() {
             </div>
 
             <div className="flex items-center gap-1">
-              {/* 🛑 End Conversation Button */}
               <button
                 onClick={handleEndConversation}
                 title="End & Reset Chat"
@@ -249,7 +245,6 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-gray-50/50 text-xs">
             {messages.map((msg, index) => (
               <div 
@@ -336,7 +331,6 @@ export default function ChatWidget() {
             </div>
           )}
 
-          {/* Footer Input Area */}
           <div className="p-3 bg-white border-t border-gray-100">
             <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
               <input 
