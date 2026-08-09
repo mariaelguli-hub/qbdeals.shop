@@ -76,7 +76,7 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 📡 الاستماع الفوري الحقيقي: يجلب أي رسالة جديدة (سواء من البوت، المستخدم، أو الموظف) وأي تغيير في الحالة فوراً بدون Refresh
+  // 📡 الاستماع الفوري الحقيقي: يجلب أي رسالة جديدة فوراً وبدون أي Refresh
   useEffect(() => {
     if (!sessionId) return
 
@@ -89,7 +89,6 @@ export default function ChatWidget() {
         filter: `session_id=eq.${sessionId}`
       }, (payload) => {
         setMessages(prev => {
-          // منع تكرار نفس الرسالة إذا كانت موجودة مسبقاً
           if (prev.some(m => m.id === payload.new.id)) return prev
           return [...prev, payload.new]
         })
@@ -103,22 +102,6 @@ export default function ChatWidget() {
         if (payload.new?.status) {
           const newStatus = payload.new.status
           setSessionStatus(newStatus)
-          
-          // إذا تحولت الحالة إلى agent، نضيف رسالة التنبيه البصرية الأنيقة مباشرة
-          if (newStatus === 'agent') {
-            setMessages(prev => {
-              if (prev.some(m => m.id === 'agent_joined_notice')) return prev
-              return [
-                ...prev,
-                {
-                  id: 'agent_joined_notice',
-                  sender: 'agent',
-                  message: '✨ A human support expert has taken over the chat to assist you personally.',
-                  created_at: new Date().toISOString()
-                }
-              ]
-            })
-          }
         }
       })
       .subscribe()
@@ -231,11 +214,10 @@ export default function ChatWidget() {
     setInputMessage('')
     setSelectedImage(null)
 
-    // إرسال رسالة المستخدم لقاعدة البيانات (Realtime ستتكلف بعرضها فوراً عند الزبون والأدمن)
     await supabase.from('chat_messages').insert([userMessage])
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
 
-    // الـ Chatbot الذكي يجيب فقط إذا كانت الحالة 'bot'
+    // الروبوت يجيب فقط إذا كانت الحالة 'bot'
     if (sessionStatus === 'bot') {
       setIsTyping(true)
 
@@ -332,54 +314,59 @@ export default function ChatWidget() {
 
           {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-gray-50/50 text-xs">
-            {messages.map((msg, index) => (
-              <div 
-                key={msg.id || index} 
-                className={`flex gap-2.5 transition-all duration-300 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.sender !== 'user' && (
-                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-sm ${
-                    msg.sender === 'agent' ? 'bg-amber-500 text-white animate-bounce' : 'bg-emerald-100 text-emerald-800'
-                  }`}>
-                    {msg.sender === 'agent' ? <Headset className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                )}
+            {messages.map((msg, index) => {
+              // التحقق واش المرسل هو الموظف أو الأدمن بأي صيغة (agent, admin, support)
+              const isAgentOrAdmin = msg.sender === 'agent' || msg.sender === 'admin' || msg.sender === 'support'
 
-                <div className={`max-w-[78%] space-y-1.5 ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                  {msg.image_url && (
-                    <img 
-                      src={msg.image_url} 
-                      alt="Attachment" 
-                      className="rounded-2xl max-h-48 w-full object-cover border border-gray-200 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => window.open(msg.image_url, '_blank')}
-                    />
+              return (
+                <div 
+                  key={msg.id || index} 
+                  className={`flex gap-2.5 transition-all duration-300 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {msg.sender !== 'user' && (
+                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-sm ${
+                      isAgentOrAdmin ? 'bg-amber-500 text-white animate-bounce' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {isAgentOrAdmin ? <Headset className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    </div>
                   )}
 
-                  {msg.message && (
-                    <div className={`p-3 rounded-2xl font-medium leading-relaxed shadow-sm whitespace-pre-line transition-all duration-300 ${
-                      msg.sender === 'user' 
-                        ? 'bg-emerald-600 text-white rounded-br-none shadow-emerald-600/20' 
-                        : msg.sender === 'agent'
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-bl-none border border-amber-400 shadow-md shadow-amber-500/20 animate-in fade-in zoom-in-95'
-                        : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
-                    }`}>
-                      {msg.sender === 'agent' && (
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-amber-100 uppercase mb-1 tracking-wider border-b border-amber-400/30 pb-0.5">
-                          <ShieldCheck className="w-3 h-3" /> Live Support Expert
-                        </div>
-                      )}
-                      {msg.message}
+                  <div className={`max-w-[78%] space-y-1.5 ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                    {msg.image_url && (
+                      <img 
+                        src={msg.image_url} 
+                        alt="Attachment" 
+                        className="rounded-2xl max-h-48 w-full object-cover border border-gray-200 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(msg.image_url, '_blank')}
+                      />
+                    )}
+
+                    {msg.message && (
+                      <div className={`p-3 rounded-2xl font-medium leading-relaxed shadow-sm whitespace-pre-line transition-all duration-300 ${
+                        msg.sender === 'user' 
+                          ? 'bg-emerald-600 text-white rounded-br-none shadow-emerald-600/20' 
+                          : isAgentOrAdmin
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-bl-none border border-amber-400 shadow-md shadow-amber-500/20 animate-in fade-in zoom-in-95'
+                          : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
+                      }`}>
+                        {isAgentOrAdmin && (
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-amber-100 uppercase mb-1 tracking-wider border-b border-amber-400/30 pb-0.5">
+                            <ShieldCheck className="w-3 h-3" /> Live Support Expert
+                          </div>
+                        )}
+                        {msg.message}
+                      </div>
+                    )}
+                  </div>
+
+                  {msg.sender === 'user' && (
+                    <div className="w-7 h-7 bg-gray-200 text-gray-700 rounded-xl flex items-center justify-center shrink-0 mt-1">
+                      <User className="w-4 h-4" />
                     </div>
                   )}
                 </div>
-
-                {msg.sender === 'user' && (
-                  <div className="w-7 h-7 bg-gray-200 text-gray-700 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                    <User className="w-4 h-4" />
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
 
             {isTyping && sessionStatus === 'bot' && (
               <div className="flex gap-2 items-center text-gray-400 text-xs">
