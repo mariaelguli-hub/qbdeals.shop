@@ -25,34 +25,29 @@ export default function Contact() {
     let userIp = 'Unknown'
     let userLocation = 'Unknown'
 
-    // 🌐 1️⃣ المحاولة الأولى: جلب الـ IP والمدينة والبلد معاً عبر ip-api.com
+    // 🌐 1. جلب الـ IP
     try {
-      const res = await fetch('https://ip-api.com/json/?fields=status,country,city,regionName,query', { 
-        signal: AbortSignal.timeout(3500) 
-      })
+      const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) })
       const data = await res.json()
-      if (data && data.status === 'success') {
-        userIp = data.query || 'Unknown'
-        const city = data.city || data.regionName || ''
-        userLocation = `${city ? city + ', ' : ''}${data.country || ''}`.trim()
-      }
+      if (data?.ip) userIp = data.ip
     } catch (e) {
-      console.log('Primary IP service failed, trying backup...')
+      try {
+        const resAlt = await fetch('https://api.bigdatacloud.net/data/client-ip', { signal: AbortSignal.timeout(3000) })
+        const dataAlt = await resAlt.json()
+        if (dataAlt?.ipString) userIp = dataAlt.ipString
+      } catch (e2) {}
     }
 
-    // 🌐 2️⃣ المحاولة الثانية (احتياطية): عبر ipapi.co
-    if (userLocation === 'Unknown') {
+    // 📍 2. جلب الموقع
+    if (userIp !== 'Unknown') {
       try {
-        const res2 = await fetch('https://ipapi.co/json/', { 
-          signal: AbortSignal.timeout(3500) 
-        })
-        const data2 = await res2.json()
-        if (data2 && data2.ip) {
-          userIp = data2.ip
-          const city = data2.city || data2.region || ''
-          userLocation = `${city ? city + ', ' : ''}${data2.country_name || ''}`.trim()
+        const locRes = await fetch(`https://ipwho.is/${userIp}`, { signal: AbortSignal.timeout(3000) })
+        const locData = await locRes.json()
+        if (locData && locData.success) {
+          const city = locData.city || locData.region || ''
+          userLocation = `${city ? city + ', ' : ''}${locData.country || ''}`.trim()
         }
-      } catch (e2) {}
+      } catch (e) {}
     }
 
     // 📤 إرسال البيانات إلى Supabase
