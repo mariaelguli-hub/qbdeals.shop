@@ -208,15 +208,23 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* Buy Button */}
-              <button className="btn-primary w-full justify-center py-4 text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
-                <Zap className="w-5 h-5 fill-current" /> Buy now
-              </button>
+              {/* ⚡ Buy Now Button with Motion & Mirror / Glossy Shine Effect */}
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative overflow-hidden w-full justify-center py-4 text-base font-extrabold bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white rounded-xl shadow-xl shadow-emerald-600/30 transition-all flex items-center gap-2 group cursor-pointer"
+              >
+                {/* Mirror / Glossy Shine Sweep Effect */}
+                <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine" />
+                
+                <Zap className="w-5 h-5 fill-current animate-pulse" /> 
+                <span className="tracking-wide">Buy now</span>
+              </motion.button>
 
-              {/* 💳 Payment Cards & High-End Animated Trust Box Section */}
+              {/* 💳 Payment Cards (Fixed Logos & Clean SVG/Text Styling) & Unchanged Trust Board */}
               <div className="mt-6 space-y-6">
                 
-                {/* Payment Cards Grid (Fixed Apple Pay & Enhanced UI) */}
+                {/* Payment Cards Grid */}
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -228,36 +236,35 @@ export default function ProductDetails() {
                   <div className="grid grid-cols-5 gap-2">
                     {/* Visa */}
                     <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-black italic text-blue-900 tracking-tighter text-sm">VISA</span>
+                      <span className="font-black italic text-blue-800 tracking-tighter text-sm">VISA</span>
                     </div>
                     {/* Mastercard */}
                     <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
                       <div className="flex -space-x-1.5">
-                        <div className="w-3.5 h-3.5 rounded-full bg-red-600 opacity-90"></div>
-                        <div className="w-3.5 h-3.5 rounded-full bg-amber-500 opacity-90"></div>
+                        <div className="w-3.5 h-3.5 rounded-full bg-red-600 opacity-95"></div>
+                        <div className="w-3.5 h-3.5 rounded-full bg-orange-500 opacity-95"></div>
                       </div>
                     </div>
                     {/* PayPal */}
                     <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-bold text-blue-600 text-xs tracking-tight">Pay<span className="text-blue-400">Pal</span></span>
+                      <span className="font-extrabold text-blue-700 text-xs tracking-tighter">Pay<span className="text-cyan-500">Pal</span></span>
                     </div>
-                    {/* Apple Pay (Fixed Code) */}
+                    {/* Apple Pay (Fixed Unicode & Clean Font) */}
                     <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-extrabold text-gray-900 text-xs tracking-tight flex items-center gap-0.5">
-                        <span className="text-sm leading-none"></span>Pay
+                      <span className="font-black text-gray-900 text-xs tracking-tight flex items-center">
+                        <span className="text-sm font-sans"></span>Pay
                       </span>
                     </div>
                     {/* Google Pay */}
                     <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-bold text-gray-800 text-xs"><span className="text-blue-500">G</span>Pay</span>
+                      <span className="font-bold text-gray-800 text-xs tracking-tight"><span className="text-blue-500 font-black">G</span>Pay</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Animated High-Quality Trust Box with Enhanced Effects */}
+                {/* Unchanged Trust Board (As Requested) */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
                   
-                  {/* Multiple Glow & Sparkle Effects */}
                   <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
                   <div className="absolute -left-12 -bottom-12 w-36 h-36 bg-blue-400/10 rounded-full blur-3xl"></div>
 
