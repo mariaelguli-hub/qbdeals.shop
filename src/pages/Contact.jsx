@@ -25,28 +25,38 @@ export default function Contact() {
     let userIp = 'Private/AdBlock'
     let userLocation = 'Unknown'
 
-    // 🌐 جلب الـ IP مع حماية ضد AdBlock والتوقف التجاري (Timeout 3s)
+    // 🌐 المحاولة الأولى: ipify + ipapi
     try {
       const ipRes = await fetch('https://api.ipify.org?format=json', { 
-        signal: AbortSignal.timeout(3000) 
+        signal: AbortSignal.timeout(2500) 
       })
       const ipData = await ipRes.json()
       if (ipData?.ip) {
         userIp = ipData.ip
         try {
           const locRes = await fetch(`https://ipapi.co/${userIp}/json/`, { 
-            signal: AbortSignal.timeout(3000) 
+            signal: AbortSignal.timeout(2500) 
           })
           const locData = await locRes.json()
           if (locData?.country_name) {
             userLocation = `${locData.city || ''}, ${locData.country_name || ''}`.trim()
           }
-        } catch (e) {
-          console.log('Location fetch skipped')
-        }
+        } catch (e) {}
       }
-    } catch (ipErr) {
-      console.log('IP fetch bypassed due to adblocker or timeout')
+    } catch (e1) {
+      // 🌐 المحاولة الثانية الاحتياطية (في حال حظر AdBlock للأولى): ip-api.com
+      try {
+        const altRes = await fetch('https://ip-api.com/json/?fields=query,city,country', { 
+          signal: AbortSignal.timeout(2500) 
+        })
+        const altData = await altRes.json()
+        if (altData?.query) {
+          userIp = altData.query
+          userLocation = `${altData.city || ''}, ${altData.country || ''}`.trim()
+        }
+      } catch (e2) {
+        console.log('All IP providers bypassed or blocked')
+      }
     }
 
     // 📤 إرسال البيانات إلى Supabase
