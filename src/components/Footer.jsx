@@ -1,8 +1,18 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Mail, Phone, MapPin, ShieldCheck, Lock, RotateCcw, CheckCircle, Sparkles } from 'lucide-react'
 
 export default function Footer() {
+  const { pathname } = useLocation()
+
+  // 📜 دالة Scroll to Top عند الضغط على اللوغو
+  const handleLogoClick = (e) => {
+    if (pathname === '/') {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   return (
     <footer className="bg-white text-gray-600 pt-16 pb-8 border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,8 +23,12 @@ export default function Footer() {
           {/* Brand & Contact Info */}
           <div className="lg:col-span-2 space-y-4">
             
-            {/* 🌟 HIGH-LEVEL ANIMATED LOGO 🌟 */}
-            <Link to="/" className="inline-flex items-center gap-3 group select-none py-1">
+            {/* 🌟 HIGH-LEVEL ANIMATED LOGO WITH SCROLL TO TOP 🌟 */}
+            <Link 
+              to="/" 
+              onClick={handleLogoClick}
+              className="inline-flex items-center gap-3 group select-none py-1 cursor-pointer"
+            >
               
               {/* Animated Logo Icon Box */}
               <div className="relative flex items-center justify-center">
