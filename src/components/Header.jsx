@@ -14,6 +14,18 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { pathname } = useLocation()
 
+  // 📜 دالة الـ Smooth Scroll لقسم المنتجات
+  const handleShopClick = () => {
+    if (pathname === '/') {
+      const productsSection = document.getElementById('products') || document.querySelector('section')
+      if (productsSection) {
+        productsSection.scrollIntoView({ behavior: 'smooth' })
+        return
+      }
+    }
+    window.location.href = '/shop'
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-200">
       
@@ -53,7 +65,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 font-bold text-xl text-brand-700">
             <div className="w-8 h-8 bg-brand-700 text-white rounded-md flex items-center justify-center text-sm font-extrabold">
-              QD
+              QB
             </div>
             QB DEALS
           </Link>
@@ -83,12 +95,20 @@ export default function Header() {
             >
               <ShoppingCart className="w-5 h-5 text-gray-700" />
             </Link>
-            <Link
-              to="/shop"
-              className="hidden sm:inline-flex btn-primary text-sm py-2.5 px-5"
+
+            {/* 🌟 SHOP NOW BUTTON WITH ANIMATION & SMOOTH SCROLL 🌟 */}
+            <button
+              onClick={handleShopClick}
+              className="hidden sm:inline-flex relative items-center justify-center px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 rounded-xl overflow-hidden shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 hover:shadow-emerald-600/50 hover:scale-105 active:scale-95 transition-all duration-300 animate-pulse hover:animate-none group cursor-pointer"
             >
-              Shop now
-            </Link>
+              {/* تأثير لمعان ضوئي يمر على الزر */}
+              <span className="absolute top-0 left-0 w-full h-full bg-white/20 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              
+              <span className="relative z-10 flex items-center gap-1.5">
+                Shop now
+              </span>
+            </button>
+
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100"
@@ -102,7 +122,7 @@ export default function Header() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
-          <div className="px-4 py-3 space-y-1">
+          <div className="px-4 py-3 space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -117,6 +137,7 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            
             <Link
               to="/cart"
               onClick={() => setMobileOpen(false)}
@@ -124,6 +145,17 @@ export default function Header() {
             >
               <ShoppingCart className="w-4 h-4" /> Cart
             </Link>
+
+            {/* Mobile Shop Now Button */}
+            <button
+              onClick={() => {
+                setMobileOpen(false)
+                handleShopClick()
+              }}
+              className="w-full mt-2 inline-flex items-center justify-center py-3 text-sm font-bold text-white bg-emerald-600 rounded-xl shadow-md active:scale-95 transition-all"
+            >
+              Shop now
+            </button>
           </div>
         </div>
       )}
