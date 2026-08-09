@@ -88,10 +88,10 @@ export default function ProductDetails() {
 
           <div className="grid lg:grid-cols-12 gap-10 items-start">
             
-            {/* Left Side: Interactive Zoom Image + Horizontal Slide Widget */}
+            {/* Left Side: Full Image Display (No Crop) + Zoom */}
             <div className="lg:col-span-5 space-y-6">
               
-              {/* Product Image Container with Interactive Zoom */}
+              {/* Product Image Container (Fit Image Exactly) */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ export default function ProductDetails() {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onMouseMove={handleMouseMove}
-                className="bg-white rounded-3xl border border-gray-200/80 p-2 flex items-center justify-center shadow-sm relative overflow-hidden cursor-crosshair group h-[380px] sm:h-[420px]"
+                className="bg-white rounded-3xl border border-gray-200/80 p-3 flex items-center justify-center shadow-sm relative overflow-hidden cursor-crosshair group min-h-[350px]"
               >
                 <img
                   src={product.image}
@@ -108,13 +108,13 @@ export default function ProductDetails() {
                     transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
                     transform: isHovered ? 'scale(2.2)' : 'scale(1)',
                   }}
-                  className="w-full h-full object-cover object-center rounded-2xl transition-transform duration-200 ease-out"
+                  className="w-full h-auto max-h-[480px] object-contain rounded-2xl transition-transform duration-200 ease-out"
                   onError={(e) => {
                     e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
                   }}
                 />
 
-                {/* Hover Zoom Badge */}
+                {/* Zoom Hint */}
                 <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
                   <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
                 </div>
