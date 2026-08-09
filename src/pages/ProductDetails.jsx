@@ -208,7 +208,7 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* ⚡ High-End Buy Now Button */}
+              {/* ⚡ Buy Now Button */}
               <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
@@ -227,7 +227,7 @@ export default function ProductDetails() {
               {/* 💳 Payment Cards & Unchanged Trust Board */}
               <div className="mt-6 space-y-6">
                 
-                {/* Payment Cards Grid with Optimized & Balanced Logo Sizes */}
+                {/* Payment Cards Grid with Fixed Apple Pay & Aligned Logos */}
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -257,10 +257,13 @@ export default function ProductDetails() {
                       <span className="font-extrabold text-[#003087] text-sm tracking-tighter">Pay<span className="text-[#0079C1]">Pal</span></span>
                     </div>
 
-                    {/* Apple Pay */}
+                    {/* Apple Pay (Corrected & Perfectly Aligned SVG) */}
                     <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <svg className="h-6 w-auto text-gray-900 scale-110" viewBox="0 0 55 24" fill="currentColor">
-                        <path d="M18.87 15.34c-.45 1.3-1.07 2.54-1.85 3.69-.88 1.28-1.74 2.14-2.58 2.58-.59.31-1.25.47-1.97.47-.51 0-1.08-.12-1.71-.35-.63-.23-1.26-.35-1.89-.35-.66 0-1.31.12-1.96.35-.65.23-1.21.35-1.68.35-.74 0-1.47-.18-2.2-.53-.73-.35-1.58-1.29-2.54-2.82C.55 16.59 0 14.52 0 12.09c0-2.47.66-4.51 1.98-6.11 1.32-1.6 2.97-2.4 4.96-2.4.74 0 1.45.15 2.13.45.68.3 1.24.45 1.68.45.38 0 .93-.15 1.65-.45.72-.3 1.44-.45 2.16-.45 1.67 0 3.09.53 4.25 1.59-1.3 1.05-1.95 2.45-1.95 4.19 0 1.44.52 2.68 1.57 3.72 1.04 1.04 2.29 1.56 3.75 1.56-.25.88-.58 1.76-.99 2.64zm-5.69-14.7c0-.58.21-1.12.63-1.62.42-.5.95-.75 1.6-.75.25 0 .54.06.87.18.33.12.63.29.9.51.27.22.48.49.63.81.15.32.22.68.22 1.08 0 .56-.21 1.1-.63 1.62-.42.5-.96.75-1.62.75-.24 0-.53-.06-.87-.18-.34-.12-.64-.29-.9-.51-.26-.22-.47-.49-.63-.81-.16-.32-.24-.68-.24-1.09z"/>
+                      <svg className="h-5 w-auto" viewBox="0 0 98 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M33.24 16.32c-.03-2.61 2.13-3.87 2.23-3.93-1.22-1.78-3.12-2.03-3.79-2.08-1.61-.16-3.15.95-3.96.95-.81 0-2.06-.92-3.39-.9-1.74.03-3.34 1.01-4.23 2.58-1.81 3.14-.46 7.78 1.3 10.31.87 1.25 1.9 2.65 3.26 2.6 1.31-.05 1.81-.84 3.4-.84 1.59 0 2.05.84 3.41.81 1.4-.03 2.27-1.26 3.13-2.52.99-1.46 1.4-2.88 1.42-2.95-.03-.01-2.73-1.05-2.77-4.33zM30.63 9.47c.72-.88 1.21-2.11 1.08-3.34-1.04.04-2.31.7-3.05 1.57-.67.78-1.26 2.03-1.1 3.23 1.16.09 2.35-.58 3.07-1.46z" fill="#000"/>
+                        <path d="M44.11 21.57c-1.25 0-2.12-.51-2.67-1.53l-7.46-15.08h3.94l5.12 11.23h.11l5.13-11.23h3.87l-7.53 15.08c-.6 1.02-1.47 1.53-2.51 1.53z" fill="#000"/>
+                        <path d="M64.08 21.85c-2.31 0-3.88-1.47-3.88-3.73V9.01h3.61v8.83c0 .87.49 1.42 1.42 1.42.92 0 1.42-.55 1.42-1.42V9.01h3.61v9.11c0 2.26-1.57 3.73-3.78 3.73z" fill="#000"/>
+                        <path d="M79.46 21.85c-2.31 0-3.88-1.47-3.88-3.73V9.01h3.61v8.83c0 .87.49 1.42 1.42 1.42.92 0 1.42-.55 1.42-1.42V9.01h3.61v9.11c0 2.26-1.57 3.73-3.78 3.73z" fill="#000"/>
                       </svg>
                     </div>
 
