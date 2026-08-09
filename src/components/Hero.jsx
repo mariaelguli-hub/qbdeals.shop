@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Zap, ShieldCheck, CheckCircle, Star, ArrowRight, Sparkles, Lock } from 'lucide-react'
+import { Check, Zap, ShieldCheck, CheckCircle, Star, ArrowRight, Sparkles } from 'lucide-react'
 
 const whyUsFeatures = [
   {
@@ -35,7 +35,6 @@ export default function Hero() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  // Scroll function for Buy Now button
   const scrollToProducts = (e) => {
     e.preventDefault()
     const doScroll = () => {
@@ -59,7 +58,6 @@ export default function Hero() {
     }
   }
 
-  // Auto-slide for the right card
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
@@ -69,7 +67,6 @@ export default function Hero() {
 
   const ActiveIcon = whyUsFeatures[activeTab].icon
 
-  // Animation Variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -92,29 +89,21 @@ export default function Hero() {
 
   return (
     <section className="relative py-10 lg:py-20 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/50 overflow-hidden">
-      
-      {/* Background Decorative Mesh Glow */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Left Side: Animated Hero Content */}
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="lg:col-span-7 text-left"
           >
-            {/* Rating Badge */}
             <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 mb-5 shadow-2xs">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
               <span className="text-xs font-black text-emerald-950 tracking-tight">4.8/5 from 22 verified reviews</span>
               <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
-            {/* Title */}
             <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.15]">
               Genuine QuickBooks Desktop 2024 —{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 inline-block">
@@ -122,12 +111,10 @@ export default function Hero() {
               </span>
             </motion.h1>
             
-            {/* Subtitle */}
             <motion.p variants={itemVariants} className="text-gray-600 text-sm sm:text-base lg:text-lg font-medium leading-relaxed mb-7 max-w-2xl">
               Stop paying yearly. Get an authentic QuickBooks Desktop license key delivered to your inbox in minutes — no subscription, no monthly fees, backed by a 30-day money-back guarantee.
             </motion.p>
 
-            {/* Perks List */}
             <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm font-extrabold text-gray-800 mb-8">
               <span className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-3 py-1 rounded-lg border border-emerald-200/50">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> No subscription
@@ -140,8 +127,7 @@ export default function Hero() {
               </span>
             </motion.div>
 
-            {/* CTAs */}
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4">
               <button
                 onClick={scrollToProducts}
                 className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white font-extrabold text-base shadow-xl shadow-emerald-600/30 hover:shadow-emerald-600/50 hover:scale-105 active:scale-95 transition-all duration-300 overflow-hidden cursor-pointer"
@@ -159,62 +145,8 @@ export default function Hero() {
                 <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
-
-            {/* 💳 Payment Method Logos Section */}
-            <motion.div variants={itemVariants} className="pt-4 border-t border-gray-200/60 flex flex-wrap items-center gap-3">
-              <span className="text-xs font-extrabold text-gray-400 flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5 text-emerald-600" /> Guaranteed Safe Checkout:
-              </span>
-              
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* VISA */}
-                <div className="h-7 px-2.5 bg-white border border-gray-200/80 rounded-md flex items-center justify-center shadow-2xs">
-                  <span className="font-black italic text-[#1A1F71] text-xs tracking-tighter select-none font-sans">
-                    VISA
-                  </span>
-                </div>
-
-                {/* Mastercard */}
-                <div className="h-7 px-2.5 bg-white border border-gray-200/80 rounded-md flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                    alt="Mastercard" 
-                    className="h-4 w-auto object-contain"
-                  />
-                </div>
-
-                {/* PayPal */}
-                <div className="h-7 px-2.5 bg-white border border-gray-200/80 rounded-md flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
-                    alt="PayPal" 
-                    className="h-3.5 w-auto object-contain"
-                  />
-                </div>
-
-                {/* Apple Pay */}
-                <div className="h-7 px-2.5 bg-white border border-gray-200/80 rounded-md flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" 
-                    alt="Apple Pay" 
-                    className="h-3.5 w-auto object-contain"
-                  />
-                </div>
-
-                {/* Google Pay */}
-                <div className="h-7 px-2.5 bg-white border border-gray-200/80 rounded-md flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" 
-                    alt="Google Pay" 
-                    className="h-3.5 w-auto object-contain"
-                  />
-                </div>
-              </div>
-            </motion.div>
-
           </motion.div>
 
-          {/* Right Side: Animated Horizontal Slide Card */}
           <motion.div 
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -222,8 +154,6 @@ export default function Hero() {
             className="lg:col-span-5"
           >
             <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/10 border border-gray-200/80 relative overflow-hidden">
-              
-              {/* Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                 <h3 className="font-extrabold text-gray-900 text-base sm:text-lg">
                   Why buy from us
@@ -234,7 +164,6 @@ export default function Hero() {
                 </span>
               </div>
 
-              {/* Horizontal Slide Content */}
               <div className="relative min-h-[110px] flex items-center overflow-hidden">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -260,7 +189,6 @@ export default function Hero() {
                 </AnimatePresence>
               </div>
 
-              {/* Dots Navigation */}
               <div className="flex items-center justify-between pt-5 mt-2 border-t border-gray-100">
                 <div className="flex items-center gap-1.5">
                   {whyUsFeatures.map((_, idx) => (
@@ -278,7 +206,6 @@ export default function Hero() {
                   0{activeTab + 1} / 0{whyUsFeatures.length}
                 </span>
               </div>
-
             </div>
           </motion.div>
 
