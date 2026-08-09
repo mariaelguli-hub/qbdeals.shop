@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, Phone, MapPin, ShieldCheck, Lock, RotateCcw, CheckCircle } from 'lucide-react'
+import { Mail, Phone, MapPin, ShieldCheck, Lock, RotateCcw, CheckCircle, Sparkles } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -12,11 +12,40 @@ export default function Footer() {
           
           {/* Brand & Contact Info */}
           <div className="lg:col-span-2 space-y-4">
-            <Link to="/" className="inline-flex items-center gap-2 text-xl font-extrabold text-emerald-800 tracking-tight">
-              <span className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
-                QB
-              </span>
-              <span className="text-emerald-700">QB DEALS</span>
+            
+            {/* 🌟 HIGH-LEVEL ANIMATED LOGO 🌟 */}
+            <Link to="/" className="inline-flex items-center gap-3 group select-none py-1">
+              
+              {/* Animated Logo Icon Box */}
+              <div className="relative flex items-center justify-center">
+                
+                {/* Outer Glow Halo */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl blur-xs opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" />
+                
+                {/* Main Icon Container */}
+                <div className="relative w-10 h-10 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 text-white rounded-2xl flex items-center justify-center font-black text-base shadow-md shadow-emerald-950/20 group-hover:rotate-6 group-hover:scale-105 transition-all duration-300 border border-emerald-400/30">
+                  <span className="tracking-tighter font-mono">QB</span>
+                  
+                  {/* Micro Sparkle Indicator */}
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white flex items-center justify-center shadow-xs">
+                    <span className="w-1 h-1 bg-amber-900 rounded-full animate-ping" />
+                  </span>
+                </div>
+              </div>
+
+              {/* Logo Typography */}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1">
+                  <span className="font-black text-xl tracking-tight text-gray-900 group-hover:text-emerald-700 transition-colors">
+                    QB<span className="text-emerald-600 group-hover:text-emerald-500 transition-colors">DEALS</span>
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500 opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-300" />
+                </div>
+                <span className="text-[9px] font-extrabold text-emerald-700 uppercase tracking-widest -mt-1 opacity-80">
+                  Official Software Store
+                </span>
+              </div>
+
             </Link>
             
             <p className="text-sm text-gray-500 leading-relaxed max-w-sm">
@@ -112,7 +141,7 @@ export default function Footer() {
           {/* Perfect Authentic Payment Badges */}
           <div className="flex items-center gap-2">
             
-            {/* VISA - Perfect Clean Vector */}
+            {/* VISA */}
             <div className="h-9 px-3 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center">
               <span className="font-black italic text-[#1A1F71] text-base tracking-tighter select-none font-sans">
                 VISA
