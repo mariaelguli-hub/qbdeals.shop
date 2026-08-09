@@ -5,6 +5,8 @@
     "name": "QuickBooks Desktop Pro Plus 2024 (3 Users)",
     "category": "PRO",
     "tag": "Most Popular",
+    "rating": 4.96,
+    "reviewsCount": 142,
     "description": "Powerful desktop accounting for up to 3 users. One-time purchase, genuine license key, instant email delivery.",
     "features": [
       "Up to 3 simultaneous users",
@@ -23,6 +25,8 @@
     "name": "QuickBooks Desktop Mac Plus 2024",
     "category": "MAC",
     "tag": "For macOS",
+    "rating": 4.95,
+    "reviewsCount": 128,
     "description": "Native QuickBooks Desktop accounting for macOS. One-time purchase, genuine license, instant delivery.",
     "features": [
       "Native macOS experience",
@@ -32,7 +36,7 @@
     "variants": [
       { "id": "mac-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": true }
     ],
-    "image": "/images/products/qb-mac-plus.png"
+    "image": "https://i.ibb.co/HLDC9vyw/Quick-Books-Desktop-Mac-Plus-2024.png"
   },
   {
     "id": 3,
@@ -40,6 +44,8 @@
     "name": "QuickBooks Desktop Enterprise Accountant 2024",
     "category": "ENTERPRISE",
     "tag": "Enterprise + Accountant",
+    "rating": 4.98,
+    "reviewsCount": 156,
     "description": "Enterprise power plus accountant-only tools for firms serving larger clients. One-time purchase.",
     "features": [
       "All Enterprise features + accountant tools",
@@ -58,6 +64,8 @@
     "name": "QuickBooks Desktop Enterprise Solutions 2024",
     "category": "ENTERPRISE",
     "tag": "For Larger Teams",
+    "rating": 4.94,
+    "reviewsCount": 112,
     "description": "Scalable accounting with advanced inventory and reporting for larger businesses. One-time purchase.",
     "features": [
       "Supports more simultaneous users",
