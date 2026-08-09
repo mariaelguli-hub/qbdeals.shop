@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 
@@ -42,12 +42,14 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true)
     
+    // Fetch Contact Messages
     const { data: msgData } = await supabase
       .from('messages')
       .select('*')
       .order('created_at', { ascending: false })
     setMessages(msgData || [])
 
+    // Fetch Visitors Log History
     const { data: visData } = await supabase
       .from('visitors')
       .select('*')
@@ -70,7 +72,16 @@ export default function AdminDashboard() {
     const { error } = await supabase.from('visitors').delete().eq('id', id)
     if (!error) {
       setVisitors(visitors.filter(v => v.id !== id))
-      toast.success('Visitor removed')
+      toast.success('Visitor log removed')
+    }
+  }
+
+  const deleteMessage = async (id) => {
+    if (!window.confirm('Delete this message?')) return
+    const { error } = await supabase.from('messages').delete().eq('id', id)
+    if (!error) {
+      setMessages(messages.filter(m => m.id !== id))
+      toast.success('Message deleted')
     }
   }
 
@@ -174,6 +185,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
+          {/* Tab 1: Visitors History Logs */}
           {activeTab === 'visitors' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -244,21 +256,50 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* Tab 2: Contact Messages */}
           {activeTab === 'messages' && (
             <div className="grid gap-4">
-              {messages.map((msg) => (
-                <div key={msg.id} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                  <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-3">
-                    <span className="font-bold text-gray-900">{msg.name} ({msg.email})</span>
-                    <span className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleString()}</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2">Subject: {msg.subject}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{msg.message}</p>
-                  <div className="flex justify-between items-center border-t border-gray-100 pt-3 text-xs text-gray-500">
-                    <span>🌐 IP: {msg.ip_address} | {msg.location}</span>
-                  </div>
+              {messages.length === 0 ? (
+                <div className="bg-white rounded-3xl p-12 text-center text-gray-500 border border-gray-100">
+                  No messages received yet.
                 </div>
-              ))}
+              ) : (
+                messages.map((msg) => (
+                  <div key={msg.id} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-3">
+                      <div>
+                        <span className="font-bold text-gray-900">{msg.name}</span>
+                        <a href={`mailto:${msg.email}`} className="ml-2 text-xs text-emerald-600 font-semibold underline">
+                          {msg.email}
+                        </a>
+                      </div>
+                      <span className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleString()}</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-2">Subject: {msg.subject}</h3>
+                    <p className="text-gray-600 text-sm mb-4 whitespace-pre-wrap">{msg.message}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 text-xs">
+                      <div className="flex items-center gap-2 text-gray-500">
+                        {msg.ip_address && (
+                          <span className="inline-flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg font-mono text-[11px]">
+                            <ShieldAlert className="w-3.5 h-3.5 text-gray-400" /> IP: {msg.ip_address}
+                          </span>
+                        )}
+                        {msg.location && (
+                          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg font-medium text-[11px]">
+                            <Globe className="w-3.5 h-3.5 text-emerald-600" /> {msg.location}
+                          </span>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => deleteMessage(msg.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
