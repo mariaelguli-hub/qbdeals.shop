@@ -14,6 +14,14 @@ export default function Header() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
 
+  // 📜 دالة Scroll to Top عند الضغط على اللوغو
+  const handleLogoClick = (e) => {
+    if (pathname === '/') {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   // 📜 دالة الـ Scroll Down الجذري والحل المضمون لمشكلة 404
   const scrollToProducts = () => {
     const doScroll = () => {
@@ -73,8 +81,12 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18">
           
-          {/* 🌟 HIGH-LEVEL ANIMATED LOGO 🌟 */}
-          <Link to="/" className="flex items-center gap-3 group select-none py-1">
+          {/* 🌟 HIGH-LEVEL ANIMATED LOGO WITH SCROLL TO TOP 🌟 */}
+          <Link 
+            to="/" 
+            onClick={handleLogoClick}
+            className="flex items-center gap-3 group select-none py-1 cursor-pointer"
+          >
             
             {/* Animated Logo Icon Box */}
             <div className="relative flex items-center justify-center">
