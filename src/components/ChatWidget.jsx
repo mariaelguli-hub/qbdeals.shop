@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw, LogOut } from 'lucide-react'
+import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw, LogOut, Headset } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 
 const QUICK_QUESTIONS = [
@@ -14,6 +14,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [sessionId, setSessionId] = useState(null)
+  const [sessionStatus, setSessionStatus] = useState('bot') // 'bot' | 'agent' | 'ended'
   const [uploadingImage, setUploadingImage] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
   const [isTyping, setIsTyping] = useState(false)
@@ -25,7 +26,6 @@ export default function ChatWidget() {
     let savedSessionId = localStorage.getItem('qb_chat_session')
     
     if (!savedSessionId || forceNew) {
-      // إنشاء جلسة جديدة
       const { data } = await supabase
         .from('chat_sessions')
         .insert([{ status: 'bot' }])
@@ -40,6 +40,18 @@ export default function ChatWidget() {
     setSessionId(savedSessionId)
 
     if (savedSessionId && !forceNew) {
+      // جلب حالة الجلسة الحالية من قاعدة البيانات
+      const { data: sessionData } = await supabase
+        .from('chat_sessions')
+        .select('status')
+        .eq('id', savedSessionId)
+        .single()
+
+      if (sessionData) {
+        setSessionStatus(sessionData.status)
+      }
+
+      // جلب رسائل الجلسة
       const { data: existingMsg } = await supabase
         .from('chat_messages')
         .select('*')
@@ -50,6 +62,8 @@ export default function ChatWidget() {
         setMessages(existingMsg)
         return
       }
+    } else {
+      setSessionStatus('bot')
     }
 
     setMessages([
@@ -65,14 +79,47 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 🛑 2️⃣ دالة إنهاء المحادثة وتحديث الحالية في Admin Dashboard
+  // 📡 2️⃣ الاستماع التفاعلي الفوري (Realtime) لأي رد من الـ Admin أو إغلاق للجلسة
+  useEffect(() => {
+    if (!sessionId) return
+
+    const channel = supabase
+      .channel(`widget_chat_${sessionId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `session_id=eq.${sessionId}`
+      }, (payload) => {
+        setMessages(prev => {
+          if (prev.some(m => m.id === payload.new.id)) return prev
+          return [...prev, payload.new]
+        })
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'chat_sessions',
+        filter: `id=eq.${sessionId}`
+      }, (payload) => {
+        if (payload.new?.status) {
+          setSessionStatus(payload.new.status)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [sessionId])
+
+  // 🛑 3️⃣ دالة إنهاء المحادثة
   const handleEndConversation = async () => {
     if (window.confirm("Are you sure you want to end this conversation and start a new chat?")) {
       if (sessionId) {
-        // تحديث حالة المحادثة في Supabase لتظهر في الـ Admin Dashboard
         await supabase
           .from('chat_sessions')
-          .update({ status: 'ended' })
+          .update({ status: 'ended', updated_at: new Date().toISOString() })
           .eq('id', sessionId)
       }
 
@@ -85,7 +132,7 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping, isOpen])
 
-  // 3️⃣ رفع الصور
+  // 4️⃣ رفع الصور وتخزينها في Supabase Storage
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -117,21 +164,18 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🧠 4️⃣ محرك إجابات ذكي متطور ومتعدد الاحتمالات
+  // 🧠 5️⃣ محرك الردود الذكي والمحلي للـ Bot
   const generateResponse = (userPrompt) => {
     const text = userPrompt.toLowerCase().trim()
 
-    // اقتراح أفضل أصل / إصدار مناسب (Best Version / Recommendation)
     if (text.includes("best version") || text.includes("recommend") || text.includes("which version") || text.includes("which one")) {
       return "To choose the best version for your business:\n\n• **QuickBooks Pro Plus 2024**: Ideal for small businesses needing fast accounting and invoicing.\n• **QuickBooks Enterprise 2024**: Best for growing businesses needing advanced inventory & multi-user support.\n• **QuickBooks Plus 2024 Mac**: Tailored specifically for Mac OS users.\n\nYou can view all products and order directly in our Products section!"
     }
 
-    // السلام المباشر فقط
     if (text === "hi" || text === "hello" || text === "hey" || text === "greetings") {
       return "Hello! 👋 Welcome to QB DEALS. What product or question can I help you with today?"
     }
 
-    // السؤال عن الحال / طلب المساعدة العامة
     if (text.includes("how are you") || text.includes("how r u")) {
       return "I'm doing great, thank you! How can I assist you with your QuickBooks Desktop license today?"
     }
@@ -140,39 +184,33 @@ export default function ChatWidget() {
       return "Of course! I am here to help. What specific details or QuickBooks version would you like to know more about?"
     }
 
-    // الاستفسار عن المنتجات
     if (text.includes("product") || text.includes("offer") || text.includes("version") || text.includes("what do you have")) {
       return "We offer 3 lifetime-access QuickBooks Desktop 2024 products:\n1. QuickBooks Pro Plus 2024\n2. QuickBooks Enterprise 2024\n3. QuickBooks Plus 2024 Mac\n\nCheck out our Products section to select the right one for you!"
     }
 
-    // الأسعار والطلب
     if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("order") || text.includes("pay") || text.includes("purchase")) {
       return "All our QuickBooks Desktop licenses are genuine 100% one-time payments with no monthly or annual fees!\n\nPlease visit our 'Products' section to view current prices and place your order instantly."
     }
 
-    // الاشتراك / طريقة الدفع
     if (text.includes("one time") || text.includes("subscription") || text.includes("monthly") || text.includes("annual")) {
       return "Yes, exactly! It is a one-time payment with no recurring subscription fees. You buy it once and use your license key indefinitely."
     }
 
-    // التوصيل
     if (text.includes("delivery") || text.includes("receive") || text.includes("fast") || text.includes("how long")) {
       return "After completing your order, your license key and download link will be delivered directly to your email within 5 to 15 minutes."
     }
 
-    // نقل الترخيص
     if (text.includes("transfer") || text.includes("new pc") || text.includes("another computer")) {
       return "Yes, you can easily transfer your software license to a new PC whenever you upgrade your computer."
     }
 
-    // رد افتراضي مرن عند عدم تطابق القواعد
-    return "Thank you for asking! We provide genuine QuickBooks Pro Plus, Enterprise, and Mac licenses with instant email delivery. Please check our Products section to place your order!"
+    return "Thank you for reaching out! We offer genuine QuickBooks Pro Plus, Enterprise, and Mac licenses with instant email delivery. Please check our Products section to place your order!"
   }
 
-  // 5️⃣ إرسال الرسالة
+  // 6️⃣ إرسال الرسالة
   const handleSend = async (textToSend = null) => {
     const messageContent = textToSend || inputMessage
-    if ((!messageContent.trim() && !selectedImage) || !sessionId) return
+    if ((!messageContent.trim() && !selectedImage) || !sessionId || sessionStatus === 'ended') return
 
     const userMessage = {
       session_id: sessionId,
@@ -186,31 +224,37 @@ export default function ChatWidget() {
     setInputMessage('')
     setSelectedImage(null)
 
+    // إرسال رسالة الزائر لـ Supabase لتظهر في Admin Dashboard
     await supabase.from('chat_messages').insert([userMessage])
 
-    setIsTyping(true)
+    // تحديث وقت الجلسة
+    await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
 
-    setTimeout(async () => {
-      const responseText = generateResponse(messageContent)
+    // إذا لم يتولى الأدمن المحادثة بعد، يجيب البوت تلقائياً
+    if (sessionStatus !== 'agent') {
+      setIsTyping(true)
 
-      const botMessage = {
-        session_id: sessionId,
-        sender: 'bot',
-        message: responseText,
-        created_at: new Date().toISOString()
-      }
+      setTimeout(async () => {
+        const responseText = generateResponse(messageContent)
 
-      setMessages(prev => [...prev, botMessage])
-      setIsTyping(false)
+        const botMessage = {
+          session_id: sessionId,
+          sender: 'bot',
+          message: responseText,
+          created_at: new Date().toISOString()
+        }
 
-      await supabase.from('chat_messages').insert([botMessage])
-    }, 700)
+        setMessages(prev => [...prev, botMessage])
+        setIsTyping(false)
+
+        await supabase.from('chat_messages').insert([botMessage])
+      }, 700)
+    }
   }
 
   return (
     <div className="fixed bottom-5 right-5 z-50 font-sans">
       
-      {/* Launcher Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -226,7 +270,6 @@ export default function ChatWidget() {
         </button>
       )}
 
-      {/* Chat Window */}
       {isOpen && (
         <div className="w-[360px] sm:w-[400px] h-[560px] bg-white/95 backdrop-blur-xl rounded-3xl border border-gray-100 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
           
@@ -243,12 +286,13 @@ export default function ChatWidget() {
                 <h3 className="font-bold text-sm leading-tight flex items-center gap-1.5">
                   QB DEALS Support <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300/30" />
                 </h3>
-                <p className="text-[11px] text-emerald-200/80 font-medium">Instant Support Assistance</p>
+                <p className="text-[11px] text-emerald-200/80 font-medium">
+                  {sessionStatus === 'agent' ? 'Live Agent Connected' : 'Instant AI & Live Assistance'}
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
-              {/* 🛑 End Conversation Icon */}
               <button
                 onClick={handleEndConversation}
                 title="End & Reset Chat"
@@ -266,16 +310,19 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          {/* Top Bar for explicitly Ending Chat */}
+          {/* Session Status Bar */}
           <div className="bg-emerald-50/80 px-4 py-1.5 border-b border-emerald-100 flex items-center justify-between text-[11px]">
-            <span className="text-emerald-800 font-medium flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Active Session
+            <span className="text-emerald-800 font-medium flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${
+                sessionStatus === 'ended' ? 'bg-red-500' : sessionStatus === 'agent' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-pulse'
+              }`} /> 
+              {sessionStatus === 'ended' ? 'Chat Ended' : sessionStatus === 'agent' ? 'Live Agent Connected' : 'Active Session'}
             </span>
             <button
               onClick={handleEndConversation}
               className="text-red-600 hover:text-red-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
             >
-              <LogOut className="w-3 h-3" /> End Chat
+              <LogOut className="w-3 h-3" /> {sessionStatus === 'ended' ? 'New Chat' : 'End Chat'}
             </button>
           </div>
 
@@ -287,8 +334,10 @@ export default function ChatWidget() {
                 className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender !== 'user' && (
-                  <div className="w-7 h-7 bg-emerald-100 text-emerald-800 rounded-xl flex items-center justify-center shrink-0 mt-1">
-                    <Bot className="w-4 h-4" />
+                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-1 ${
+                    msg.sender === 'agent' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    {msg.sender === 'agent' ? <Headset className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                   </div>
                 )}
 
@@ -306,8 +355,13 @@ export default function ChatWidget() {
                     <div className={`p-3 rounded-2xl font-medium leading-relaxed shadow-sm whitespace-pre-line ${
                       msg.sender === 'user' 
                         ? 'bg-emerald-600 text-white rounded-br-none' 
+                        : msg.sender === 'agent'
+                        ? 'bg-emerald-900 text-white rounded-bl-none border border-emerald-800'
                         : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
                     }`}>
+                      {msg.sender === 'agent' && (
+                        <span className="block text-[10px] font-bold text-amber-300 uppercase mb-0.5">Live Agent</span>
+                      )}
                       {msg.message}
                     </div>
                   )}
@@ -334,7 +388,7 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {messages.length <= 2 && (
+            {messages.length <= 2 && sessionStatus !== 'ended' && (
               <div className="pt-2 space-y-1.5">
                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Quick Questions:</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -354,7 +408,6 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Image Preview Panel */}
           {selectedImage && (
             <div className="p-2 bg-emerald-50 border-t border-emerald-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -369,39 +422,51 @@ export default function ChatWidget() {
 
           {/* Footer Input Area */}
           <div className="p-3 bg-white border-t border-gray-100">
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
-                accept="image/*" 
-                className="hidden" 
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingImage}
-                className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
-              </button>
+            {sessionStatus === 'ended' ? (
+              <div className="text-center py-2">
+                <p className="text-xs text-gray-500 mb-2 font-medium">This conversation has ended.</p>
+                <button
+                  onClick={() => handleEndConversation()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded-xl transition-all cursor-pointer shadow-md"
+                >
+                  Start New Chat ✨
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleImageUpload} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                </button>
 
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-              />
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                />
 
-              <button
-                type="submit"
-                disabled={!inputMessage.trim() && !selectedImage}
-                className="p-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={!inputMessage.trim() && !selectedImage}
+                  className="p-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            )}
           </div>
 
         </div>
