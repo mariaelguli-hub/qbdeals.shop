@@ -8,23 +8,22 @@ export default function ProductCard({ product }) {
 
   const discount = Math.round(((selectedVariant.comparePrice - selectedVariant.price) / selectedVariant.comparePrice) * 100)
   
-  // Rating and Reviews fallback values
   const ratingValue = product.rating || 4.95
   const reviewsCount = product.reviewsCount || 128
 
   return (
-    <div className="card flex flex-col overflow-hidden">
+    <div className="card flex flex-col overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
       
-      {/* Image Container (Fills the entire space with Object-Cover) */}
-      <div className="relative w-full h-56 sm:h-64 overflow-hidden bg-white">
-        <span className="absolute top-3 left-3 z-10 badge bg-brand-700 text-white shadow-md">
+      {/* Full Image Container - No Crop */}
+      <div className="relative w-full p-4 bg-gray-50/60 text-center flex items-center justify-center min-h-[260px]">
+        <span className="absolute top-3 left-3 z-10 badge bg-brand-700 text-white shadow-xs">
           {product.tag}
         </span>
         
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-300"
+          className="w-full h-auto max-h-[230px] object-contain hover:scale-105 transition-transform duration-300"
           onError={(e) => {
             e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
           }}
