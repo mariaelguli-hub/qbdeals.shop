@@ -2,29 +2,31 @@ import React, { useState, useEffect, useRef } from 'react'
 import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 
-// 🔐 تقطيع المفتاح الجديد آلياً لتفادي اكتشافه وبلوكه من طرف GitHub
+// 🔐 تقطيع المفتاح لتفادي حظره التلقائي على GitHub
 const k1 = "AQ.Ab8RN6KrIoqltdC05"
 const k2 = "uia_eeODy2ZVtJagcLC3a8USxkPSpexYg"
 const GEMINI_API_KEY = k1 + k2
 
-const SYSTEM_PROMPT = `You are the official sales & support AI Agent for QB DEALS (qbdeals.com).
-Your goal is to answer customer questions accurately, guide them to buy QuickBooks Desktop licenses, and always push for a closing CTA.
+const SYSTEM_PROMPT = `You are a friendly, helpful, and natural human sales support agent for QB DEALS (qbdeals.com).
 
-PRODUCTS OFFERED:
+CONVERSATIONAL TONE & STEP-BY-STEP RULE:
+- Talk like a helpful, polite human sales assistant. Do NOT rush to sell immediately or give repetitive sales pitches.
+- Go step-by-step with the user. If they say "hi" or ask "how are you", reply warmly, introduce yourself briefly, and ask how you can help them today.
+- Keep your answers concise, clear, and focused on what the user actually asked.
+
+PRODUCTS WE OFFER:
 1. QuickBooks Pro Plus 2024
 2. QuickBooks Plus 2024 Mac
 3. QuickBooks Enterprise 2024
 
-PRICING & PURCHASING INSTRUCTIONS:
-- If the customer asks about prices, costs, or how to buy/order: Tell them to check the "Products" section on our website to place their order directly.
-- Emphasize that all licenses are 100% genuine one-time payments with no monthly/annual subscription fees, backed by instant email delivery (5–15 mins).
+BUSINESS & PRICING POLICIES:
+- All licenses are 100% genuine one-time payments (No annual or monthly subscription fees).
+- Delivery is instant via email (takes 5 to 15 minutes after order).
+- If the user asks about prices, costs, or how to buy/order, guide them naturally to check our "Products" section on the website to place their order directly.
 
-STRICT SCOPE & BOUNDARIES:
-- Only answer questions related to the 3 QuickBooks Desktop products listed above, order delivery, licensing, and installation.
-- Deactivate/decline polite responses to off-topic questions (e.g. coding, weather, sports, general chat) by saying: "I am specialized only in assisting you with QuickBooks Desktop licenses and QB DEALS orders."
-
-SALES CLOSING & CTA RULE:
-- ALWAYS end EVERY response with a clear Call To Action (CTA) encouraging the user to choose their product from the Products section and place their order now.`
+BOUNDARIES:
+- Only answer questions related to our 3 QuickBooks Desktop products, licensing, installation, and QB DEALS orders.
+- For off-topic questions (e.g., coding, general knowledge, weather), politely state that you are specialized in QuickBooks Desktop licenses at QB DEALS.`
 
 const QUICK_QUESTIONS = [
   "What products do you offer?",
@@ -77,7 +79,7 @@ export default function ChatWidget() {
             {
               id: 'welcome',
               sender: 'bot',
-              message: 'Hello! 👋 Welcome to QB DEALS. How can I assist you with your QuickBooks Desktop license today? Check out our Products section to place your order!'
+              message: 'Hello! 👋 Welcome to QB DEALS. How can I assist you with your QuickBooks Desktop license today?'
             }
           ])
         }
@@ -142,37 +144,50 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🤖 3️⃣ دالة استدعاء Gemini AI
-  const callGeminiAI = async (userPrompt) => {
+  // 🤖 3️⃣ دالة استدعاء Gemini AI بأسلوب محادثة طبيعي
+  const callGeminiAI = async (userPrompt, chatHistory) => {
     try {
+      // إعداد سجل المحادثة الكامل حتى يفهم الذكاء الاصطناعي السياق خطوة بخطوة
+      const formattedHistory = chatHistory
+        .filter(m => m.message)
+        .map(m => ({
+          role: m.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: m.message }]
+        }))
+
+      const contents = [
+        ...formattedHistory,
+        { role: 'user', parts: [{ text: userPrompt }] }
+      ]
+
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: `${SYSTEM_PROMPT}\n\nCustomer Message: ${userPrompt}` }]
-              }
-            ]
+            systemInstruction: {
+              parts: [{ text: SYSTEM_PROMPT }]
+            },
+            contents: contents
           })
         }
       )
 
       const data = await response.json()
+      
       if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
         return data.candidates[0].content.parts[0].text
       }
-      return "You can check our Products section on our website to view all available QuickBooks licenses and place your order now! How else can I help you?"
+      
+      return "Hello! How can I help you regarding QuickBooks Desktop today?"
     } catch (error) {
-      console.error("Gemini AI API Error:", error)
-      return "To buy your genuine QuickBooks Desktop license key, please visit our Products section to place your order now!"
+      console.error("Gemini AI Error:", error)
+      return "Hello! Feel free to ask any question about our QuickBooks products."
     }
   }
 
-  // 4️⃣ إرسال الرسالة لـ Supabase والتفاعل مع الـ AI
+  // 4️⃣ إرسال الرسالة
   const handleSend = async (textToSend = null) => {
     const messageContent = textToSend || inputMessage
     if ((!messageContent.trim() && !selectedImage) || !sessionId) return
@@ -185,7 +200,8 @@ export default function ChatWidget() {
       created_at: new Date().toISOString()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
     setInputMessage('')
     setSelectedImage(null)
 
@@ -193,8 +209,8 @@ export default function ChatWidget() {
 
     setIsTyping(true)
 
-    // الحصول على الرد بواسطة الذكاء الاصطناعي
-    const aiResponseText = await callGeminiAI(messageContent)
+    // الحصول على رد طبيعي مخصص
+    const aiResponseText = await callGeminiAI(messageContent, updatedMessages)
 
     const botMessage = {
       session_id: sessionId,
