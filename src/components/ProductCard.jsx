@@ -12,18 +12,18 @@ export default function ProductCard({ product }) {
   const reviewsCount = product.reviewsCount || 128
 
   return (
-    <div className="card flex flex-col overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="card flex flex-col overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group">
       
-      {/* Full Image Container - No Crop */}
-      <div className="relative w-full p-4 bg-gray-50/60 text-center flex items-center justify-center min-h-[260px]">
-        <span className="absolute top-3 left-3 z-10 badge bg-brand-700 text-white shadow-xs">
+      {/* Full-Bleed Image Banner (Seamless Edge-to-Edge) */}
+      <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+        <span className="absolute top-3 left-3 z-10 badge bg-brand-700 text-white shadow-md font-bold text-xs">
           {product.tag}
         </span>
         
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-auto max-h-[230px] object-contain hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
           onError={(e) => {
             e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
           }}
@@ -45,7 +45,7 @@ export default function ProductCard({ product }) {
           </div>
         </div>
 
-        <h3 className="font-bold text-gray-900 mb-2 leading-snug">
+        <h3 className="font-bold text-gray-900 mb-2 leading-snug text-base group-hover:text-brand-700 transition-colors">
           {product.name}
         </h3>
         
@@ -67,9 +67,9 @@ export default function ProductCard({ product }) {
           {product.variants.map((variant) => (
             <label
               key={variant.id}
-              className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer text-sm transition-colors ${
+              className={`flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer text-sm transition-colors ${
                 selectedVariant.id === variant.id
-                  ? 'border-brand-600 bg-brand-50'
+                  ? 'border-brand-600 bg-brand-50/60 font-semibold'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -90,39 +90,39 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Price & Qty */}
-        <div className="flex items-center gap-3 mb-4 mt-auto">
+        <div className="flex items-center gap-3 mb-4 mt-auto pt-2 border-t border-gray-50">
           <span className="text-2xl font-extrabold text-gray-900">
             ${selectedVariant.price.toFixed(2)}
           </span>
           <span className="text-sm text-gray-400 line-through">
             ${selectedVariant.comparePrice.toFixed(2)}
           </span>
-          <span className="text-sm font-bold text-brand-700">
+          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
             {discount}% off
           </span>
-          <div className="ml-auto flex items-center border border-gray-300 rounded-md">
+          <div className="ml-auto flex items-center border border-gray-200 rounded-lg bg-gray-50/50">
             <button
               onClick={() => setQty(Math.max(1, qty - 1))}
-              className="px-2.5 py-1.5 hover:bg-gray-50"
+              className="px-2.5 py-1.5 hover:bg-gray-200/60 rounded-l-lg transition-colors"
             >
               <Minus className="w-3.5 h-3.5" />
             </button>
-            <span className="px-2 text-sm font-medium w-8 text-center">{qty}</span>
+            <span className="px-2 text-sm font-bold w-7 text-center text-gray-800">{qty}</span>
             <button
               onClick={() => setQty(qty + 1)}
-              className="px-2.5 py-1.5 hover:bg-gray-50"
+              className="px-2.5 py-1.5 hover:bg-gray-200/60 rounded-r-lg transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        <button className="w-full btn-primary justify-center py-3 text-sm mb-2">
+        <button className="w-full btn-primary justify-center py-3 text-sm mb-2 shadow-md shadow-brand-700/20">
           <Zap className="w-4 h-4" /> Buy now
         </button>
         <Link
           to={`/product/${product.slug}`}
-          className="block text-center text-sm text-gray-500 hover:text-brand-700 underline"
+          className="block text-center text-sm font-semibold text-gray-500 hover:text-brand-700 underline underline-offset-2 transition-colors"
         >
           View full details
         </Link>
