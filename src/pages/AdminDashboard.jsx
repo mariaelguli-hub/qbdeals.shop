@@ -156,12 +156,12 @@ export default function AdminDashboard() {
     toast.success('Reply sent successfully!')
   }
 
-  // 🛑 🔴 دالة جديدة: إغلاق المحادثة من طرف الأدمن
+  // 🛑 🔴 دالة إغلاق المحادثة من طرف الأدمن مع إرسال رسالة فورية للعميل
   const handleEndSessionFromAdmin = async () => {
     if (!selectedSession) return
 
     if (window.confirm("Are you sure you want to end this live conversation?")) {
-      // إرسال رسالة توضيحية للعميل
+      // 1. إرسال رسالة ختامية لجدول الرسائل لتظهر عند العميل فوراً
       const closeMsg = {
         session_id: selectedSession.id,
         sender: 'agent',
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
 
       await supabase.from('chat_messages').insert([closeMsg])
 
-      // تحديث حالة المحادثة إلى ended
+      // 2. تحديث حالة المحادثة إلى ended
       const { error } = await supabase
         .from('chat_sessions')
         .update({ status: 'ended', updated_at: new Date().toISOString() })
