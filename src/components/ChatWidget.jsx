@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw, LogOut, Headset } from 'lucide-react'
+import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw, LogOut, Headset, ShieldCheck } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 
 const QUICK_QUESTIONS = [
@@ -76,7 +76,7 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // الاستماع الفوري لأي تغيير في حالة الجلسة أو رسائل الأدمن
+  // الاستماع الفوري الحقيقي والذكي بدون أي تأخير أو الحاجة لـ Refresh
   useEffect(() => {
     if (!sessionId) return
 
@@ -101,19 +101,26 @@ export default function ChatWidget() {
       }, (payload) => {
         if (payload.new?.status) {
           const newStatus = payload.new.status
-          // إذا تحولت الحالة إلى agent من طرف لوحة التحكم، نضيف رسالة تنبيهية أوتوماتيكية للزبون
+          
+          // إذا تغيرت الحالة إلى agent ولم تكن كذلك من قبل، نقوم بإضافة رسالة التنبيه فوراً وبشكل سلس
           if (newStatus === 'agent' && sessionStatus !== 'agent') {
-            setMessages(prev => [
-              ...prev,
-              {
-                id: 'agent_joined_' + Date.now(),
-                sender: 'agent',
-                message: '👋 A live support agent has joined the chat and will assist you now.',
-                created_at: new Date().toISOString()
-              }
-            ])
+            setSessionStatus('agent')
+            setMessages(prev => {
+              // التأكد من عدم تكرار رسالة الانضمام
+              if (prev.some(m => m.id === 'agent_joined_notice')) return prev
+              return [
+                ...prev,
+                {
+                  id: 'agent_joined_notice',
+                  sender: 'agent',
+                  message: '✨ A human support expert has taken over the chat to assist you personally.',
+                  created_at: new Date().toISOString()
+                }
+              ]
+            })
+          } else {
+            setSessionStatus(newStatus)
           }
-          setSessionStatus(newStatus)
         }
       })
       .subscribe()
@@ -172,7 +179,6 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // محرك الذكاء الاصطناعي الحقيقي عبر OpenRouter
   const fetchOpenRouterAI = async (userPrompt) => {
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
     if (!apiKey) {
@@ -229,11 +235,9 @@ export default function ChatWidget() {
     setSelectedImage(null)
 
     await supabase.from('chat_messages').insert([userMessage])
-    
-    // إذا كان البوت هو الخادم، نقوم بتحديث الحالة أو إبقاء الجلسة نشطة
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
 
-    // إذا كانت الحالة الحالية للتشغيل هي 'bot' (ولم يتتدخل الـ Admin بعد)، فالروبوت يجيب بذكاء
+    // الـ Chatbot يجيب فقط إذا كانت الحالة 'bot'
     if (sessionStatus === 'bot') {
       setIsTyping(true)
 
@@ -277,14 +281,13 @@ export default function ChatWidget() {
           <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 p-4 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <div className="relative">
-                {/* Logo يتبدل أوتوماتيكياً حسب واش البوت أو الهيومان */}
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm border ${
-                  sessionStatus === 'agent' ? 'bg-amber-600 border-amber-400/30' : 'bg-emerald-600 border-emerald-400/30'
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm border transition-all duration-300 ${
+                  sessionStatus === 'agent' ? 'bg-amber-600 border-amber-400/50 shadow-lg shadow-amber-500/30' : 'bg-emerald-600 border-emerald-400/30'
                 }`}>
-                  {sessionStatus === 'agent' ? <Headset className="w-5 h-5 text-white" /> : 'QB'}
+                  {sessionStatus === 'agent' ? <Headset className="w-5 h-5 text-white animate-pulse" /> : 'QB'}
                 </div>
                 <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-emerald-900 rounded-full ${
-                  sessionStatus === 'agent' ? 'bg-amber-400' : 'bg-emerald-400'
+                  sessionStatus === 'agent' ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'
                 }`} />
               </div>
               <div>
@@ -292,7 +295,7 @@ export default function ChatWidget() {
                   QB DEALS Support <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300/30" />
                 </h3>
                 <p className="text-[11px] text-emerald-200/80 font-medium">
-                  {sessionStatus === 'agent' ? 'Live Agent Connected (Human)' : 'Instant AI Assistance'}
+                  {sessionStatus === 'agent' ? 'Live Support Agent (Active)' : 'Instant AI Assistance'}
                 </p>
               </div>
             </div>
@@ -321,7 +324,7 @@ export default function ChatWidget() {
               <span className={`w-2 h-2 rounded-full ${
                 sessionStatus === 'ended' ? 'bg-red-500' : sessionStatus === 'agent' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-pulse'
               }`} /> 
-              {sessionStatus === 'ended' ? 'Chat Ended' : sessionStatus === 'agent' ? 'Human Agent is chatting with you' : 'Active AI Session'}
+              {sessionStatus === 'ended' ? 'Chat Ended' : sessionStatus === 'agent' ? 'Human Expert Connected 🟢' : 'Active AI Session'}
             </span>
             <button
               onClick={handleEndConversation}
@@ -336,11 +339,11 @@ export default function ChatWidget() {
             {messages.map((msg, index) => (
               <div 
                 key={msg.id || index} 
-                className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-2.5 transition-all duration-300 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender !== 'user' && (
-                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-1 ${
-                    msg.sender === 'agent' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-sm ${
+                    msg.sender === 'agent' ? 'bg-amber-500 text-white animate-bounce' : 'bg-emerald-100 text-emerald-800'
                   }`}>
                     {msg.sender === 'agent' ? <Headset className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                   </div>
@@ -357,15 +360,17 @@ export default function ChatWidget() {
                   )}
 
                   {msg.message && (
-                    <div className={`p-3 rounded-2xl font-medium leading-relaxed shadow-sm whitespace-pre-line ${
+                    <div className={`p-3 rounded-2xl font-medium leading-relaxed shadow-sm whitespace-pre-line transition-all duration-300 ${
                       msg.sender === 'user' 
-                        ? 'bg-emerald-600 text-white rounded-br-none' 
+                        ? 'bg-emerald-600 text-white rounded-br-none shadow-emerald-600/20' 
                         : msg.sender === 'agent'
-                        ? 'bg-amber-500 text-white rounded-bl-none border border-amber-600 shadow-md'
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-bl-none border border-amber-400 shadow-md shadow-amber-500/20 animate-in fade-in zoom-in-95'
                         : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
                     }`}>
                       {msg.sender === 'agent' && (
-                        <span className="block text-[10px] font-bold text-amber-100 uppercase mb-0.5 tracking-wider">Human Agent</span>
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-amber-100 uppercase mb-1 tracking-wider border-b border-amber-400/30 pb-0.5">
+                          <ShieldCheck className="w-3 h-3" /> Live Support Expert
+                        </div>
                       )}
                       {msg.message}
                     </div>
@@ -459,14 +464,16 @@ export default function ChatWidget() {
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder={sessionStatus === 'agent' ? "Type to human agent..." : "Type a message..."}
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  placeholder={sessionStatus === 'agent' ? "Message your support expert..." : "Type a message..."}
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                 />
 
                 <button
                   type="submit"
                   disabled={!inputMessage.trim() && !selectedImage}
-                  className="p-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all active:scale-95 cursor-pointer"
+                  className={`p-2.5 text-white rounded-xl shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-40 ${
+                    sessionStatus === 'agent' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                  }`}
                 >
                   <Send className="w-4 h-4" />
                 </button>
