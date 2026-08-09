@@ -158,31 +158,44 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // محرك الردود الذكي والمتنوع حسب سؤال الزبون
-  const generateResponse = (userPrompt) => {
-    const text = userPrompt.toLowerCase().trim()
-
-    if (text.includes("hi") || text.includes("hello") || text.includes("hey")) {
-      return "Hello! 👋 Welcome to QB DEALS. Are you looking for QuickBooks Pro, Mac, or Enterprise?"
+  // 🧠 الذكاء الاصطناعي الحقيقي عبر OpenRouter و GPT-4o-mini
+  const fetchOpenRouterAI = async (userPrompt) => {
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+    if (!apiKey) {
+      return "Thank you for reaching out! Please check out our Products section to place your order."
     }
 
-    if (text.includes("mac")) {
-      return "Yes, we have QuickBooks Plus 2024 for Mac available with instant email delivery. You can check it out in the Products section!"
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful sales assistant for QB DEALS (qbdeals.com). We sell genuine QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024 licenses as one-time payments with instant email delivery (5-15 mins). Answer questions naturally, concisely, and accurately based on user queries (like pricing, Mac versions, delivery, etc.). Direct them to the Products section for purchases."
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ]
+        })
+      })
+
+      const data = await response.json()
+      if (data.choices && data.choices[0] && data.choices[0].message) {
+        return data.choices[0].message.content
+      }
+    } catch (err) {
+      console.error("OpenRouter Error:", err)
     }
 
-    if (text.includes("qb") || text.includes("quickbooks") || text.includes("product") || text.includes("version") || text.includes("need")) {
-      return "We offer QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024. Which one are you interested in?"
-    }
-
-    if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("pay")) {
-      return "All our licenses are one-time payments with no monthly fees. Please check the Products section on our website for current pricing!"
-    }
-
-    if (text.includes("delivery") || text.includes("receive") || text.includes("email") || text.includes("fast")) {
-      return "You will receive your license key and download link directly via email within 5 to 15 minutes of purchase."
-    }
-
-    return "We provide genuine QuickBooks Desktop licenses with instant delivery. Feel free to browse our Products section to place your order!"
+    return "Thank you for reaching out! We offer genuine QuickBooks licenses with instant email delivery. Check our Products section!"
   }
 
   const handleSend = async (textToSend = null) => {
@@ -207,21 +220,19 @@ export default function ChatWidget() {
     if (sessionStatus !== 'agent') {
       setIsTyping(true)
 
-      setTimeout(async () => {
-        const responseText = generateResponse(messageContent)
+      const responseText = await fetchOpenRouterAI(messageContent)
 
-        const botMessage = {
-          session_id: sessionId,
-          sender: 'bot',
-          message: responseText,
-          created_at: new Date().toISOString()
-        }
+      const botMessage = {
+        session_id: sessionId,
+        sender: 'bot',
+        message: responseText,
+        created_at: new Date().toISOString()
+      }
 
-        setMessages(prev => [...prev, botMessage])
-        setIsTyping(false)
+      setMessages(prev => [...prev, botMessage])
+      setIsTyping(false)
 
-        await supabase.from('chat_messages').insert([botMessage])
-      }, 700)
+      await supabase.from('chat_messages').insert([botMessage])
     }
   }
 
