@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw } from 'lucide-react'
+import { MessageSquare, X, Send, Sparkles, User, Bot, Loader2, Paperclip, RefreshCw, LogOut } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 
 const QUICK_QUESTIONS = [
@@ -25,6 +25,7 @@ export default function ChatWidget() {
     let savedSessionId = localStorage.getItem('qb_chat_session')
     
     if (!savedSessionId || forceNew) {
+      // إنشاء جلسة جديدة
       const { data } = await supabase
         .from('chat_sessions')
         .insert([{ status: 'bot' }])
@@ -64,9 +65,17 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 🛑 إنهاء المحادثة وإعادتها من الصفر
+  // 🛑 2️⃣ دالة إنهاء المحادثة وتحديث الحالية في Admin Dashboard
   const handleEndConversation = async () => {
-    if (window.confirm("Do you want to end this conversation and start a new chat?")) {
+    if (window.confirm("Are you sure you want to end this conversation and start a new chat?")) {
+      if (sessionId) {
+        // تحديث حالة المحادثة في Supabase لتظهر في الـ Admin Dashboard
+        await supabase
+          .from('chat_sessions')
+          .update({ status: 'ended' })
+          .eq('id', sessionId)
+      }
+
       localStorage.removeItem('qb_chat_session')
       await initChat(true)
     }
@@ -76,7 +85,7 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping, isOpen])
 
-  // 2️⃣ رفع الصور
+  // 3️⃣ رفع الصور
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -108,55 +117,59 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🧠 3️⃣ محرك إجابات ذكي ومباشر (Local Smart AI Engine)
+  // 🧠 4️⃣ محرك إجابات ذكي متطور ومتعدد الاحتمالات
   const generateResponse = (userPrompt) => {
     const text = userPrompt.toLowerCase().trim()
 
-    // السلام والترحاب
-    if (text.match(/^(hi|hello|hey|good morning|good afternoon|greetings)/i)) {
-      return "Hello! 👋 Great to have you here. How can I help you regarding your QuickBooks Desktop license today?"
+    // اقتراح أفضل أصل / إصدار مناسب (Best Version / Recommendation)
+    if (text.includes("best version") || text.includes("recommend") || text.includes("which version") || text.includes("which one")) {
+      return "To choose the best version for your business:\n\n• **QuickBooks Pro Plus 2024**: Ideal for small businesses needing fast accounting and invoicing.\n• **QuickBooks Enterprise 2024**: Best for growing businesses needing advanced inventory & multi-user support.\n• **QuickBooks Plus 2024 Mac**: Tailored specifically for Mac OS users.\n\nYou can view all products and order directly in our Products section!"
     }
 
-    // كيف الحال / هل يمكنك مساعدتي
-    if (text.includes("how are you") || text.includes("can you help") || text.includes("need help") || text.includes("have questions")) {
-      return "I'm doing great, thank you! I'd be happy to answer any questions you have about our QuickBooks Desktop products, license keys, or instant delivery."
+    // السلام المباشر فقط
+    if (text === "hi" || text === "hello" || text === "hey" || text === "greetings") {
+      return "Hello! 👋 Welcome to QB DEALS. What product or question can I help you with today?"
     }
 
-    // الاستفسار عن المنتجات المتاحة
-    if (text.includes("product") || text.includes("version") || text.includes("what do you have") || text.includes("offer") || text.includes("which")) {
-      return "We offer 3 genuine QuickBooks Desktop 2024 licenses:\n1. QuickBooks Pro Plus 2024\n2. QuickBooks Plus 2024 Mac\n3. QuickBooks Enterprise 2024\n\nWhich version are you looking for?"
+    // السؤال عن الحال / طلب المساعدة العامة
+    if (text.includes("how are you") || text.includes("how r u")) {
+      return "I'm doing great, thank you! How can I assist you with your QuickBooks Desktop license today?"
     }
 
-    // الأسعار والشراء وطريقة الطلب
-    if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("order") || text.includes("how to") || text.includes("pay")) {
-      return "All our licenses are 100% genuine with a one-time payment (no recurring subscriptions) and instant email delivery (5–15 mins).\n\nTo view pricing and complete your order, please head over to the 'Products' section on our website!"
+    if (text.includes("can you help") || text.includes("need help") || text.includes("have questions")) {
+      return "Of course! I am here to help. What specific details or QuickBooks version would you like to know more about?"
     }
 
-    // الاشتراك / هل الدفع مرة واحدة
-    if (text.includes("one time") || text.includes("subscription") || text.includes("monthly") || text.includes("annual") || text.includes("fee")) {
-      return "Yes! All our QuickBooks Desktop licenses are 100% genuine one-time payments. You pay once and enjoy your lifetime license with no monthly or annual fees."
+    // الاستفسار عن المنتجات
+    if (text.includes("product") || text.includes("offer") || text.includes("version") || text.includes("what do you have")) {
+      return "We offer 3 lifetime-access QuickBooks Desktop 2024 products:\n1. QuickBooks Pro Plus 2024\n2. QuickBooks Enterprise 2024\n3. QuickBooks Plus 2024 Mac\n\nCheck out our Products section to select the right one for you!"
     }
 
-    // السرعة وسرعة التوصيل
-    if (text.includes("fast") || text.includes("delivery") || text.includes("receive") || text.includes("time") || text.includes("when")) {
-      return "Your license key and official download link will be delivered directly to your email instantly within 5 to 15 minutes after your order is confirmed!"
+    // الأسعار والطلب
+    if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("order") || text.includes("pay") || text.includes("purchase")) {
+      return "All our QuickBooks Desktop licenses are genuine 100% one-time payments with no monthly or annual fees!\n\nPlease visit our 'Products' section to view current prices and place your order instantly."
     }
 
-    // نقل الترخيص لكمبيوتر آخر
-    if (text.includes("transfer") || text.includes("new pc") || text.includes("another computer") || text.includes("move")) {
-      return "Yes, you can easily transfer your QuickBooks license to a new PC by installing it on the new computer and activating it using your license key."
+    // الاشتراك / طريقة الدفع
+    if (text.includes("one time") || text.includes("subscription") || text.includes("monthly") || text.includes("annual")) {
+      return "Yes, exactly! It is a one-time payment with no recurring subscription fees. You buy it once and use your license key indefinitely."
     }
 
-    // السؤال عن الذكاء الاصطناعي أو المساعدة العامة
-    if (text.includes("agent") || text.includes("who are you") || text.includes("bot") || text.includes("real person")) {
-      return "I am the official QB DEALS support agent! I am here to help guide you with our QuickBooks Desktop products, ordering, and setup."
+    // التوصيل
+    if (text.includes("delivery") || text.includes("receive") || text.includes("fast") || text.includes("how long")) {
+      return "After completing your order, your license key and download link will be delivered directly to your email within 5 to 15 minutes."
     }
 
-    // إجابة عامة وتفاعلية عند عدم مطابقة الكلمات
-    return "Thank you for reaching out! We offer QuickBooks Pro Plus 2024, Mac, and Enterprise licenses with lifetime access and instant delivery. Please visit our Products section to select your preferred license!"
+    // نقل الترخيص
+    if (text.includes("transfer") || text.includes("new pc") || text.includes("another computer")) {
+      return "Yes, you can easily transfer your software license to a new PC whenever you upgrade your computer."
+    }
+
+    // رد افتراضي مرن عند عدم تطابق القواعد
+    return "Thank you for asking! We provide genuine QuickBooks Pro Plus, Enterprise, and Mac licenses with instant email delivery. Please check our Products section to place your order!"
   }
 
-  // 4️⃣ إرسال الرسالة
+  // 5️⃣ إرسال الرسالة
   const handleSend = async (textToSend = null) => {
     const messageContent = textToSend || inputMessage
     if ((!messageContent.trim() && !selectedImage) || !sessionId) return
@@ -177,7 +190,6 @@ export default function ChatWidget() {
 
     setIsTyping(true)
 
-    // وقت محاكاة استجابة حقيقية (0.8 ثانية)
     setTimeout(async () => {
       const responseText = generateResponse(messageContent)
 
@@ -192,12 +204,13 @@ export default function ChatWidget() {
       setIsTyping(false)
 
       await supabase.from('chat_messages').insert([botMessage])
-    }, 800)
+    }, 700)
   }
 
   return (
     <div className="fixed bottom-5 right-5 z-50 font-sans">
       
+      {/* Launcher Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -213,8 +226,9 @@ export default function ChatWidget() {
         </button>
       )}
 
+      {/* Chat Window */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[400px] h-[550px] bg-white/95 backdrop-blur-xl rounded-3xl border border-gray-100 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="w-[360px] sm:w-[400px] h-[560px] bg-white/95 backdrop-blur-xl rounded-3xl border border-gray-100 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
           
           {/* Header */}
           <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 p-4 text-white flex items-center justify-between shadow-md">
@@ -229,12 +243,12 @@ export default function ChatWidget() {
                 <h3 className="font-bold text-sm leading-tight flex items-center gap-1.5">
                   QB DEALS Support <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300/30" />
                 </h3>
-                <p className="text-[11px] text-emerald-200/80 font-medium">Instant AI & Live Assistance</p>
+                <p className="text-[11px] text-emerald-200/80 font-medium">Instant Support Assistance</p>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
-              {/* 🛑 End Conversation Button */}
+              {/* 🛑 End Conversation Icon */}
               <button
                 onClick={handleEndConversation}
                 title="End & Reset Chat"
@@ -250,6 +264,19 @@ export default function ChatWidget() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+          </div>
+
+          {/* Top Bar for explicitly Ending Chat */}
+          <div className="bg-emerald-50/80 px-4 py-1.5 border-b border-emerald-100 flex items-center justify-between text-[11px]">
+            <span className="text-emerald-800 font-medium flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Active Session
+            </span>
+            <button
+              onClick={handleEndConversation}
+              className="text-red-600 hover:text-red-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <LogOut className="w-3 h-3" /> End Chat
+            </button>
           </div>
 
           {/* Messages Area */}
@@ -327,6 +354,7 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Image Preview Panel */}
           {selectedImage && (
             <div className="p-2 bg-emerald-50 border-t border-emerald-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
