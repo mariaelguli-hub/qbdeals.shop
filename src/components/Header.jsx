@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X, ShoppingCart, ShieldCheck, Zap, CreditCard, RotateCcw } from 'lucide-react'
 
 const navLinks = [
   { to: '/', label: 'Home' },
-  { to: '/shop', label: 'Products' },
   { to: '/about', label: 'About' },
   { to: '/faq', label: 'FAQ' },
   { to: '/contact', label: 'Contact' },
@@ -13,23 +12,37 @@ const navLinks = [
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { pathname } = useLocation()
+  const navigate = useNavigate()
 
-  // 📜 دالة الـ Smooth Scroll لقسم المنتجات
-  const handleShopClick = () => {
-    if (pathname === '/') {
-      const productsSection = document.getElementById('products') || document.querySelector('section')
-      if (productsSection) {
-        productsSection.scrollIntoView({ behavior: 'smooth' })
-        return
+  // 📜 دالة الـ Scroll Down الجذري والحل المضمون لمشكلة 404
+  const scrollToProducts = () => {
+    const doScroll = () => {
+      // البحث عن أي قسم يحمل id للمنتجات أو أول قسم عروض
+      const target = document.getElementById('products') || 
+                     document.getElementById('all-products') || 
+                     document.querySelector('section:nth-of-type(2)') ||
+                     document.querySelector('main')
+
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        window.scrollTo({ top: 600, behavior: 'smooth' })
       }
     }
-    window.location.href = '/shop'
+
+    if (pathname === '/') {
+      doScroll()
+    } else {
+      // نقل المستخدم للصفحة الرئيسية ثم الـ Scroll
+      navigate('/')
+      setTimeout(doScroll, 300)
+    }
   }
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-200">
       
-      {/* 🚀 TOP BAR UPGRADE 🚀 */}
+      {/* TOP BAR */}
       <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-emerald-100 text-xs py-2 border-b border-emerald-800/40 shadow-sm relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center sm:justify-between gap-y-2 gap-x-6 text-[11px] sm:text-xs font-semibold tracking-wide">
@@ -85,6 +98,13 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            {/* زر Products في المنيو ينزل أسفل للمنتجات مباشرة بدون 404 */}
+            <button
+              onClick={scrollToProducts}
+              className="text-sm font-medium text-gray-600 hover:text-brand-700 transition-colors cursor-pointer"
+            >
+              Products
+            </button>
           </nav>
 
           {/* Actions */}
@@ -96,12 +116,12 @@ export default function Header() {
               <ShoppingCart className="w-5 h-5 text-gray-700" />
             </Link>
 
-            {/* 🌟 SHOP NOW BUTTON WITH ANIMATION & SMOOTH SCROLL 🌟 */}
+            {/* 🌟 SHOP NOW BUTTON WITH ANIMATION & SCROLL DOWN 🌟 */}
             <button
-              onClick={handleShopClick}
+              onClick={scrollToProducts}
               className="hidden sm:inline-flex relative items-center justify-center px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 rounded-xl overflow-hidden shadow-lg shadow-emerald-600/30 hover:bg-emerald-700 hover:shadow-emerald-600/50 hover:scale-105 active:scale-95 transition-all duration-300 animate-pulse hover:animate-none group cursor-pointer"
             >
-              {/* تأثير لمعان ضوئي يمر على الزر */}
+              {/* تأثير اللمعان */}
               <span className="absolute top-0 left-0 w-full h-full bg-white/20 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
               
               <span className="relative z-10 flex items-center gap-1.5">
@@ -137,7 +157,17 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            
+
+            <button
+              onClick={() => {
+                setMobileOpen(false)
+                scrollToProducts()
+              }}
+              className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Products
+            </button>
+
             <Link
               to="/cart"
               onClick={() => setMobileOpen(false)}
@@ -150,7 +180,7 @@ export default function Header() {
             <button
               onClick={() => {
                 setMobileOpen(false)
-                handleShopClick()
+                scrollToProducts()
               }}
               className="w-full mt-2 inline-flex items-center justify-center py-3 text-sm font-bold text-white bg-emerald-600 rounded-xl shadow-md active:scale-95 transition-all"
             >
