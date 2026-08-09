@@ -14,14 +14,13 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [sessionId, setSessionId] = useState(null)
-  const [sessionStatus, setSessionStatus] = useState('bot') // 'bot' | 'agent' | 'ended'
+  const [sessionStatus, setSessionStatus] = useState('bot')
   const [uploadingImage, setUploadingImage] = useState(false)
   const [selectedImage, setSelectedImage] = useState(null)
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  // 1️⃣ إعداد المحادثة والجلسة في Supabase
   const initChat = async (forceNew = false) => {
     let savedSessionId = localStorage.getItem('qb_chat_session')
     
@@ -77,7 +76,6 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // 📡 2️⃣ الاستماع التفاعلي الفوري (Realtime) لأي رد من الـ Admin أو إغلاق للجلسة
   useEffect(() => {
     if (!sessionId) return
 
@@ -111,7 +109,6 @@ export default function ChatWidget() {
     }
   }, [sessionId])
 
-  // 🛑 3️⃣ دالة إنهاء المحادثة
   const handleEndConversation = async () => {
     if (window.confirm("Are you sure you want to end this conversation and start a new chat?")) {
       if (sessionId) {
@@ -130,7 +127,6 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping, isOpen])
 
-  // 4️⃣ رفع الصور وتخزينها في Supabase Storage
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -162,42 +158,33 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🧠 5️⃣ محرك الردود الذكي والمحلي المتطور (يتفاعل حسب سؤال الزبون)
+  // محرك الردود الذكي والمتنوع حسب سؤال الزبون
   const generateResponse = (userPrompt) => {
     const text = userPrompt.toLowerCase().trim()
 
+    if (text.includes("hi") || text.includes("hello") || text.includes("hey")) {
+      return "Hello! 👋 Welcome to QB DEALS. Are you looking for QuickBooks Pro, Mac, or Enterprise?"
+    }
+
     if (text.includes("mac")) {
-      return "Yes! We offer QuickBooks Plus 2024 Mac tailored specifically for macOS users with genuine activation and instant email delivery (5-15 mins). Check out our Products section to get yours!"
+      return "Yes, we have QuickBooks Plus 2024 for Mac available with instant email delivery. You can check it out in the Products section!"
     }
 
-    if (text.includes("best version") || text.includes("recommend") || text.includes("which version") || text.includes("which one")) {
-      return "To choose the best version for your business:\n\n• **QuickBooks Pro Plus 2024**: Ideal for small businesses needing fast accounting and invoicing.\n• **QuickBooks Enterprise 2024**: Best for growing businesses needing advanced inventory & multi-user support.\n• **QuickBooks Plus 2024 Mac**: Tailored specifically for Mac OS users.\n\nYou can view all products and order directly in our Products section!"
+    if (text.includes("qb") || text.includes("quickbooks") || text.includes("product") || text.includes("version") || text.includes("need")) {
+      return "We offer QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024. Which one are you interested in?"
     }
 
-    if (text === "hi" || text === "hello" || text === "hey" || text === "greetings") {
-      return "Hello! 👋 Welcome to QB DEALS. What product or question can I help you with today?"
+    if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("pay")) {
+      return "All our licenses are one-time payments with no monthly fees. Please check the Products section on our website for current pricing!"
     }
 
-    if (text.includes("product") || text.includes("offer") || text.includes("version") || text.includes("what do you have")) {
-      return "We offer 3 lifetime-access QuickBooks Desktop 2024 products:\n1. QuickBooks Pro Plus 2024\n2. QuickBooks Enterprise 2024\n3. QuickBooks Plus 2024 Mac\n\nCheck out our Products section to select the right one for you!"
+    if (text.includes("delivery") || text.includes("receive") || text.includes("email") || text.includes("fast")) {
+      return "You will receive your license key and download link directly via email within 5 to 15 minutes of purchase."
     }
 
-    if (text.includes("price") || text.includes("cost") || text.includes("buy") || text.includes("order") || text.includes("pay") || text.includes("purchase")) {
-      return "All our QuickBooks Desktop licenses are genuine 100% one-time payments with no monthly or annual fees!\n\nPlease visit our 'Products' section to view current prices and place your order instantly."
-    }
-
-    if (text.includes("delivery") || text.includes("receive") || text.includes("fast") || text.includes("how long")) {
-      return "After completing your order, your license key and download link will be delivered directly to your email within 5 to 15 minutes."
-    }
-
-    if (text.includes("transfer") || text.includes("new pc") || text.includes("another computer")) {
-      return "Yes, you can easily transfer your software license to a new PC whenever you upgrade your computer."
-    }
-
-    return "Thank you for reaching out! We offer genuine QuickBooks Pro Plus, Enterprise, and Mac licenses with instant email delivery. Please check our Products section to place your order!"
+    return "We provide genuine QuickBooks Desktop licenses with instant delivery. Feel free to browse our Products section to place your order!"
   }
 
-  // 6️⃣ إرسال الرسالة
   const handleSend = async (textToSend = null) => {
     const messageContent = textToSend || inputMessage
     if ((!messageContent.trim() && !selectedImage) || !sessionId || sessionStatus === 'ended') return
