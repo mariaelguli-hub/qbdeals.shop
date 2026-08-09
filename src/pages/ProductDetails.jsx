@@ -80,15 +80,16 @@ export default function ProductDetails() {
             {/* Left Side: Image + Horizontal Slide Widget */}
             <div className="lg:col-span-5 space-y-6">
               
+              {/* Product Image Container (Sized & Standardized for All Products) */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl border border-gray-200/80 p-8 flex items-center justify-center shadow-sm"
+                className="bg-white rounded-3xl border border-gray-200/80 p-6 flex items-center justify-center shadow-sm h-80 sm:h-96 w-full aspect-square relative overflow-hidden"
               >
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="max-h-80 object-contain hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
                   }}
