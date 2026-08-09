@@ -25,11 +25,15 @@ import AdminDashboard from './pages/AdminDashboard'
 export default function App() {
   return (
     <>
+      {/* 🎯 تتبع الزوار + السكورل لفوق + الشات بوت المباشر */}
       <VisitorTracker />
       <ScrollToTop />
+      <ChatWidget /> {/* 👈 هادي هي اللي كانت ناقصاك فـ JSX وكانت ما كاتبينهاش! */}
+
       <Toaster position="top-right" toastOptions={{
         style: { borderRadius: '10px', fontSize: '14px' }
       }} />
+
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
