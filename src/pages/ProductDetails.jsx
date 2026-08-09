@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock } from 'lucide-react'
+import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles } from 'lucide-react'
 import products from '../data/products.json'
 
 const whyUsFeatures = [
@@ -37,7 +37,6 @@ export default function ProductDetails() {
   const product = products.find((p) => p.slug === slug)
   const [activeTab, setActiveTab] = useState(0)
 
-  // Auto-slide horizontal every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
@@ -77,7 +76,6 @@ export default function ProductDetails() {
             {/* Left Side: Image + Horizontal Slide Widget */}
             <div className="lg:col-span-5 space-y-6">
               
-              {/* Product Image */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -93,14 +91,12 @@ export default function ProductDetails() {
                 />
               </motion.div>
 
-              {/* Real Horizontal Slide Widget */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
                 className="bg-white rounded-3xl p-6 shadow-xl shadow-gray-200/60 border border-gray-100 relative overflow-hidden"
               >
-                {/* Header */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
                   <h3 className="font-extrabold text-gray-900 text-base">
                     Why buy from us
@@ -111,7 +107,6 @@ export default function ProductDetails() {
                   </span>
                 </div>
 
-                {/* Horizontal Slide Container */}
                 <div className="relative min-h-[100px] flex items-center overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -137,7 +132,6 @@ export default function ProductDetails() {
                   </AnimatePresence>
                 </div>
 
-                {/* Dots Navigation */}
                 <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
                   <div className="flex items-center gap-1.5">
                     {whyUsFeatures.map((_, idx) => (
@@ -178,7 +172,6 @@ export default function ProductDetails() {
                 {product.description}
               </p>
 
-              {/* Features List */}
               <ul className="space-y-2.5 mb-8 bg-white p-5 rounded-2xl border border-gray-100">
                 {product.features.map((feat, i) => (
                   <li key={i} className="flex items-center gap-2.5 text-sm font-medium text-gray-700">
@@ -188,7 +181,6 @@ export default function ProductDetails() {
                 ))}
               </ul>
 
-              {/* Pricing Variants */}
               <div className="space-y-3 mb-8">
                 {product.variants.map((variant) => (
                   <div
@@ -221,59 +213,69 @@ export default function ProductDetails() {
                 <Zap className="w-5 h-5 fill-current" /> Buy now
               </button>
 
-              {/* 💳 Payment Cards & Animated Trust Box Section */}
+              {/* 💳 Payment Cards & High-End Animated Trust Box Section */}
               <div className="mt-6 space-y-6">
                 
-                {/* Payment Cards Grid */}
+                {/* Payment Cards Grid (Fixed Apple Pay & Enhanced UI) */}
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 text-center">
-                    Guaranteed Safe & Secure Checkout
-                  </p>
+                  <div className="flex items-center justify-center gap-1.5 mb-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
+                      Guaranteed Safe & Secure Checkout
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-5 gap-2">
                     {/* Visa */}
-                    <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all duration-300">
+                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
                       <span className="font-black italic text-blue-900 tracking-tighter text-sm">VISA</span>
                     </div>
                     {/* Mastercard */}
-                    <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all duration-300">
+                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
                       <div className="flex -space-x-1.5">
                         <div className="w-3.5 h-3.5 rounded-full bg-red-600 opacity-90"></div>
                         <div className="w-3.5 h-3.5 rounded-full bg-amber-500 opacity-90"></div>
                       </div>
                     </div>
                     {/* PayPal */}
-                    <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all duration-300">
+                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
                       <span className="font-bold text-blue-600 text-xs tracking-tight">Pay<span className="text-blue-400">Pal</span></span>
                     </div>
-                    {/* Apple Pay */}
-                    <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all duration-300">
-                      <span className="font-semibold text-gray-900 text-xs">Pay</span>
+                    {/* Apple Pay (Fixed Code) */}
+                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
+                      <span className="font-extrabold text-gray-900 text-xs tracking-tight flex items-center gap-0.5">
+                        <span className="text-sm leading-none"></span>Pay
+                      </span>
                     </div>
                     {/* Google Pay */}
-                    <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all duration-300">
+                    <div className="bg-white border border-gray-200/90 rounded-xl p-2.5 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
                       <span className="font-bold text-gray-800 text-xs"><span className="text-blue-500">G</span>Pay</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Animated High-Quality Trust Box */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/60 via-white to-emerald-50/30 border border-emerald-100 rounded-2xl p-4 shadow-sm">
+                {/* Animated High-Quality Trust Box with Enhanced Effects */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
                   
-                  {/* Glow Animation Effect */}
-                  <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl animate-pulse"></div>
+                  {/* Multiple Glow & Sparkle Effects */}
+                  <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
+                  <div className="absolute -left-12 -bottom-12 w-36 h-36 bg-blue-400/10 rounded-full blur-3xl"></div>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-sm shadow-emerald-600/30">
-                      <ShieldCheck className="w-4 h-4" />
+                  <div className="relative z-10 flex items-center justify-between mb-4 pb-3 border-b border-emerald-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-600/30">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider">
+                        100% Safe & Secure Purchase Guarantee
+                      </h4>
                     </div>
-                    <h4 className="font-bold text-gray-900 text-xs uppercase tracking-wide">
-                      100% Safe & Secure Purchase Guarantee
-                    </h4>
+                    <Sparkles className="w-4 h-4 text-emerald-600 animate-bounce" />
                   </div>
 
-                  <div className="space-y-2.5 text-xs text-gray-600">
-                    <div className="flex items-start gap-2.5 group">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-0.5 group-hover:scale-110 transition-transform">
+                  <div className="relative z-10 space-y-3 text-xs text-gray-700">
+                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
+                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
                         <Zap className="w-3 h-3" />
                       </div>
                       <div>
@@ -281,8 +283,8 @@ export default function ProductDetails() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-2.5 group">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-0.5 group-hover:scale-110 transition-transform">
+                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
+                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
                         <ShieldCheck className="w-3 h-3" />
                       </div>
                       <div>
@@ -290,8 +292,8 @@ export default function ProductDetails() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-2.5 group">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-0.5 group-hover:scale-110 transition-transform">
+                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
+                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
                         <RefreshCw className="w-3 h-3 animate-spin" />
                       </div>
                       <div>
@@ -300,12 +302,12 @@ export default function ProductDetails() {
                     </div>
                   </div>
 
-                  <div className="mt-3.5 pt-3 border-t border-emerald-100/60 flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-medium">
+                  <div className="relative z-10 mt-4 pt-3 border-t border-emerald-100/80 flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-semibold">
                     <Lock className="w-3 h-3 text-emerald-600" />
                     <span>Secure checkout</span>
-                    <span>•</span>
+                    <span className="text-emerald-400">•</span>
                     <span>Encrypted payments</span>
-                    <span>•</span>
+                    <span className="text-emerald-400">•</span>
                     <span>Trusted by thousands</span>
                   </div>
 
