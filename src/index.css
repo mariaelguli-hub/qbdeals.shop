@@ -70,3 +70,43 @@ details[open] summary ~ * {
 .animate-shine {
   animation: shine 1.5s infinite;
 }
+
+/* 📱 MOBILE RESPONSIVE FIXES (Without touching Desktop code) */
+@media (max-width: 640px) {
+  
+  /* 1. Hide TopBar sub-items on mobile to prevent clutter */
+  header div.bg-gradient-to-r div.flex-wrap > div:nth-child(n+3) {
+    display: none !important;
+  }
+  
+  header div.bg-gradient-to-r div.flex-wrap {
+    justify-content: center !important;
+    gap: 0.75rem !important;
+  }
+
+  /* 2. Fix Floating Chat Widget overlapping with Buy Now button */
+  div[class*="chat"], 
+  button[aria-label*="chat"],
+  iframe[title*="chat"],
+  .z-50.fixed.bottom-6.right-6 {
+    bottom: 5rem !important; /* Elevate chat above buy button */
+    right: 1rem !important;
+  }
+
+  /* 3. Adjust Hero Titles for mobile screens */
+  h1 {
+    font-size: 1.875rem !important; /* 30px instead of giant text */
+    line-height: 2.25rem !important;
+  }
+
+  /* 4. Fix padding for sections on small screens */
+  section {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  /* 5. Clean up stats and trust badges spacing */
+  .grid.grid-cols-2 {
+    gap: 1rem !important;
+  }
+}
