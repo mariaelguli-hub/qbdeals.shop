@@ -10,26 +10,38 @@ export default function VisitorTracker() {
     let timer = null
 
     const recordNewVisit = async () => {
-      let userIp = 'Unknown'
+      let userIp = 'Private/AdBlock'
       let userLoc = 'Unknown'
 
-      // جلب IP والموقع
+      // 🌐 المحاولة الأولى: ipify + ipapi
       try {
-        const ipRes = await fetch('https://api.ipify.org?format=json')
+        const ipRes = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2500) })
         const ipData = await ipRes.json()
-        if (ipData.ip) {
+        if (ipData?.ip) {
           userIp = ipData.ip
           try {
-            const locRes = await fetch(`https://ipapi.co/${userIp}/json/`)
+            const locRes = await fetch(`https://ipapi.co/${userIp}/json/`, { signal: AbortSignal.timeout(2500) })
             const locData = await locRes.json()
-            if (locData.country_name) {
+            if (locData?.country_name) {
               userLoc = `${locData.city || ''}, ${locData.country_name || ''}`.trim()
             }
           } catch (e) {}
         }
-      } catch (e) {}
+      } catch (e1) {
+        // 🌐 المحاولة الثانية الاحتياطية (في حال حظر AdBlock للأولى)
+        try {
+          const altRes = await fetch('https://ip-api.com/json/?fields=query,city,country', { signal: AbortSignal.timeout(2500) })
+          const altData = await altRes.json()
+          if (altData?.query) {
+            userIp = altData.query
+            userLoc = `${altData.city || ''}, ${altData.country || ''}`.trim()
+          }
+        } catch (e2) {
+          console.log('All IP providers bypassed or blocked')
+        }
+      }
 
-      // تسجيل زيارة جديدة في قاعدة البيانات
+      // تسجل الزيارة تلقائياً
       const { data } = await supabase
         .from('visitors')
         .insert([
@@ -50,7 +62,7 @@ export default function VisitorTracker() {
 
     recordNewVisit()
 
-    // تحديث وقت البقاء للزيارة الحالية
+    // تحديث وقت البقاء كل 5 ثوانٍ
     let spent = 0
     timer = setInterval(async () => {
       if (currentLogId) {
