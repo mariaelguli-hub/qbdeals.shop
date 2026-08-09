@@ -76,6 +76,7 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
+  // الاستماع الفوري لأي تغيير في حالة الجلسة أو رسائل الأدمن
   useEffect(() => {
     if (!sessionId) return
 
@@ -99,7 +100,20 @@ export default function ChatWidget() {
         filter: `id=eq.${sessionId}`
       }, (payload) => {
         if (payload.new?.status) {
-          setSessionStatus(payload.new.status)
+          const newStatus = payload.new.status
+          // إذا تحولت الحالة إلى agent من طرف لوحة التحكم، نضيف رسالة تنبيهية أوتوماتيكية للزبون
+          if (newStatus === 'agent' && sessionStatus !== 'agent') {
+            setMessages(prev => [
+              ...prev,
+              {
+                id: 'agent_joined_' + Date.now(),
+                sender: 'agent',
+                message: '👋 A live support agent has joined the chat and will assist you now.',
+                created_at: new Date().toISOString()
+              }
+            ])
+          }
+          setSessionStatus(newStatus)
         }
       })
       .subscribe()
@@ -107,7 +121,7 @@ export default function ChatWidget() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [sessionId])
+  }, [sessionId, sessionStatus])
 
   const handleEndConversation = async () => {
     if (window.confirm("Are you sure you want to end this conversation and start a new chat?")) {
@@ -158,7 +172,7 @@ export default function ChatWidget() {
     setUploadingImage(false)
   }
 
-  // 🧠 الذكاء الاصطناعي الحقيقي عبر OpenRouter و GPT-4o-mini
+  // محرك الذكاء الاصطناعي الحقيقي عبر OpenRouter
   const fetchOpenRouterAI = async (userPrompt) => {
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
     if (!apiKey) {
@@ -177,7 +191,7 @@ export default function ChatWidget() {
           messages: [
             {
               role: "system",
-              content: "You are a helpful sales assistant for QB DEALS (qbdeals.com). We sell genuine QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024 licenses as one-time payments with instant email delivery (5-15 mins). Answer questions naturally, concisely, and accurately based on user queries (like pricing, Mac versions, delivery, etc.). Direct them to the Products section for purchases."
+              content: "You are a helpful sales assistant for QB DEALS (qbdeals.com). We sell genuine QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024 licenses as one-time payments with instant email delivery (5-15 mins). Answer questions naturally, concisely, and accurately based on user queries. Direct them to the Products section for purchases."
             },
             {
               role: "user",
@@ -215,9 +229,12 @@ export default function ChatWidget() {
     setSelectedImage(null)
 
     await supabase.from('chat_messages').insert([userMessage])
+    
+    // إذا كان البوت هو الخادم، نقوم بتحديث الحالة أو إبقاء الجلسة نشطة
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
 
-    if (sessionStatus !== 'agent') {
+    // إذا كانت الحالة الحالية للتشغيل هي 'bot' (ولم يتتدخل الـ Admin بعد)، فالروبوت يجيب بذكاء
+    if (sessionStatus === 'bot') {
       setIsTyping(true)
 
       const responseText = await fetchOpenRouterAI(messageContent)
@@ -256,20 +273,26 @@ export default function ChatWidget() {
       {isOpen && (
         <div className="w-[360px] sm:w-[400px] h-[560px] bg-white/95 backdrop-blur-xl rounded-3xl border border-gray-100 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
           
+          {/* Header */}
           <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-950 p-4 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-sm border border-emerald-400/30">
-                  QB
+                {/* Logo يتبدل أوتوماتيكياً حسب واش البوت أو الهيومان */}
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm border ${
+                  sessionStatus === 'agent' ? 'bg-amber-600 border-amber-400/30' : 'bg-emerald-600 border-emerald-400/30'
+                }`}>
+                  {sessionStatus === 'agent' ? <Headset className="w-5 h-5 text-white" /> : 'QB'}
                 </div>
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-emerald-900 rounded-full" />
+                <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-emerald-900 rounded-full ${
+                  sessionStatus === 'agent' ? 'bg-amber-400' : 'bg-emerald-400'
+                }`} />
               </div>
               <div>
                 <h3 className="font-bold text-sm leading-tight flex items-center gap-1.5">
                   QB DEALS Support <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300/30" />
                 </h3>
                 <p className="text-[11px] text-emerald-200/80 font-medium">
-                  {sessionStatus === 'agent' ? 'Live Agent Connected' : 'Instant AI & Live Assistance'}
+                  {sessionStatus === 'agent' ? 'Live Agent Connected (Human)' : 'Instant AI Assistance'}
                 </p>
               </div>
             </div>
@@ -292,12 +315,13 @@ export default function ChatWidget() {
             </div>
           </div>
 
+          {/* Session Status Bar */}
           <div className="bg-emerald-50/80 px-4 py-1.5 border-b border-emerald-100 flex items-center justify-between text-[11px]">
             <span className="text-emerald-800 font-medium flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${
                 sessionStatus === 'ended' ? 'bg-red-500' : sessionStatus === 'agent' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-pulse'
               }`} /> 
-              {sessionStatus === 'ended' ? 'Chat Ended' : sessionStatus === 'agent' ? 'Live Agent Connected' : 'Active Session'}
+              {sessionStatus === 'ended' ? 'Chat Ended' : sessionStatus === 'agent' ? 'Human Agent is chatting with you' : 'Active AI Session'}
             </span>
             <button
               onClick={handleEndConversation}
@@ -307,6 +331,7 @@ export default function ChatWidget() {
             </button>
           </div>
 
+          {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-gray-50/50 text-xs">
             {messages.map((msg, index) => (
               <div 
@@ -336,11 +361,11 @@ export default function ChatWidget() {
                       msg.sender === 'user' 
                         ? 'bg-emerald-600 text-white rounded-br-none' 
                         : msg.sender === 'agent'
-                        ? 'bg-emerald-900 text-white rounded-bl-none border border-emerald-800'
+                        ? 'bg-amber-500 text-white rounded-bl-none border border-amber-600 shadow-md'
                         : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
                     }`}>
                       {msg.sender === 'agent' && (
-                        <span className="block text-[10px] font-bold text-amber-300 uppercase mb-0.5">Live Agent</span>
+                        <span className="block text-[10px] font-bold text-amber-100 uppercase mb-0.5 tracking-wider">Human Agent</span>
                       )}
                       {msg.message}
                     </div>
@@ -355,7 +380,7 @@ export default function ChatWidget() {
               </div>
             ))}
 
-            {isTyping && (
+            {isTyping && sessionStatus === 'bot' && (
               <div className="flex gap-2 items-center text-gray-400 text-xs">
                 <div className="w-7 h-7 bg-emerald-100 text-emerald-800 rounded-xl flex items-center justify-center">
                   <Bot className="w-4 h-4" />
@@ -368,7 +393,7 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {messages.length <= 2 && sessionStatus !== 'ended' && (
+            {messages.length <= 2 && sessionStatus !== 'ended' && sessionStatus === 'bot' && (
               <div className="pt-2 space-y-1.5">
                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Quick Questions:</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -400,6 +425,7 @@ export default function ChatWidget() {
             </div>
           )}
 
+          {/* Footer Input Area */}
           <div className="p-3 bg-white border-t border-gray-100">
             {sessionStatus === 'ended' ? (
               <div className="text-center py-2">
@@ -433,7 +459,7 @@ export default function ChatWidget() {
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Type a message..."
+                  placeholder={sessionStatus === 'agent' ? "Type to human agent..." : "Type a message..."}
                   className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                 />
 
