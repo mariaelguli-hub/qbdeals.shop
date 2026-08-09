@@ -81,26 +81,28 @@ export default function ComparisonTable() {
               {/* Table Header */}
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60 text-xs sm:text-sm">
-                  <th className="py-5 px-6 font-extrabold text-gray-900 w-2/5">
+                  <th className="py-6 px-6 font-extrabold text-gray-900 w-2/5 align-middle">
                     Feature
                   </th>
                   
-                  {/* Our Store Highlighted Header */}
-                  <th className="py-5 px-6 font-black text-emerald-700 bg-emerald-500/10 text-center relative border-x border-emerald-500/20">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span className="text-sm sm:text-base">Our Store</span>
+                  {/* Our Store Highlighted Header (With Clean Badge Inside) */}
+                  <th className="py-4 px-6 text-center bg-emerald-500/10 border-x border-emerald-500/20 align-middle">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <span className="bg-emerald-600 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full shadow-xs uppercase tracking-wider">
+                        Best Choice
+                      </span>
+                      <div className="flex items-center gap-1.5 font-black text-emerald-700 text-sm sm:text-base">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Our Store</span>
+                      </div>
                     </div>
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full shadow-xs uppercase tracking-wider">
-                      Best Choice
-                    </span>
                   </th>
 
-                  <th className="py-5 px-6 font-bold text-gray-500 text-center">
+                  <th className="py-6 px-6 font-bold text-gray-500 text-center align-middle">
                     Retail Subscription
                   </th>
 
-                  <th className="py-5 px-6 font-bold text-gray-500 text-center">
+                  <th className="py-6 px-6 font-bold text-gray-500 text-center align-middle">
                     Other Stores
                   </th>
                 </tr>
