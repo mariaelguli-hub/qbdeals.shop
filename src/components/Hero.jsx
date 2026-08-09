@@ -39,7 +39,7 @@ export default function Hero() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  // 🔄 Auto-switch animated words every 2.8s
+  // 🔄 Auto-switch animated words
   useEffect(() => {
     const wordInterval = setInterval(() => {
       setWordIndex((prev) => (prev + 1) % animatedWords.length)
@@ -47,7 +47,7 @@ export default function Hero() {
     return () => clearInterval(wordInterval)
   }, [])
 
-  // 🔄 Auto-slide for the right card
+  // 🔄 Auto-slide for right card
   useEffect(() => {
     const cardInterval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
@@ -124,18 +124,18 @@ export default function Hero() {
               <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
-            {/* Main Title with Clean Inline-Flex Text Switcher */}
+            {/* Main Title with Clean Border-Bottom Accent (No Descender Cutting) */}
             <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.15]">
               Genuine QuickBooks Desktop 2024 —{' '}
               <span className="inline-flex items-center">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={wordIndex}
-                    initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+                    initial={{ opacity: 0, y: 8, filter: 'blur(3px)' }}
                     animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-                    transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic underline decoration-emerald-300/60 underline-offset-4"
+                    exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic pb-1 border-b-3 border-emerald-400/80"
                   >
                     {animatedWords[wordIndex]}
                   </motion.span>
