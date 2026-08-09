@@ -208,7 +208,7 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* ⚡ Buy Now Button */}
+              {/* ⚡ Buy Now Button with Motion & Mirror / Glossy Shine Animation */}
               <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
@@ -224,10 +224,10 @@ export default function ProductDetails() {
                 </button>
               </motion.div>
 
-              {/* 💳 Payment Cards & Unchanged Trust Board */}
+              {/* 💳 Payment Badges & Trust Board (Using Footer's Exact Proven Structure) */}
               <div className="mt-6 space-y-6">
                 
-                {/* Payment Cards Grid (Clean, Aligned & Perfect Brand Look) */}
+                {/* Authentic Payment Badges Grid */}
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
@@ -237,41 +237,54 @@ export default function ProductDetails() {
                   </div>
 
                   <div className="grid grid-cols-5 gap-2">
-                    {/* Visa */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-black italic text-blue-700 tracking-tighter text-sm">VISA</span>
+                    
+                    {/* VISA */}
+                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
+                      <span className="font-black italic text-[#1A1F71] text-sm tracking-tighter select-none font-sans">
+                        VISA
+                      </span>
                     </div>
 
                     {/* Mastercard */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <div className="flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-[#EB001B] opacity-95"></div>
-                        <div className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-95 -ml-2"></div>
-                      </div>
+                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+                        alt="Mastercard" 
+                        className="h-5 w-auto object-contain"
+                      />
                     </div>
 
                     {/* PayPal */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-extrabold text-[#003087] text-xs tracking-tighter">Pay<span className="text-[#0079C1]">Pal</span></span>
+                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
+                        alt="PayPal" 
+                        className="h-4 w-auto object-contain"
+                      />
                     </div>
 
-                    {/* Apple Pay (Clean, Perfect & Aligned) */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-extrabold text-gray-900 text-xs tracking-tight flex items-center gap-0.5">
-                        <span className="text-sm font-sans"></span>Pay
-                      </span>
+                    {/* Apple Pay */}
+                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" 
+                        alt="Apple Pay" 
+                        className="h-4 w-auto object-contain"
+                      />
                     </div>
 
                     {/* Google Pay */}
-                    <div className="bg-white border border-gray-200/90 rounded-xl py-3 px-2 flex items-center justify-center shadow-xs hover:border-emerald-500 hover:shadow-md hover:scale-105 transition-all duration-300">
-                      <span className="font-bold text-gray-900 text-xs tracking-tight flex items-center">
-                        <span className="text-blue-500 font-extrabold text-sm">G</span>Pay
-                      </span>
+                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
+                      <img 
+                        src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" 
+                        alt="Google Pay" 
+                        className="h-4 w-auto object-contain"
+                      />
                     </div>
+
                   </div>
                 </div>
 
-                {/* Unchanged Trust Board */}
+                {/* Trust Board */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
                   
                   <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
