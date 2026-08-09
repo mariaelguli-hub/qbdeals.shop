@@ -1,3 +1,4 @@
+import ChatWidget from './components/ChatWidget'
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import ScrollToTop from './components/ScrollToTop'
