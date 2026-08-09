@@ -76,7 +76,7 @@ export default function ChatWidget() {
     initChat()
   }, [])
 
-  // الاستماع الفوري الحقيقي والذكي بدون أي تأخير أو الحاجة لـ Refresh
+  // 📡 الاستماع الفوري الحقيقي: يجلب أي رسالة جديدة (سواء من البوت، المستخدم، أو الموظف) وأي تغيير في الحالة فوراً بدون Refresh
   useEffect(() => {
     if (!sessionId) return
 
@@ -89,6 +89,7 @@ export default function ChatWidget() {
         filter: `session_id=eq.${sessionId}`
       }, (payload) => {
         setMessages(prev => {
+          // منع تكرار نفس الرسالة إذا كانت موجودة مسبقاً
           if (prev.some(m => m.id === payload.new.id)) return prev
           return [...prev, payload.new]
         })
@@ -101,12 +102,11 @@ export default function ChatWidget() {
       }, (payload) => {
         if (payload.new?.status) {
           const newStatus = payload.new.status
+          setSessionStatus(newStatus)
           
-          // إذا تغيرت الحالة إلى agent ولم تكن كذلك من قبل، نقوم بإضافة رسالة التنبيه فوراً وبشكل سلس
-          if (newStatus === 'agent' && sessionStatus !== 'agent') {
-            setSessionStatus('agent')
+          // إذا تحولت الحالة إلى agent، نضيف رسالة التنبيه البصرية الأنيقة مباشرة
+          if (newStatus === 'agent') {
             setMessages(prev => {
-              // التأكد من عدم تكرار رسالة الانضمام
               if (prev.some(m => m.id === 'agent_joined_notice')) return prev
               return [
                 ...prev,
@@ -118,8 +118,6 @@ export default function ChatWidget() {
                 }
               ]
             })
-          } else {
-            setSessionStatus(newStatus)
           }
         }
       })
@@ -128,7 +126,7 @@ export default function ChatWidget() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [sessionId, sessionStatus])
+  }, [sessionId])
 
   const handleEndConversation = async () => {
     if (window.confirm("Are you sure you want to end this conversation and start a new chat?")) {
@@ -230,14 +228,14 @@ export default function ChatWidget() {
       created_at: new Date().toISOString()
     }
 
-    setMessages(prev => [...prev, userMessage])
     setInputMessage('')
     setSelectedImage(null)
 
+    // إرسال رسالة المستخدم لقاعدة البيانات (Realtime ستتكلف بعرضها فوراً عند الزبون والأدمن)
     await supabase.from('chat_messages').insert([userMessage])
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
 
-    // الـ Chatbot يجيب فقط إذا كانت الحالة 'bot'
+    // الـ Chatbot الذكي يجيب فقط إذا كانت الحالة 'bot'
     if (sessionStatus === 'bot') {
       setIsTyping(true)
 
@@ -250,9 +248,7 @@ export default function ChatWidget() {
         created_at: new Date().toISOString()
       }
 
-      setMessages(prev => [...prev, botMessage])
       setIsTyping(false)
-
       await supabase.from('chat_messages').insert([botMessage])
     }
   }
@@ -295,7 +291,7 @@ export default function ChatWidget() {
                   QB DEALS Support <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300/30" />
                 </h3>
                 <p className="text-[11px] text-emerald-200/80 font-medium">
-                  {sessionStatus === 'agent' ? 'Live Support Agent (Active)' : 'Instant AI Assistance'}
+                  {sessionStatus === 'agent' ? 'Live Support Expert (Active)' : 'Instant AI Assistance'}
                 </p>
               </div>
             </div>
