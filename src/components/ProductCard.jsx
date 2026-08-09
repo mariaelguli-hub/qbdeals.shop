@@ -1,43 +1,59 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Zap, Minus, Plus, Check } from 'lucide-react'
+import { Zap, Minus, Plus, Check, Star } from 'lucide-react'
 
 export default function ProductCard({ product }) {
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0])
   const [qty, setQty] = useState(1)
 
   const discount = Math.round(((selectedVariant.comparePrice - selectedVariant.price) / selectedVariant.comparePrice) * 100)
+  
+  // Rating and Reviews fallback values
+  const ratingValue = product.rating || 4.95
+  const reviewsCount = product.reviewsCount || 128
 
   return (
-    <div className="card flex flex-col">
-      {/* Image */}
-      <div className="relative bg-gray-50 p-5 text-center">
-        <span className="absolute top-3 left-3 badge bg-brand-700 text-white">
+    <div className="card flex flex-col overflow-hidden">
+      
+      {/* Image Container (Fills the entire space with Object-Cover) */}
+      <div className="relative w-full h-56 sm:h-64 overflow-hidden bg-white">
+        <span className="absolute top-3 left-3 z-10 badge bg-brand-700 text-white shadow-md">
           {product.tag}
         </span>
-        <div className="h-40 flex items-center justify-center">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="h-full object-contain"
-            onError={(e) => {
-              e.target.src = `https://placehold.co/200x200/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
-            }}
-          />
-        </div>
+        
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
+          }}
+        />
       </div>
 
       {/* Content */}
       <div className="p-5 flex-1 flex flex-col">
-        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
-          {product.category}
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            {product.category}
+          </div>
+
+          {/* ⭐️ Golden Star Rating */}
+          <div className="flex items-center gap-1">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-black text-gray-900">{ratingValue}</span>
+            <span className="text-[11px] text-gray-400">({reviewsCount})</span>
+          </div>
         </div>
+
         <h3 className="font-bold text-gray-900 mb-2 leading-snug">
           {product.name}
         </h3>
+        
         <p className="text-sm text-gray-500 mb-3 line-clamp-2">
           {product.description}
         </p>
+
         <ul className="space-y-1 mb-4">
           {product.features.map((feat, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -75,7 +91,7 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Price & Qty */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4 mt-auto">
           <span className="text-2xl font-extrabold text-gray-900">
             ${selectedVariant.price.toFixed(2)}
           </span>
