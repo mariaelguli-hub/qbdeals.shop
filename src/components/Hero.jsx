@@ -124,10 +124,10 @@ export default function Hero() {
               <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
-            {/* Main Title with Clean Border-Bottom Accent (No Descender Cutting) */}
-            <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.15]">
+            {/* Main Title with Perfected Custom Underline Accent */}
+            <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.2]">
               Genuine QuickBooks Desktop 2024 —{' '}
-              <span className="inline-flex items-center">
+              <span className="inline-flex items-center relative py-1 pr-3">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={wordIndex}
@@ -135,9 +135,11 @@ export default function Hero() {
                     animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                     exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
                     transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic pb-1 border-b-3 border-emerald-400/80"
+                    className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black italic pr-1"
                   >
                     {animatedWords[wordIndex]}
+                    {/* Custom Glowing Line Accent underneath */}
+                    <span className="absolute left-0 bottom-0 w-full h-[3px] bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
                   </motion.span>
                 </AnimatePresence>
               </span>
