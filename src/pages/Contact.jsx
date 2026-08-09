@@ -22,41 +22,40 @@ export default function Contact() {
     e.preventDefault()
     setLoading(true)
 
-    let userIp = 'Private/AdBlock'
+    let userIp = 'Unknown'
     let userLocation = 'Unknown'
 
-    // 🌐 المحاولة الأولى: ipify + ipapi
+    // 🌐 جلب الـ IP والموقع بـ API سريع ومفتوح لا يتبلوكا
     try {
-      const ipRes = await fetch('https://api.ipify.org?format=json', { 
-        signal: AbortSignal.timeout(2500) 
+      const res = await fetch('https://api.bigdatacloud.net/data/client-ip', { 
+        signal: AbortSignal.timeout(3000) 
       })
-      const ipData = await ipRes.json()
-      if (ipData?.ip) {
-        userIp = ipData.ip
-        try {
-          const locRes = await fetch(`https://ipapi.co/${userIp}/json/`, { 
-            signal: AbortSignal.timeout(2500) 
-          })
-          const locData = await locRes.json()
-          if (locData?.country_name) {
-            userLocation = `${locData.city || ''}, ${locData.country_name || ''}`.trim()
-          }
-        } catch (e) {}
+      const data = await res.json()
+      if (data?.ipString) {
+        userIp = data.ipString
       }
-    } catch (e1) {
-      // 🌐 المحاولة الثانية الاحتياطية (في حال حظر AdBlock للأولى): ip-api.com
+    } catch (e) {
       try {
-        const altRes = await fetch('https://ip-api.com/json/?fields=query,city,country', { 
-          signal: AbortSignal.timeout(2500) 
+        const res2 = await fetch('https://api.ipify.org?format=json', { 
+          signal: AbortSignal.timeout(3000) 
         })
-        const altData = await altRes.json()
-        if (altData?.query) {
-          userIp = altData.query
-          userLocation = `${altData.city || ''}, ${altData.country || ''}`.trim()
+        const data2 = await res2.json()
+        if (data2?.ip) userIp = data2.ip
+      } catch (e2) {}
+    }
+
+    // جلب المدينة والبلد بدقة عالية
+    if (userIp !== 'Unknown') {
+      try {
+        const locRes = await fetch(`https://api.bigdatacloud.net/data/ip-geolocation?ip=${userIp}&localityLanguage=en`, { 
+          signal: AbortSignal.timeout(3000) 
+        })
+        const locData = await locRes.json()
+        if (locData?.country?.name) {
+          const city = locData.city || locData.locality || ''
+          userLocation = `${city ? city + ', ' : ''}${locData.country.name}`.trim()
         }
-      } catch (e2) {
-        console.log('All IP providers bypassed or blocked')
-      }
+      } catch (e) {}
     }
 
     // 📤 إرسال البيانات إلى Supabase
