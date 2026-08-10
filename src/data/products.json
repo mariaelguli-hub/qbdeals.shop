@@ -50,7 +50,15 @@
       "Create & send invoices"
     ],
     "variants": [
-      { "id": "mac-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": true }
+      { 
+        "id": "mac-single", 
+        "label": "Single User", 
+        "price": 159, 
+        "comparePrice": 685, 
+        "users": 1, 
+        "bestselling": true,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#UJ7YKLQBHWT7FALF"
+      }
     ],
     "image": "/images/QuickBooks-Desktop-Mac-Plus-2024.png"
   },
