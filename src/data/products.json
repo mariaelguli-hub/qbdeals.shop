@@ -14,8 +14,24 @@
       "Create & send professional invoices"
     ],
     "variants": [
-      { "id": "pro-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": false },
-      { "id": "pro-3users", "label": "3 Users", "price": 153, "comparePrice": 799, "users": 3, "bestselling": true }
+      { 
+        "id": "pro-single", 
+        "label": "Single User", 
+        "price": 135, 
+        "comparePrice": 685, 
+        "users": 1, 
+        "bestselling": false,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
+      },
+      { 
+        "id": "pro-3users", 
+        "label": "3 Users", 
+        "price": 149, 
+        "comparePrice": 799, 
+        "users": 3, 
+        "bestselling": true,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#PJGSYFNV2RG7PXYB"
+      }
     ],
     "image": "/images/qb-pro-plus-2024.webp"
   },
