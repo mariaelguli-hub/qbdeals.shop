@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn } from 'lucide-react'
+import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn, CheckCircle2 } from 'lucide-react'
 import products from '../data/products.json'
 
 const whyUsFeatures = [
@@ -34,13 +34,24 @@ const whyUsFeatures = [
 
 export default function ProductDetails() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const product = products.find((p) => p.slug === slug)
+
+  // 1️⃣ State لتحديد الـ Variant الخيار المختار (الافتراضي هو الأول)
+  const [selectedVariant, setSelectedVariant] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
 
   // Zoom States
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [isHovered, setIsHovered] = useState(false)
   const imgRef = useRef(null)
+
+  // تعيين الخيار الأول كـ Default عند تحميل المنتج
+  useEffect(() => {
+    if (product && product.variants && product.variants.length > 0) {
+      setSelectedVariant(product.variants[0])
+    }
+  }, [product])
 
   const handleMouseMove = (e) => {
     if (!imgRef.current) return
@@ -68,30 +79,45 @@ export default function ProductDetails() {
     )
   }
 
+  // 2️⃣ دالة الشراء الفوري (Buy Now Handler)
+  const handleBuyNow = () => {
+    const targetVariant = selectedVariant || (product.variants && product.variants[0])
+
+    // إلا كان عندها paymentLink مباشر (فـ JSON) كيتوجه ليه أونلاين
+    if (targetVariant && targetVariant.paymentLink) {
+      window.location.href = targetVariant.paymentLink
+    } else if (product.paymentLink) {
+      window.location.href = product.paymentLink
+    } else {
+      // إرسال لصفحة Checkout مع الـ ID المحدد
+      navigate(`/checkout?id=${product.id}&variant=${targetVariant?.id || 'default'}`)
+    }
+  }
+
   const ActiveIcon = whyUsFeatures[activeTab].icon
-  const ratingValue = product.rating || 4.95
-  const reviewsCount = product.reviewsCount || 128
+  const ratingValue = product.rating || 4.96
+  const reviewsCount = product.reviewsCount || 142
 
   return (
     <>
       <Helmet>
-        <title>{product.name} — QB Deals</title>
+        <title>{product.name} — QB DEALS</title>
         <meta name="description" content={product.description} />
       </Helmet>
       
       <section className="py-12 lg:py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-brand-700 mb-6 transition-colors">
+          <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-emerald-700 mb-6 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to products
           </Link>
 
           <div className="grid lg:grid-cols-12 gap-10 items-start">
             
-            {/* Left Side: Full Image Display (No Crop) + Zoom */}
+            {/* Left Side: Full Image Display + Zoom & Widget */}
             <div className="lg:col-span-5 space-y-6">
               
-              {/* Product Image Container (Fit Image Exactly) */}
+              {/* Product Image Container */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -183,7 +209,7 @@ export default function ProductDetails() {
 
             </div>
 
-            {/* Right Side: Product Details & Pricing */}
+            {/* Right Side: Product Details & Interactive Variant Selection */}
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -204,7 +230,7 @@ export default function ProductDetails() {
                 {product.name}
               </h1>
 
-              {/* Golden Star Rating Section */}
+              {/* Rating */}
               <div className="flex items-center gap-2 mb-5">
                 <div className="flex items-center gap-0.5 text-amber-400">
                   {[...Array(5)].map((_, i) => (
@@ -218,12 +244,13 @@ export default function ProductDetails() {
                 </span>
               </div>
               
-              <p className="text-gray-600 leading-relaxed mb-6">
+              <p className="text-gray-600 leading-relaxed mb-6 text-sm sm:text-base">
                 {product.description}
               </p>
 
+              {/* Features List */}
               <ul className="space-y-2.5 mb-8 bg-white p-5 rounded-2xl border border-gray-100">
-                {product.features.map((feat, i) => (
+                {(product.features || []).map((feat, i) => (
                   <li key={i} className="flex items-center gap-2.5 text-sm font-medium text-gray-700">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{feat}</span>
@@ -231,40 +258,68 @@ export default function ProductDetails() {
                 ))}
               </ul>
 
+              {/* 🎯 3️⃣ VARIANTS SELECTION LIST (المربعات التي تصبح محددة بـ Click) */}
               <div className="space-y-3 mb-8">
-                {product.variants.map((variant) => (
-                  <div
-                    key={variant.id}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-xl bg-white hover:border-emerald-500 transition-colors cursor-pointer group"
-                  >
-                    <div>
-                      <div className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
-                        {variant.label}
+                {(product.variants || []).map((variant) => {
+                  const isSelected = selectedVariant?.id === variant.id
+
+                  return (
+                    <div
+                      key={variant.id}
+                      onClick={() => setSelectedVariant(variant)}
+                      className={`relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer select-none ${
+                        isSelected
+                          ? 'bg-emerald-50/40 border-emerald-600 shadow-md shadow-emerald-600/10'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Check Indicator Icon */}
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                          isSelected ? 'bg-emerald-600 text-white' : 'border border-gray-300'
+                        }`}>
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+
+                        <div>
+                          <div className={`font-black text-sm sm:text-base transition-colors ${
+                            isSelected ? 'text-emerald-950' : 'text-gray-900'
+                          }`}>
+                            {variant.label}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
+                            {variant.users} user license
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {variant.users} user license
+                      
+                      <div className="text-right">
+                        <div className={`text-xl font-black ${
+                          isSelected ? 'text-emerald-700' : 'text-gray-900'
+                        }`}>
+                          ${Number(variant.price).toFixed(2)}
+                        </div>
+                        {variant.comparePrice && (
+                          <div className="text-xs text-gray-400 line-through">
+                            ${Number(variant.comparePrice).toFixed(2)}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    
-                    <div className="text-right">
-                      <div className="text-xl font-black text-gray-900">
-                        ${variant.price.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-gray-400 line-through">
-                        ${variant.comparePrice.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
-              {/* Buy Now Button */}
+              {/* 🚀 4️⃣ BUY NOW BUTTON WITH INSTANT DIRECT LINK LOGIC */}
               <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
                 className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer"
               >
-                <button className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-base tracking-wide flex items-center justify-center gap-3 transition-all duration-300">
+                <button 
+                  onClick={handleBuyNow}
+                  className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-base tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
+                >
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
                   
                   <div className="p-1.5 bg-white/20 rounded-xl">
@@ -274,7 +329,7 @@ export default function ProductDetails() {
                 </button>
               </motion.div>
 
-              {/* Payment Badges & Trust Board */}
+              {/* Payment Method Badges & Security */}
               <div className="mt-6 space-y-6">
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
@@ -327,8 +382,7 @@ export default function ProductDetails() {
 
                 <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
                   <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
-                  <div className="absolute -left-12 -bottom-12 w-36 h-36 bg-blue-400/10 rounded-full blur-3xl"></div>
-
+                  
                   <div className="relative z-10 flex items-center justify-between mb-4 pb-3 border-b border-emerald-100">
                     <div className="flex items-center gap-2.5">
                       <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-600/30">
