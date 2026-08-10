@@ -82,7 +82,7 @@ export default function Footer() {
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                 <span className="text-xs leading-relaxed text-gray-500">
-                  Alexanderstraße 40, 10179 Berlin, Germany
+                  Mandelbachtal Saarland 66399
                 </span>
               </div>
             </div>
