@@ -1,13 +1,43 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React, { useEffect, useState, useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
 import { ShieldCheck, Lock, RotateCcw, CheckCircle2 } from 'lucide-react'
 
-const stats = [
-  { value: '100%', label: 'Genuine licenses' },
-  { value: '4.8★', label: 'Average rating' },
-  { value: '22', label: 'Verified reviews' },
-  { value: '24/7', label: 'Human support' },
-]
+// 🔢 Component صغير بزاف لحساب الأرقام بـ Smooth Animation
+function AnimatedNumber({ target, decimals = 0, suffix = '' }) {
+  const [count, setCount] = useState(0)
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: '-40px' })
+
+  useEffect(() => {
+    if (!isInView) return
+
+    let startTime = null
+    let animationFrameId
+
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime
+      const progress = Math.min((currentTime - startTime) / 2000, 1) // 2 ثواني فـ المدة
+      
+      // Easing function ناعمة فـ الأخير
+      const easeOut = 1 - Math.pow(1 - progress, 3)
+      setCount(easeOut * target)
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate)
+      }
+    }
+
+    animationFrameId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [isInView, target])
+
+  return (
+    <span ref={ref}>
+      {count.toFixed(decimals)}
+      {suffix}
+    </span>
+  )
+}
 
 export default function TrustBadges() {
   return (
@@ -20,24 +50,75 @@ export default function TrustBadges() {
         
         {/* 🔢 4 Big Numbers Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-10">
-          {stats.map((stat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: idx * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="p-5 rounded-3xl bg-white border border-gray-200/80 shadow-xs hover:shadow-xl hover:shadow-emerald-950/5 hover:border-emerald-500/30 transition-all duration-300 text-center group"
-            >
-              <div className="text-3xl sm:text-4xl font-black text-emerald-600 group-hover:scale-105 transition-transform font-mono tracking-tight mb-1">
-                {stat.value}
-              </div>
-              <div className="text-xs sm:text-sm font-extrabold text-gray-600 group-hover:text-emerald-900 transition-colors">
-                {stat.label}
-              </div>
-            </motion.div>
-          ))}
+          
+          {/* Card 1: 100% */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0 }}
+            whileHover={{ y: -4 }}
+            className="p-5 rounded-3xl bg-white border border-gray-200/80 shadow-xs hover:shadow-xl hover:shadow-emerald-950/5 hover:border-emerald-500/30 transition-all duration-300 text-center group"
+          >
+            <div className="text-3xl sm:text-4xl font-black text-emerald-600 group-hover:scale-105 transition-transform font-mono tracking-tight mb-1">
+              <AnimatedNumber target={100} suffix="%" />
+            </div>
+            <div className="text-xs sm:text-sm font-extrabold text-gray-600 group-hover:text-emerald-900 transition-colors">
+              Genuine licenses
+            </div>
+          </motion.div>
+
+          {/* Card 2: 4.8★ */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            whileHover={{ y: -4 }}
+            className="p-5 rounded-3xl bg-white border border-gray-200/80 shadow-xs hover:shadow-xl hover:shadow-emerald-950/5 hover:border-emerald-500/30 transition-all duration-300 text-center group"
+          >
+            <div className="text-3xl sm:text-4xl font-black text-emerald-600 group-hover:scale-105 transition-transform font-mono tracking-tight mb-1">
+              <AnimatedNumber target={4.8} decimals={1} suffix="★" />
+            </div>
+            <div className="text-xs sm:text-sm font-extrabold text-gray-600 group-hover:text-emerald-900 transition-colors">
+              Average rating
+            </div>
+          </motion.div>
+
+          {/* Card 3: 22 */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            whileHover={{ y: -4 }}
+            className="p-5 rounded-3xl bg-white border border-gray-200/80 shadow-xs hover:shadow-xl hover:shadow-emerald-950/5 hover:border-emerald-500/30 transition-all duration-300 text-center group"
+          >
+            <div className="text-3xl sm:text-4xl font-black text-emerald-600 group-hover:scale-105 transition-transform font-mono tracking-tight mb-1">
+              <AnimatedNumber target={22} />
+            </div>
+            <div className="text-xs sm:text-sm font-extrabold text-gray-600 group-hover:text-emerald-900 transition-colors">
+              Verified reviews
+            </div>
+          </motion.div>
+
+          {/* Card 4: 24/7 */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            whileHover={{ y: -4 }}
+            className="p-5 rounded-3xl bg-white border border-gray-200/80 shadow-xs hover:shadow-xl hover:shadow-emerald-950/5 hover:border-emerald-500/30 transition-all duration-300 text-center group"
+          >
+            <div className="text-3xl sm:text-4xl font-black text-emerald-600 group-hover:scale-105 transition-transform font-mono tracking-tight mb-1">
+              24/7
+            </div>
+            <div className="text-xs sm:text-sm font-extrabold text-gray-600 group-hover:text-emerald-900 transition-colors">
+              Human support
+            </div>
+          </motion.div>
+
         </div>
 
         {/* 🛡️ Middle Bar: Security Badges + Authentic Payment Logos */}
