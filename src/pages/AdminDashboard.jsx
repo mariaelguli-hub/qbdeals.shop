@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon, LogOut } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon, LogOut, Download, FileSpreadsheet } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
+import productsData from '../data/products.json' // 👈 استيراد المنتجات لملف الـ Export
 
 const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
 
@@ -81,6 +82,58 @@ export default function AdminDashboard() {
       return () => clearInterval(interval)
     }
   }, [isAuthenticated])
+
+  // 📦 دالة الـ Export لـ Google Merchant Center CSV
+  const exportGmcCsv = () => {
+    try {
+      const domain = 'https://qbdeals.shop'
+      const headers = [
+        'id',
+        'title',
+        'description',
+        'link',
+        'image_link',
+        'availability',
+        'price',
+        'brand',
+        'condition',
+        'google_product_category'
+      ]
+
+      const rows = (productsData || []).map((p) => {
+        const cleanDesc = (p.description || '').replace(/"/g, '""')
+        const priceFormatted = `${Number(p.price || 127).toFixed(2)} USD`
+        const productLink = `${domain}/product/${p.slug || p.id}`
+        const imageLink = p.image && p.image.startsWith('http') ? p.image : `${domain}${p.image || '/images/pro.jpg'}`
+
+        return [
+          `"${p.id}"`,
+          `"${p.title}"`,
+          `"${cleanDesc}"`,
+          `"${productLink}"`,
+          `"${imageLink}"`,
+          '"in_stock"',
+          `"${priceFormatted}"`,
+          '"QuickBooks"',
+          '"new"',
+          '"Software > Business & Productivity Software"'
+        ].join(',')
+      })
+
+      const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n')
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement('a')
+      link.setAttribute('href', encodedUri)
+      link.setAttribute('download', `gmc_feed_qbdeals_${new Date().toISOString().slice(0, 10)}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success('GMC Feed CSV Downloaded!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to export CSV. Check products.json file.')
+    }
+  }
 
   // جلب رسائل المحادثة المحددة والاشتراك في Realtime
   useEffect(() => {
@@ -161,7 +214,6 @@ export default function AdminDashboard() {
     if (!selectedSession) return
 
     if (window.confirm("Are you sure you want to end this live conversation?")) {
-      // 1. إرسال رسالة ختامية لجدول الرسائل لتظهر عند العميل فوراً
       const closeMsg = {
         session_id: selectedSession.id,
         sender: 'agent',
@@ -171,7 +223,6 @@ export default function AdminDashboard() {
 
       await supabase.from('chat_messages').insert([closeMsg])
 
-      // 2. تحديث حالة المحادثة إلى ended
       const { error } = await supabase
         .from('chat_sessions')
         .update({ status: 'ended', updated_at: new Date().toISOString() })
@@ -260,12 +311,21 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           
+          {/* HEADER BAR */}
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Control Panel</h1>
-              <p className="text-xs text-gray-500">Visitor logs, live chat & contact management</p>
+              <p className="text-xs text-gray-500">Visitor logs, live chat & GMC product feed management</p>
             </div>
             <div className="flex items-center gap-2">
+              {/* 🟢 ZER EXPORT GMC CSV */}
+              <button 
+                onClick={exportGmcCsv}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-extrabold transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+              >
+                <Download className="w-4 h-4" /> Export GMC Feed (.CSV)
+              </button>
+
               <button 
                 onClick={fetchData}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all"
@@ -281,6 +341,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* TABS NAVIGATION */}
           <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
             <button
               onClick={() => setActiveTab('visitors')}
@@ -313,6 +374,17 @@ export default function AdminDashboard() {
               }`}
             >
               <MessageSquare className="w-4 h-4" /> Contact Forms ({messages.length})
+            </button>
+
+            <button
+              onClick={() => setActiveTab('gmc')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'gmc' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <FileSpreadsheet className="w-4 h-4" /> GMC Exporter
             </button>
           </div>
 
@@ -541,6 +613,30 @@ export default function AdminDashboard() {
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {/* TAB 4: GMC EXPORTER CARD */}
+          {activeTab === 'gmc' && (
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm max-w-2xl mx-auto text-center space-y-4">
+              <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
+                <FileSpreadsheet className="w-7 h-7" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Google Merchant Center Feed Exporter</h2>
+                <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
+                  Export all store products formatted strictly according to Google Merchant Center specification (USD prices, full URLs, in_stock status).
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={exportGmcCsv}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                >
+                  <Download className="w-5 h-5" /> Download GMC Feed (.CSV)
+                </button>
+              </div>
             </div>
           )}
 
