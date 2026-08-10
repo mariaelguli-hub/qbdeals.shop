@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Zap, ShieldCheck, CheckCircle, Star, ArrowRight, Sparkles } from 'lucide-react'
+import { Check, Zap, ShieldCheck, CheckCircle, Star, ArrowRight, Sparkles, Mail, Download, Shield, Timer } from 'lucide-react'
 
 // الكلمات المتغيرة
 const animatedWords = ['one-time payment', 'no subscription', 'instant delivery', 'lifetime key']
@@ -47,7 +47,7 @@ export default function Hero() {
     return () => clearInterval(wordInterval)
   }, [])
 
-  // 🔄 Auto-slide for right card
+  // 🔄 Auto-slide for features
   useEffect(() => {
     const cardInterval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % whyUsFeatures.length)
@@ -78,8 +78,6 @@ export default function Hero() {
     }
   }
 
-  const ActiveIcon = whyUsFeatures[activeTab].icon
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -101,9 +99,9 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative py-12 lg:py-24 bg-emerald-50/20 overflow-hidden">
+    <section className="relative py-12 lg:py-24 bg-emerald-50/20 overflow-hidden perspective-1000">
       
-      {/* 🟦 1. Modern Grid Background Pattern (المربعات الهندسية الناعمة) */}
+      {/* 🟦 1. Modern Grid Background Pattern */}
       <div 
         className="absolute inset-0 z-0 pointer-events-none opacity-60"
         style={{
@@ -119,14 +117,14 @@ export default function Hero() {
       <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-400/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
           {/* Left Side: Animated Hero Content */}
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="lg:col-span-7 text-left"
+            className="lg:col-span-6 text-left"
           >
             {/* Rating Badge */}
             <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-emerald-200/80 mb-5 shadow-xs">
@@ -135,7 +133,7 @@ export default function Hero() {
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
-            {/* Main Title with Perfect Overflow & Clean Padding */}
+            {/* Main Title */}
             <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.2]">
               Genuine QuickBooks Desktop 2024 —{' '}
               <span className="inline-flex items-center overflow-visible py-1">
@@ -149,7 +147,6 @@ export default function Hero() {
                     className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black px-2 pb-1 inline-block overflow-visible"
                   >
                     {animatedWords[wordIndex]}
-                    {/* Subtly Glowing Underline Accent */}
                     <span className="absolute left-0 bottom-0 w-full h-[3.5px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 rounded-full shadow-xs" />
                   </motion.span>
                 </AnimatePresence>
@@ -196,72 +193,122 @@ export default function Hero() {
 
           </motion.div>
 
-          {/* Right Side: Animated Horizontal Slide Card */}
+          {/* 🌟 Right Side: High-Level Animated 3D Floating Dashboard Card 🌟 */}
           <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="lg:col-span-5"
+            initial={{ opacity: 0, scale: 0.9, rotateY: -12 }}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="lg:col-span-6 relative perspective-1000"
           >
-            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/10 border border-gray-200/80 relative overflow-hidden">
+            {/* 3D Main Container */}
+            <motion.div 
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              className="relative bg-white/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-7 shadow-2xl shadow-emerald-950/15 border border-gray-200/80 transition-all duration-500 hover:rotate-1"
+            >
               
-              {/* Header */}
+              {/* Top Header Row */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-                <h3 className="font-extrabold text-gray-900 text-base sm:text-lg">
-                  Why buy from us
-                </h3>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-extrabold rounded-full border border-emerald-200/60">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  Best Choice
-                </span>
-              </div>
-
-              {/* Horizontal Slide Content */}
-              <div className="relative min-h-[110px] flex items-center overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.35, ease: 'easeInOut' }}
-                    className="w-full flex items-start gap-4 py-2"
-                  >
-                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md shadow-emerald-900/20 shrink-0 border border-emerald-400/30">
-                      <ActiveIcon className="w-6 h-6 stroke-[2.2]" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-gray-900 text-base mb-1">
-                        {whyUsFeatures[activeTab].title}
-                      </h4>
-                      <p className="text-xs sm:text-sm text-gray-500 font-medium leading-relaxed">
-                        {whyUsFeatures[activeTab].desc}
-                      </p>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Dots Navigation */}
-              <div className="flex items-center justify-between pt-5 mt-2 border-t border-gray-100">
-                <div className="flex items-center gap-1.5">
-                  {whyUsFeatures.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveTab(idx)}
-                      className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        activeTab === idx ? 'w-6 bg-emerald-600' : 'w-2 bg-gray-200 hover:bg-gray-300'
-                      }`}
-                    />
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl flex items-center justify-center font-mono font-black text-white text-lg shadow-md shadow-emerald-900/20">
+                    QB
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-gray-900 text-sm sm:text-base leading-tight">
+                      QuickBooks Desktop
+                    </h3>
+                    <span className="text-xs text-gray-400 font-medium">Pro Plus 2024 · License key</span>
+                  </div>
                 </div>
 
-                <span className="text-[11px] font-black text-gray-400 font-mono">
-                  0{activeTab + 1} / 0{whyUsFeatures.length}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-full border border-emerald-200/60">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  ACTIVE
                 </span>
               </div>
 
-            </div>
+              {/* Status Step 1 */}
+              <div className="space-y-3.5 mb-6">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50/80 border border-gray-100 hover:border-emerald-200/80 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-xs sm:text-sm">License key delivered</h4>
+                      <p className="text-[11px] text-gray-400 font-medium">To your inbox in 2 min</p>
+                    </div>
+                  </div>
+                  <Check className="w-5 h-5 text-emerald-600 stroke-[3]" />
+                </div>
+
+                {/* Status Step 2 */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50/80 border border-gray-100 hover:border-emerald-200/80 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <Download className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-xs sm:text-sm">Installer ready to download</h4>
+                      <p className="text-[11px] text-gray-400 font-medium">Windows & macOS</p>
+                    </div>
+                  </div>
+                  <Check className="w-5 h-5 text-emerald-600 stroke-[3]" />
+                </div>
+
+                {/* Status Step 3 */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50/80 border border-gray-100 hover:border-emerald-200/80 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-600 text-white shadow-xs">
+                      <Zap className="w-4 h-4 fill-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-xs sm:text-sm">Activation complete</h4>
+                      <p className="text-[11px] text-gray-400 font-medium">Genuine key — lifetime</p>
+                    </div>
+                  </div>
+                  <Check className="w-5 h-5 text-emerald-600 stroke-[3]" />
+                </div>
+              </div>
+
+              {/* Bottom Card Footer */}
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                <span className="font-extrabold text-gray-400">One-time purchase</span>
+                <span className="font-black text-emerald-600 text-base font-mono">From $127.00</span>
+              </div>
+
+            </motion.div>
+
+            {/* 💃 FLOATING 3D BADGE 1 (Top Right - Money Back Guarantee) */}
+            <motion.div 
+              animate={{ y: [0, -12, 0], rotate: [0, 2, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute -top-6 -right-3 sm:-right-6 bg-white/95 backdrop-blur-xl p-3.5 rounded-2xl shadow-xl shadow-emerald-950/10 border border-emerald-100 flex items-center gap-3 z-20"
+            >
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h5 className="font-black text-gray-900 text-xs">30-day guarantee</h5>
+                <p className="text-[10px] text-gray-400 font-bold">Money-back, no risk</p>
+              </div>
+            </motion.div>
+
+            {/* 💃 FLOATING 3D BADGE 2 (Bottom Left - Instant Delivery) */}
+            <motion.div 
+              animate={{ y: [0, 10, 0], rotate: [0, -2, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+              className="absolute -bottom-6 -left-3 sm:-left-6 bg-white/95 backdrop-blur-xl p-3.5 rounded-2xl shadow-xl shadow-emerald-950/10 border border-emerald-100 flex items-center gap-3 z-20"
+            >
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+                <Timer className="w-5 h-5" />
+              </div>
+              <div>
+                <h5 className="font-black text-gray-900 text-xs">Instant delivery</h5>
+                <p className="text-[10px] text-gray-400 font-bold">Avg. 2 min</p>
+              </div>
+            </motion.div>
+
           </motion.div>
 
         </div>
