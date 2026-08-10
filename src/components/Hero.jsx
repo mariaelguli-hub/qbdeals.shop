@@ -101,11 +101,22 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative py-10 lg:py-20 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/50 overflow-hidden">
+    <section className="relative py-12 lg:py-24 bg-emerald-50/20 overflow-hidden">
       
-      {/* Background Decorative Mesh Glow */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+      {/* 🟦 1. Modern Grid Background Pattern (المربعات الهندسية الناعمة) */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: `radial-gradient(#10b981 0.75px, transparent 0.75px), linear-gradient(to right, #05966912 1px, transparent 1px), linear-gradient(to bottom, #05966912 1px, transparent 1px)`,
+          backgroundSize: '24px 24px, 32px 32px, 32px 32px',
+          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)'
+        }}
+      />
+
+      {/* 🟢 2. Soft Ambient Glows */}
+      <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-400/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -118,26 +129,28 @@ export default function Hero() {
             className="lg:col-span-7 text-left"
           >
             {/* Rating Badge */}
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 mb-5 shadow-2xs">
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-emerald-200/80 mb-5 shadow-xs">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
               <span className="text-xs font-black text-emerald-950 tracking-tight">4.8/5 from 22 verified reviews</span>
-              <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse ml-0.5" />
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse ml-0.5" />
             </motion.div>
 
-            {/* Main Title with Fixed Overflow & Padding */}
-            <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.25]">
+            {/* Main Title with Perfect Overflow & Clean Padding */}
+            <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 mb-5 tracking-tight leading-[1.2]">
               Genuine QuickBooks Desktop 2024 —{' '}
               <span className="inline-flex items-center overflow-visible py-1">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={wordIndex}
-                    initial={{ opacity: 0, y: 8, filter: 'blur(3px)' }}
+                    initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
                     animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black px-2 pb-1 border-b-3 border-emerald-400 inline-block overflow-visible"
+                    exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 font-black px-2 pb-1 inline-block overflow-visible"
                   >
                     {animatedWords[wordIndex]}
+                    {/* Subtly Glowing Underline Accent */}
+                    <span className="absolute left-0 bottom-0 w-full h-[3.5px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 rounded-full shadow-xs" />
                   </motion.span>
                 </AnimatePresence>
               </span>
@@ -149,14 +162,14 @@ export default function Hero() {
             </motion.p>
 
             {/* Perks List */}
-            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm font-extrabold text-gray-800 mb-8">
-              <span className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-3 py-1 rounded-lg border border-emerald-200/50">
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-x-4 gap-y-2.5 text-xs sm:text-sm font-extrabold text-gray-800 mb-8">
+              <span className="flex items-center gap-1.5 text-emerald-800 bg-white/80 backdrop-blur-xs px-3.5 py-1.5 rounded-xl border border-emerald-200/60 shadow-2xs">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> No subscription
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-3 py-1 rounded-lg border border-emerald-200/50">
+              <span className="flex items-center gap-1.5 text-emerald-800 bg-white/80 backdrop-blur-xs px-3.5 py-1.5 rounded-xl border border-emerald-200/60 shadow-2xs">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> Instant delivery
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-3 py-1 rounded-lg border border-emerald-200/50">
+              <span className="flex items-center gap-1.5 text-emerald-800 bg-white/80 backdrop-blur-xs px-3.5 py-1.5 rounded-xl border border-emerald-200/60 shadow-2xs">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" /> Genuine license
               </span>
             </motion.div>
@@ -174,7 +187,7 @@ export default function Hero() {
 
               <Link
                 to="/shop"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-gray-200 text-gray-800 font-extrabold text-base hover:bg-gray-50 hover:border-gray-300 shadow-2xs hover:shadow-md transition-all duration-200"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white/90 backdrop-blur-md border border-gray-200/90 text-gray-800 font-extrabold text-base hover:bg-white hover:border-gray-300 shadow-2xs hover:shadow-md transition-all duration-200"
               >
                 <span>View all products</span>
                 <ArrowRight className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
@@ -190,7 +203,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="lg:col-span-5"
           >
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/10 border border-gray-200/80 relative overflow-hidden">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-950/10 border border-gray-200/80 relative overflow-hidden">
               
               {/* Header */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
