@@ -101,20 +101,5 @@
       { "id": "ent-sol-5users", "label": "5 Users", "price": 157, "comparePrice": 949, "users": 5, "bestselling": true }
     ],
     "image": "/images/QuickBooks-Desktop-Enterprise-2024.png"
-  },
-  {
-    "id": 5,
-    "slug": "gardening-hand-trowel",
-    "name": "Gardening Hand Trowel",
-    "category": "GARDEN",
-    "tag": "Hidden",
-    "rating": 4.90,
-    "reviewsCount": 10,
-    "description": "Ergonomic gardening hand trowel for planting.",
-    "features": ["Durable steel", "Ergonomic grip"],
-    "variants": [
-      { "id": "trowel-single", "label": "Single Item", "price": 19, "comparePrice": 29, "users": 1, "bestselling": false }
-    ],
-    "image": "/images/pro.jpg"
   }
 ]
