@@ -4,7 +4,7 @@ import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Cloc
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
 import productsData from '../data/products.json'
-import HiddenProductsManager from '../components/HiddenProductsManager'
+import HiddenExplorer from '../components/HiddenExplorer'
 
 const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
 
@@ -626,9 +626,9 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 4: HIDDEN PRODUCTS CATALOG */}
+          {/* TAB 4: HIDDEN PRODUCTS EXPLORER */}
           {activeTab === 'hidden' && (
-            <HiddenProductsManager />
+            <HiddenExplorer />
           )}
 
           {/* TAB 5: GMC EXPORTER CARD */}
