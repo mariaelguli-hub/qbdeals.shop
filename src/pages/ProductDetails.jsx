@@ -36,46 +36,8 @@ export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
 
-  // 1️⃣ البحث فـ products.json الاستاتيكي
-  let foundProduct = products.find((p) => p.slug === slug || String(p.id) === slug)
-
-  // 2️⃣ إلا مالقاهش (مثلاً منتجات الـ CSV المخفية)، يصاوب المنتج أوتوماتيكياً فـ الحين من الـ Slug!
-  if (!foundProduct && slug) {
-    const formattedTitle = slug
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (l) => l.toUpperCase())
-
-    foundProduct = {
-      id: slug,
-      slug: slug,
-      name: formattedTitle,
-      category: 'HOME & GARDEN',
-      description: `Premium quality ${formattedTitle}. Genuine license with instant email delivery, continuous updates, and full money-back guarantee.`,
-      image: `https://placehold.co/500x500/f3f4f6/059669?text=${encodeURIComponent(formattedTitle)}`,
-      rating: 4.96,
-      reviewsCount: 128,
-      features: [
-        '100% Genuine Quality Guarantee',
-        'Instant Delivery by Email',
-        'One-Time Purchase — Lifetime Access',
-        '30-Day Money-Back Guarantee'
-      ],
-      variants: [
-        {
-          id: 'standard-item',
-          label: 'Standard Edition',
-          users: 1,
-          price: 135.00,
-          comparePrice: 299.00,
-          paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
-        }
-      ]
-    }
-  }
-
-  const product = foundProduct
-
-  // State لتحديد الـ Variant الخيار المختار
+  const [product, setProduct] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
 
@@ -84,12 +46,135 @@ export default function ProductDetails() {
   const [isHovered, setIsHovered] = useState(false)
   const imgRef = useRef(null)
 
-  // تعيين الخيار الأول كـ Default عند تحميل المنتج
+  // 1️⃣ جلب بيانات المنتج (من products.json أولاً، ثم من home-and-garden.csv ثانياً)
   useEffect(() => {
-    if (product && product.variants && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0])
+    setLoading(true)
+
+    // البحث فـ products.json
+    const foundInJson = products.find((p) => p.slug === slug || String(p.id) === slug)
+
+    if (foundInJson) {
+      setProduct(foundInJson)
+      if (foundInJson.variants && foundInJson.variants.length > 0) {
+        setSelectedVariant(foundInJson.variants[0])
+      }
+      setLoading(false)
+      return
     }
-  }, [product])
+
+    // البحث فـ home-and-garden.csv للجلاب الصورة الحقيقية والثمن
+    const fetchFromCSV = async () => {
+      try {
+        const response = await fetch('/home-and-garden.csv')
+        if (!response.ok) throw new Error('CSV not found')
+
+        const text = await response.text()
+        const lines = text.split('\n').filter(line => line.trim() !== '')
+
+        if (lines.length > 1) {
+          const parseCSVLine = (str) => {
+            const row = []
+            let inside = false
+            let cur = ''
+            for (let i = 0; i < str.length; i++) {
+              const c = str[i]
+              if (c === '"') inside = !inside
+              else if (c === ',' && !inside) { row.push(cur.trim()); cur = '' }
+              else cur += c
+            }
+            row.push(cur.trim())
+            return row
+          }
+
+          const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/^"|"$/g, ''))
+          const handleIdx = headers.findIndex(h => h === 'handle' || h === 'id' || h === 'slug')
+          const titleIdx = headers.findIndex(h => h === 'title' || h === 'name')
+          const priceIdx = headers.findIndex(h => h.includes('price'))
+          const imgIdx = headers.findIndex(h => h.includes('image') || h.includes('src'))
+
+          for (let i = 1; i < lines.length; i++) {
+            const row = parseCSVLine(lines[i])
+            const itemHandle = (handleIdx !== -1 && row[handleIdx]) ? row[handleIdx].replace(/^"|"$/g, '') : ''
+
+            if (itemHandle === slug) {
+              const itemTitle = (titleIdx !== -1 && row[titleIdx]) ? row[titleIdx].replace(/^"|"$/g, '') : slug.replace(/-/g, ' ')
+              let itemPrice = (priceIdx !== -1 && row[priceIdx]) ? row[priceIdx].replace(/[^0-9.]/g, '') : '135.00'
+              if (!itemPrice || itemPrice === '0') itemPrice = '135.00'
+              
+              const itemImg = (imgIdx !== -1 && row[imgIdx]) ? row[imgIdx].replace(/^"|"$/g, '') : ''
+
+              const csvProduct = {
+                id: slug,
+                slug: slug,
+                name: itemTitle.replace(/\b\w/g, l => l.toUpperCase()),
+                category: 'HOME & GARDEN',
+                description: `High quality ${itemTitle}. Authentic item with one-time payment, instant email delivery, and 30-day money-back guarantee.`,
+                image: itemImg || `https://placehold.co/500x500/f3f4f6/059669?text=${encodeURIComponent(itemTitle)}`,
+                rating: 4.96,
+                reviewsCount: 128,
+                features: [
+                  '100% Genuine Quality Guarantee',
+                  'Instant Delivery by Email',
+                  'One-Time Purchase — Lifetime Access',
+                  '30-Day Money-Back Guarantee'
+                ],
+                variants: [
+                  {
+                    id: 'standard-edition',
+                    label: 'Standard Pack',
+                    users: 1,
+                    price: parseFloat(itemPrice) || 135.00,
+                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00,
+                    paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+                  }
+                ]
+              }
+
+              setProduct(csvProduct)
+              setSelectedVariant(csvProduct.variants[0])
+              setLoading(false)
+              return
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error reading CSV in product page:", err)
+      }
+
+      // Fallback إلا مالقاهش فـ CSV
+      const formattedTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      const fallbackProduct = {
+        id: slug,
+        slug: slug,
+        name: formattedTitle,
+        category: 'HOME & GARDEN',
+        description: `High quality ${formattedTitle}. Genuine license with instant email delivery.`,
+        image: `https://placehold.co/500x500/f3f4f6/059669?text=${encodeURIComponent(formattedTitle)}`,
+        rating: 4.96,
+        reviewsCount: 112,
+        features: [
+          'Genuine License Guarantee',
+          'Instant Email Delivery',
+          '30-Day Money-Back Guarantee'
+        ],
+        variants: [
+          {
+            id: 'standard-item',
+            label: 'Standard Edition',
+            users: 1,
+            price: 135.00,
+            comparePrice: 299.00,
+            paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+          }
+        ]
+      }
+      setProduct(fallbackProduct)
+      setSelectedVariant(fallbackProduct.variants[0])
+      setLoading(false)
+    }
+
+    fetchFromCSV()
+  }, [slug])
 
   const handleMouseMove = (e) => {
     if (!imgRef.current) return
@@ -106,6 +191,15 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-32 text-center">
+        <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-gray-500 font-medium text-sm">Loading product details...</p>
+      </div>
+    )
+  }
+
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -117,7 +211,6 @@ export default function ProductDetails() {
     )
   }
 
-  // 2️⃣ دالة الشراء الفوري (Buy Now Handler)
   const handleBuyNow = () => {
     const targetVariant = selectedVariant || (product.variants && product.variants[0])
 
@@ -364,7 +457,7 @@ export default function ProductDetails() {
                 </button>
               </motion.div>
 
-              {/* Payment Method Badges & Security */}
+              {/* Payment Badges & Security */}
               <div className="mt-6 space-y-6">
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
