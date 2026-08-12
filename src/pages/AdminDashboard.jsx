@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon, LogOut, Download, FileSpreadsheet } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon, LogOut, Download, FileSpreadsheet, EyeOff as EyeOffIcon } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
-import productsData from '../data/products.json' // 👈 استيراد المنتجات لملف الـ Export
+import productsData from '../data/products.json'
+import HiddenProductsManager from '../components/HiddenProductsManager'
 
 const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
 
@@ -103,7 +104,7 @@ export default function AdminDashboard() {
       const rows = (productsData || []).map((p) => {
         const cleanDesc = (p.description || '').replace(/"/g, '""')
         const priceFormatted = `${Number(p.price || 127).toFixed(2)} USD`
-        const productLink = `${domain}/product/${p.slug || p.id}`
+        const productLink = `${domain}/#/product/${p.slug || p.id}`
         const imageLink = p.image && p.image.startsWith('http') ? p.image : `${domain}${p.image || '/images/pro.jpg'}`
 
         return [
@@ -318,7 +319,6 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-500">Visitor logs, live chat & GMC product feed management</p>
             </div>
             <div className="flex items-center gap-2">
-              {/* 🟢 ZER EXPORT GMC CSV */}
               <button 
                 onClick={exportGmcCsv}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-extrabold transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
@@ -374,6 +374,17 @@ export default function AdminDashboard() {
               }`}
             >
               <MessageSquare className="w-4 h-4" /> Contact Forms ({messages.length})
+            </button>
+
+            <button
+              onClick={() => setActiveTab('hidden')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                activeTab === 'hidden' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <EyeOffIcon className="w-4 h-4" /> Hidden Catalog
             </button>
 
             <button
@@ -503,7 +514,6 @@ export default function AdminDashboard() {
                         <p className="text-xs text-emerald-600 font-medium">Status: {selectedSession.status?.toUpperCase()}</p>
                       </div>
 
-                      {/* 🛑🔴 زر إنهاء المحادثة من طرف الأدمن */}
                       {selectedSession.status !== 'ended' && (
                         <button
                           onClick={handleEndSessionFromAdmin}
@@ -616,7 +626,12 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 4: GMC EXPORTER CARD */}
+          {/* TAB 4: HIDDEN PRODUCTS CATALOG */}
+          {activeTab === 'hidden' && (
+            <HiddenProductsManager />
+          )}
+
+          {/* TAB 5: GMC EXPORTER CARD */}
           {activeTab === 'gmc' && (
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm max-w-2xl mx-auto text-center space-y-4">
               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
