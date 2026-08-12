@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn } from 'lucide-react'
 import products from '../data/products.json'
 
 const whyUsFeatures = [
@@ -35,9 +35,47 @@ const whyUsFeatures = [
 export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const product = products.find((p) => p.slug === slug)
 
-  // 1️⃣ State لتحديد الـ Variant الخيار المختار (الافتراضي هو الأول)
+  // 1️⃣ البحث فـ products.json الاستاتيكي
+  let foundProduct = products.find((p) => p.slug === slug || String(p.id) === slug)
+
+  // 2️⃣ إلا مالقاهش (مثلاً منتجات الـ CSV المخفية)، يصاوب المنتج أوتوماتيكياً فـ الحين من الـ Slug!
+  if (!foundProduct && slug) {
+    const formattedTitle = slug
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (l) => l.toUpperCase())
+
+    foundProduct = {
+      id: slug,
+      slug: slug,
+      name: formattedTitle,
+      category: 'HOME & GARDEN',
+      description: `Premium quality ${formattedTitle}. Genuine license with instant email delivery, continuous updates, and full money-back guarantee.`,
+      image: `https://placehold.co/500x500/f3f4f6/059669?text=${encodeURIComponent(formattedTitle)}`,
+      rating: 4.96,
+      reviewsCount: 128,
+      features: [
+        '100% Genuine Quality Guarantee',
+        'Instant Delivery by Email',
+        'One-Time Purchase — Lifetime Access',
+        '30-Day Money-Back Guarantee'
+      ],
+      variants: [
+        {
+          id: 'standard-item',
+          label: 'Standard Edition',
+          users: 1,
+          price: 135.00,
+          comparePrice: 299.00,
+          paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+        }
+      ]
+    }
+  }
+
+  const product = foundProduct
+
+  // State لتحديد الـ Variant الخيار المختار
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
 
@@ -72,7 +110,7 @@ export default function ProductDetails() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Product not found</h1>
-        <Link to="/shop" className="text-brand-700 font-semibold hover:underline">
+        <Link to="/shop" className="text-emerald-700 font-semibold hover:underline">
           &larr; Back to shop
         </Link>
       </div>
@@ -83,13 +121,11 @@ export default function ProductDetails() {
   const handleBuyNow = () => {
     const targetVariant = selectedVariant || (product.variants && product.variants[0])
 
-    // إلا كان عندها paymentLink مباشر (فـ JSON) كيتوجه ليه أونلاين
     if (targetVariant && targetVariant.paymentLink) {
       window.location.href = targetVariant.paymentLink
     } else if (product.paymentLink) {
       window.location.href = product.paymentLink
     } else {
-      // إرسال لصفحة Checkout مع الـ ID المحدد
       navigate(`/checkout?id=${product.id}&variant=${targetVariant?.id || 'default'}`)
     }
   }
@@ -136,7 +172,7 @@ export default function ProductDetails() {
                   }}
                   className="w-full h-auto max-h-[480px] object-contain rounded-2xl transition-transform duration-200 ease-out"
                   onError={(e) => {
-                    e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category)}`
+                    e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category || 'Product')}`
                   }}
                 />
 
@@ -209,7 +245,7 @@ export default function ProductDetails() {
 
             </div>
 
-            {/* Right Side: Product Details & Interactive Variant Selection */}
+            {/* Right Side: Product Details & Pricing */}
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -258,7 +294,7 @@ export default function ProductDetails() {
                 ))}
               </ul>
 
-              {/* 🎯 3️⃣ VARIANTS SELECTION LIST (المربعات التي تصبح محددة بـ Click) */}
+              {/* Variants Selection List */}
               <div className="space-y-3 mb-8">
                 {(product.variants || []).map((variant) => {
                   const isSelected = selectedVariant?.id === variant.id
@@ -274,7 +310,6 @@ export default function ProductDetails() {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        {/* Check Indicator Icon */}
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
                           isSelected ? 'bg-emerald-600 text-white' : 'border border-gray-300'
                         }`}>
@@ -310,7 +345,7 @@ export default function ProductDetails() {
                 })}
               </div>
 
-              {/* 🚀 4️⃣ BUY NOW BUTTON WITH INSTANT DIRECT LINK LOGIC */}
+              {/* Buy Now Button */}
               <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
