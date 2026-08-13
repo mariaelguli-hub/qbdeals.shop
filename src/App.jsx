@@ -1,18 +1,20 @@
-import ThankYou from './pages/ThankYou'
-
-// داخل المكون الرئيسي Routes
-<Route path="/thank-you" element={<ThankYou />} />
-import ChatWidget from './components/ChatWidget'
+import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+
+// Components
+import ChatWidget from './components/ChatWidget'
 import ScrollToTop from './components/ScrollToTop'
 import VisitorTracker from './components/VisitorTracker'
 import MainLayout from './layouts/MainLayout'
+
+// Pages
 import Home from './pages/Home'
 import Shop from './pages/Shop'
 import ProductDetails from './pages/ProductDetails'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
+import ThankYou from './pages/ThankYou' // 👈 استيراد صفحة الشكر هنا
 import Contact from './pages/Contact'
 import About from './pages/About'
 import FAQ from './pages/FAQ'
@@ -32,7 +34,7 @@ export default function App() {
       {/* 🎯 تتبع الزوار + السكورل لفوق + الشات بوت المباشر */}
       <VisitorTracker />
       <ScrollToTop />
-      <ChatWidget /> {/* 👈 هادي هي اللي كانت ناقصاك فـ JSX وكانت ما كاتبينهاش! */}
+      <ChatWidget />
 
       <Toaster position="top-right" toastOptions={{
         style: { borderRadius: '10px', fontSize: '14px' }
@@ -45,6 +47,10 @@ export default function App() {
           <Route path="/product/:slug" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          
+          {/* 🟢 صفحة التأكيد والتحويلات المباشرة */}
+          <Route path="/thank-you" element={<ThankYou />} />
+
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
