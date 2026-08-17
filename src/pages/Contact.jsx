@@ -132,8 +132,9 @@ export default function Contact() {
                 </div>
                 <div className="font-bold text-gray-900 text-sm mb-1">Office Address</div>
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  4479 New Creek Road,<br />
-                  Birmingham, AL 35203
+                  Meininger Strasse 11 Mandelbachtal<br />
+                  Saarland 66399, Germany
+
                 </p>
               </div>
             </div>
