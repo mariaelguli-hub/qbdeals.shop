@@ -77,8 +77,24 @@
       "Advanced inventory & reporting"
     ],
     "variants": [
-      { "id": "ent-acc-single", "label": "Single User", "price": 137, "comparePrice": 685, "users": 1, "bestselling": false },
-      { "id": "ent-acc-5users", "label": "5 Users", "price": 153, "comparePrice": 899, "users": 5, "bestselling": true }
+      { 
+        "id": "ent-acc-single", 
+        "label": "Single User", 
+        "price": 137, 
+        "comparePrice": 685, 
+        "users": 1, 
+        "bestselling": false,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
+      },
+      { 
+        "id": "ent-acc-5users", 
+        "label": "5 Users", 
+        "price": 153, 
+        "comparePrice": 899, 
+        "users": 5, 
+        "bestselling": true,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
+      }
     ],
     "image": "/images/QuickBooks-Desktop-Enterprise-2024.png"
   },
@@ -97,8 +113,24 @@
       "Advanced reporting with templates"
     ],
     "variants": [
-      { "id": "ent-sol-single", "label": "Single User", "price": 145, "comparePrice": 725, "users": 1, "bestselling": false },
-      { "id": "ent-sol-5users", "label": "5 Users", "price": 157, "comparePrice": 949, "users": 5, "bestselling": true }
+      { 
+        "id": "ent-sol-single", 
+        "label": "Single User", 
+        "price": 145, 
+        "comparePrice": 725, 
+        "users": 1, 
+        "bestselling": false,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
+      },
+      { 
+        "id": "ent-sol-5users", 
+        "label": "5 Users", 
+        "price": 157, 
+        "comparePrice": 949, 
+        "users": 5, 
+        "bestselling": true,
+        "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
+      }
     ],
     "image": "/images/QuickBooks-Desktop-Enterprise-2024.png"
   }
