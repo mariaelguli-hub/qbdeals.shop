@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, Bot, User, Image as ImageIcon, LogOut, Download, FileSpreadsheet, EyeOff as EyeOffIcon } from 'lucide-react'
+import { Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, Users, Clock, Compass, ShieldAlert, Send, LogOut, Download, FileSpreadsheet, EyeOff as EyeOffIcon, Layers, CheckCircle } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
-import productsData from '../data/products.json'
+import defaultProducts from '../data/products.json'
 import HiddenExplorer from '../components/HiddenExplorer'
 
 const ADMIN_PASSWORD = "MySecretAdminPassword2026!"
@@ -13,9 +13,15 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
-  const [activeTab, setActiveTab] = useState('visitors')
+  const [activeTab, setActiveTab] = useState('products') // 👈 الافتراضي يفتح على إدارة المنتجات
   const [messages, setMessages] = useState([])
   const [visitors, setVisitors] = useState([])
+
+  // 📦 State إدارة المنتجات مع localStorage
+  const [productsList, setProductsList] = useState(() => {
+    const saved = localStorage.getItem('qb_catalog_products')
+    return saved ? JSON.parse(saved) : defaultProducts
+  })
   
   // 💬 States الشات المباشر
   const [chatSessions, setChatSessions] = useState([])
@@ -46,6 +52,20 @@ export default function AdminDashboard() {
     setIsAuthenticated(false)
     localStorage.removeItem('qb_admin_auth')
     toast.success('Logged out')
+  }
+
+  // 👁️ دالة التبديل بين إظهار وإخفاء المنتج
+  const toggleProductVisibility = (productId) => {
+    const updated = productsList.map(item => {
+      if (item.id === productId) {
+        const nextState = !item.hidden
+        toast.success(`${item.name} is now ${nextState ? 'Hidden' : 'Visible on Store'}`)
+        return { ...item, hidden: nextState }
+      }
+      return item
+    })
+    setProductsList(updated)
+    localStorage.setItem('qb_catalog_products', JSON.stringify(updated))
   }
 
   const fetchData = async () => {
@@ -89,27 +109,19 @@ export default function AdminDashboard() {
     try {
       const domain = 'https://qbdeals.shop'
       const headers = [
-        'id',
-        'title',
-        'description',
-        'link',
-        'image_link',
-        'availability',
-        'price',
-        'brand',
-        'condition',
-        'google_product_category'
+        'id', 'title', 'description', 'link', 'image_link',
+        'availability', 'price', 'brand', 'condition', 'google_product_category'
       ]
 
-      const rows = (productsData || []).map((p) => {
+      const rows = (productsList || []).map((p) => {
         const cleanDesc = (p.description || '').replace(/"/g, '""')
-        const priceFormatted = `${Number(p.price || 127).toFixed(2)} USD`
+        const priceFormatted = `${Number(p.variants?.[0]?.price || p.price || 135).toFixed(2)} USD`
         const productLink = `${domain}/#/product/${p.slug || p.id}`
-        const imageLink = p.image && p.image.startsWith('http') ? p.image : `${domain}${p.image || '/images/pro.jpg'}`
+        const imageLink = p.image && p.image.startsWith('http') ? p.image : `${domain}${p.image || '/images/qb-pro-plus-2024.webp'}`
 
         return [
           `"${p.id}"`,
-          `"${p.title}"`,
+          `"${p.name || p.title}"`,
           `"${cleanDesc}"`,
           `"${productLink}"`,
           `"${imageLink}"`,
@@ -132,11 +144,10 @@ export default function AdminDashboard() {
       toast.success('GMC Feed CSV Downloaded!')
     } catch (err) {
       console.error(err)
-      toast.error('Failed to export CSV. Check products.json file.')
+      toast.error('Failed to export CSV.')
     }
   }
 
-  // جلب رسائل المحادثة المحددة والاشتراك في Realtime
   useEffect(() => {
     if (!selectedSession) return
 
@@ -173,7 +184,6 @@ export default function AdminDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
-  // 🛠️ دالة إرسال رد الـ Agent
   const handleSendAgentReply = async (e) => {
     e.preventDefault()
     if (!replyInput.trim() || !selectedSession) return
@@ -195,12 +205,10 @@ export default function AdminDashboard() {
       .insert([agentMsg])
 
     if (msgError) {
-      console.error('Error sending agent reply:', msgError)
       toast.error(`Failed to send: ${msgError.message}`)
       return
     }
 
-    // تحديث حالة المحادثة إلى Agent
     await supabase
       .from('chat_sessions')
       .update({ status: 'agent', updated_at: new Date().toISOString() })
@@ -210,7 +218,6 @@ export default function AdminDashboard() {
     toast.success('Reply sent successfully!')
   }
 
-  // 🛑 🔴 دالة إغلاق المحادثة من طرف الأدمن مع إرسال رسالة فورية للعميل
   const handleEndSessionFromAdmin = async () => {
     if (!selectedSession) return
 
@@ -288,14 +295,14 @@ export default function AdminDashboard() {
               <button 
                 type="button" 
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             <button 
               type="submit" 
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
             >
               Unlock Dashboard
             </button>
@@ -316,7 +323,7 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Control Panel</h1>
-              <p className="text-xs text-gray-500">Visitor logs, live chat & GMC product feed management</p>
+              <p className="text-xs text-gray-500">Manage store visibility, visitors, live chat & GMC feed</p>
             </div>
             <div className="flex items-center gap-2">
               <button 
@@ -328,13 +335,13 @@ export default function AdminDashboard() {
 
               <button 
                 onClick={fetchData}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
               </button>
               <button 
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-medium transition-all"
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-medium transition-all cursor-pointer"
               >
                 Logout
               </button>
@@ -343,9 +350,22 @@ export default function AdminDashboard() {
 
           {/* TABS NAVIGATION */}
           <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
+            
+            {/* 🟢 TAB 1: Product Manager */}
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+                activeTab === 'products' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" /> Product Manager ({productsList.length})
+            </button>
+
             <button
               onClick={() => setActiveTab('visitors')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
                 activeTab === 'visitors' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -356,7 +376,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setActiveTab('livechat')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
                 activeTab === 'livechat' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -367,7 +387,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setActiveTab('messages')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
                 activeTab === 'messages' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -378,18 +398,18 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setActiveTab('hidden')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
                 activeTab === 'hidden' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <EyeOffIcon className="w-4 h-4" /> Hidden Catalog
+              <EyeOffIcon className="w-4 h-4" /> Hidden Explorer
             </button>
 
             <button
               onClick={() => setActiveTab('gmc')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
                 activeTab === 'gmc' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -399,7 +419,97 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* TAB 1: VISITORS LOGS */}
+          {/* 🟢 TAB 1 CONTENT: PRODUCT VISIBILITY MANAGER */}
+          {activeTab === 'products' && (
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-emerald-600" /> Storefront Product Visibility
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Toggle eye icon to show or hide any product on Home & Shop page instantly</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl font-bold border border-emerald-100">
+                    Visible: {productsList.filter(p => !p.hidden).length}
+                  </span>
+                  <span className="text-xs text-red-700 bg-red-50 px-3 py-1.5 rounded-xl font-bold border border-red-100">
+                    Hidden: {productsList.filter(p => p.hidden).length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                      <th className="p-4">Product Info</th>
+                      <th className="p-4">Category</th>
+                      <th className="p-4">Price</th>
+                      <th className="p-4">Storefront Status</th>
+                      <th className="p-4 text-center">Action (Show / Hide)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {productsList.map((product) => (
+                      <tr 
+                        key={product.id} 
+                        className={`transition-colors ${product.hidden ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/80 bg-white'}`}
+                      >
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={product.image} 
+                              alt={product.name} 
+                              className="w-10 h-10 object-contain rounded-lg border border-gray-200 bg-white p-1" 
+                            />
+                            <div>
+                              <div className="font-bold text-gray-900 text-xs sm:text-sm">{product.name}</div>
+                              <div className="text-[11px] text-gray-400 font-mono">ID: #{product.id} | {product.slug}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                            {product.category}
+                          </span>
+                        </td>
+                        <td className="p-4 font-extrabold text-emerald-600 text-xs sm:text-sm">
+                          ${product.variants?.[0]?.price || product.price || 135} USD
+                        </td>
+                        <td className="p-4">
+                          {product.hidden ? (
+                            <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2.5 py-1 rounded-full text-xs font-bold border border-red-100">
+                              <EyeOff className="w-3 h-3" /> Hidden from Home
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-100">
+                              <CheckCircle className="w-3 h-3" /> Visible on Store
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => toggleProductVisibility(product.id)}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                              product.hidden
+                                ? 'bg-gray-100 hover:bg-emerald-50 text-gray-500 hover:text-emerald-600 border-gray-200 hover:border-emerald-300'
+                                : 'bg-emerald-50 hover:bg-red-50 text-emerald-600 hover:text-red-600 border-emerald-200 hover:border-red-300 shadow-sm'
+                            }`}
+                            title={product.hidden ? "Click to Show on Home" : "Click to Hide from Home"}
+                          >
+                            {product.hidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: VISITORS LOGS */}
           {activeTab === 'visitors' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -456,7 +566,7 @@ export default function AdminDashboard() {
                           <td className="p-4 text-right">
                             <button 
                               onClick={() => deleteVisitor(v.id)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -470,7 +580,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 2: LIVE CHAT SUPPORT PANEL */}
+          {/* TAB 3: LIVE CHAT SUPPORT PANEL */}
           {activeTab === 'livechat' && (
             <div className="grid md:grid-cols-3 gap-6 h-[600px]">
               
@@ -579,7 +689,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 3: CONTACT FORM MESSAGES */}
+          {/* TAB 4: CONTACT FORM MESSAGES */}
           {activeTab === 'messages' && (
             <div className="grid gap-4">
               {messages.length === 0 ? (
@@ -615,7 +725,7 @@ export default function AdminDashboard() {
                       </div>
                       <button 
                         onClick={() => deleteMessage(msg.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" /> Delete
                       </button>
@@ -626,12 +736,12 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 4: HIDDEN PRODUCTS EXPLORER */}
+          {/* TAB 5: HIDDEN PRODUCTS EXPLORER */}
           {activeTab === 'hidden' && (
             <HiddenExplorer />
           )}
 
-          {/* TAB 5: GMC EXPORTER CARD */}
+          {/* TAB 6: GMC EXPORTER CARD */}
           {activeTab === 'gmc' && (
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm max-w-2xl mx-auto text-center space-y-4">
               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
@@ -640,7 +750,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Google Merchant Center Feed Exporter</h2>
                 <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
-                  Export all store products formatted strictly according to Google Merchant Center specification (USD prices, full URLs, in_stock status).
+                  Export all store products formatted strictly according to Google Merchant Center specification.
                 </p>
               </div>
 
