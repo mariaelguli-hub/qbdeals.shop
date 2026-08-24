@@ -1,8 +1,28 @@
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import products from '../data/products.json'
+import defaultProducts from '../data/products.json'
 import ProductCard from './ProductCard'
 
 export default function ProductGrid() {
+  const [products, setProducts] = useState(() => {
+    const saved = localStorage.getItem('qb_catalog_products')
+    return saved ? JSON.parse(saved) : defaultProducts
+  })
+
+  // تتبع أي تحديثات فورية
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('qb_catalog_products')
+      if (saved) setProducts(JSON.parse(saved))
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  // تصفية وعرض المنتجات الظاهرة فقط
+  const visibleProducts = products.filter(product => !product.hidden)
+
   return (
     <section className="py-16 lg:py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,11 +42,18 @@ export default function ProductGrid() {
             All products &rarr;
           </Link>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+
+        {visibleProducts.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-200">
+            No products available at the moment.
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
