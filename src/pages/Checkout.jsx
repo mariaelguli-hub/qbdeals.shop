@@ -1,207 +1,198 @@
-import React from 'react'
-import { Helmet } from 'react-helmet-async'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, CreditCard, Lock, ShieldCheck, Zap, Sparkles, CheckCircle2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../hooks/useCart';
 
 export default function Checkout() {
-  return (
-    <>
-      <Helmet>
-        <title>Secure Checkout — QB DEALS</title>
-      </Helmet>
+  const { cartItems, cartTotal, clearCart } = useCart();
+  const navigate = useNavigate();
 
-      <section className="py-12 lg:py-20 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/50 min-h-[85vh] relative overflow-hidden font-sans">
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: 'Morocco'
+  });
+
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+
+  // Charger PayPal SDK
+  useEffect(() => {
+    if (window.paypal) {
+      setSdkLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    // 3wed CLIENT_ID b l-Client ID dial PayPal Business dyalk
+    script.src = "https://www.paypal.com/sdk/js?client-id=BAA7g-TRxn1tHm2l97rTyP5TGgoFv80wXtF89v2Dde2gDAMUbqeYsIynyUNA9udOSIiXBTWJnZnj89DDuE&currency=USD";
+    script.async = true;
+    script.onload = () => setSdkLoaded(true);
+    document.body.appendChild(script);
+  }, []);
+
+  // Render PayPal Buttons f l-Checkout Card
+  useEffect(() => {
+    if (sdkLoaded && window.paypal) {
+      const container = document.getElementById('paypal-button-container');
+      if (container) {
+        container.innerHTML = '';
         
-        {/* Background Decorative Mesh Glow */}
-        <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-10 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+        window.paypal.Buttons({
+          createOrder: (data, actions) => {
+            return actions.order.create({
+              purchase_units: [{
+                amount: {
+                  value: cartTotal.toFixed(2)
+                }
+              }]
+            });
+          },
+          onApprove: (data, actions) => {
+            return actions.order.capture().then((details) => {
+              clearCart();
+              navigate('/thank-you');
+            });
+          },
+          onError: (err) => {
+            console.error('PayPal Error:', err);
+            alert('Waqeate mochkil f amaliyat l-dafa3, 3awd mahawol.');
+          }
+        }).render('#paypal-button-container');
+      }
+    }
+  }, [sdkLoaded, cartTotal, clearCart, navigate]);
 
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          
-          {/* Back Button */}
-          <Link 
-            to="/cart" 
-            className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-emerald-700 transition-colors mb-6 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
-            <span>Back to cart</span>
-          </Link>
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-          {/* Title Header */}
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200/60">
-            <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight">Secure Checkout</h1>
-              <p className="text-xs text-gray-500 font-medium mt-1">Instant delivery to your email inbox</p>
-            </div>
-            
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200/60 text-xs font-black">
-              <Lock className="w-3.5 h-3.5 text-emerald-600" />
-              <span>256-Bit Encrypted</span>
-            </div>
-          </div>
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Ila bghiti t-khdm l-methode l-3adiya wla l-form submission l-adiyya
+  };
 
-          {/* 1️⃣ Contact Information Card */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="bg-white rounded-3xl border border-gray-200/80 p-6 sm:p-7 shadow-xl shadow-gray-200/50 mb-6"
-          >
-            <h2 className="font-extrabold text-gray-900 text-base mb-4 flex items-center justify-between">
-              <span>Contact Information</span>
-              <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-md">Step 1 of 2</span>
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">
-                  Email Address (For Instant License Delivery)
-                </label>
-                <input 
-                  type="email" 
-                  className="w-full bg-gray-50/50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all shadow-2xs" 
-                  placeholder="you@example.com" 
-                  required
-                />
-                <span className="text-[11px] text-gray-400 font-medium mt-1 inline-block">
-                  ⚡ Your QuickBooks license key & download links will be sent here immediately.
-                </span>
-              </div>
-            </div>
-          </motion.div>
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout</h1>
 
-          {/* 2️⃣ Payment Details Card */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-white rounded-3xl border border-gray-200/80 p-6 sm:p-7 shadow-xl shadow-gray-200/50 mb-8"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-gray-100">
-              <h2 className="font-extrabold text-gray-900 text-base">Payment Method</h2>
-              
-              {/* 💳 Authentic Payment Logos */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {/* VISA */}
-                <div className="h-7 px-2.5 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center shadow-2xs">
-                  <span className="font-black italic text-[#1A1F71] text-xs tracking-tighter select-none font-sans">
-                    VISA
-                  </span>
-                </div>
-
-                {/* Mastercard */}
-                <div className="h-7 px-2.5 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                    alt="Mastercard" 
-                    className="h-3.5 w-auto object-contain"
-                  />
-                </div>
-
-                {/* PayPal */}
-                <div className="h-7 px-2.5 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
-                    alt="PayPal" 
-                    className="h-3 w-auto object-contain"
-                  />
-                </div>
-
-                {/* Apple Pay */}
-                <div className="h-7 px-2.5 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" 
-                    alt="Apple Pay" 
-                    className="h-3 w-auto object-contain"
-                  />
-                </div>
-
-                {/* Google Pay */}
-                <div className="h-7 px-2.5 bg-gray-50 border border-gray-200/80 rounded-lg flex items-center justify-center shadow-2xs">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" 
-                    alt="Google Pay" 
-                    className="h-3 w-auto object-contain"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">
-                  Card Number
-                </label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    className="w-full bg-gray-50/50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none pl-11 transition-all shadow-2xs font-mono" 
-                    placeholder="0000 0000 0000 0000" 
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* L-Form dial Ma3lomat l-Chahin (Billing & Shipping) */}
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Ma3lomat l-Zaboun</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">L-Ism l-Awwal</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
                     required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                   />
-                  <CreditCard className="w-5 h-5 text-gray-400 absolute left-3.5 top-3.5" />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">L-Ism l-Aakhir</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">L- العنوان (Address)</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">
-                    Expiry Date
-                  </label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-gray-50/50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all shadow-2xs font-mono" 
-                    placeholder="MM/YY" 
+                  <label className="block text-sm font-medium text-gray-700">L-Madina (City)</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
                     required
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-1.5">
-                    CVC Code
-                  </label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-gray-50/50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 font-medium focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all shadow-2xs font-mono" 
-                    placeholder="123" 
-                    required
+                  <label className="block text-sm font-medium text-gray-700">Postal Code</label>
+                  <input
+                    type="text"
+                    name="postalCode"
+                    value={formData.postalCode}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
                   />
                 </div>
               </div>
-            </div>
-          </motion.div>
-
-          {/* 🚀 High-Level Animated Primary CTA Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <button className="group relative w-full inline-flex items-center justify-center gap-3 py-4 px-8 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white font-black text-base shadow-xl shadow-emerald-600/30 hover:shadow-emerald-600/50 hover:scale-[1.02] active:scale-95 transition-all duration-300 overflow-hidden cursor-pointer mb-6">
-              
-              {/* Shimmer Light Beam Effect */}
-              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
-              
-              <Lock className="w-5 h-5 shrink-0" />
-              <span>Complete Purchase</span>
-              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse ml-1" />
-            </button>
-          </motion.div>
-
-          {/* 🔒 Bottom Micro Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-extrabold text-gray-500 text-center">
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Guaranteed Genuine License
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <Zap className="w-4 h-4 text-amber-500 fill-amber-500" /> Instant Email Delivery
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-600">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> 30-Day Money Back
-            </span>
+            </form>
           </div>
 
+          {/* Product Card & Checkout Payment Summary */}
+          <div className="bg-white p-6 rounded-lg shadow-sm h-fit">
+            <h2 className="text-xl font-semibold mb-4">Molakhas l-Talabiya (Order Summary)</h2>
+            
+            <div className="divide-y divide-gray-200 mb-4 max-h-60 overflow-y-auto">
+              {cartItems.map((item) => (
+                <div key={item.id} className="py-3 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />}
+                    <div>
+                      <p className="font-medium text-gray-800">{item.name}</p>
+                      <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                    </div>
+                  </div>
+                  <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t pt-4 mb-6">
+              <div className="flex justify-between font-bold text-lg text-gray-900">
+                <span>Total:</span>
+                <span>${cartTotal.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* PayPal Checkout Buttons f l-Card */}
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Ikhtar Tariqat l-Adaf (Payment Method)</h3>
+              <div id="paypal-button-container"></div>
+            </div>
+          </div>
         </div>
-      </section>
-    </>
-  )
+      </div>
+    </div>
+  );
 }
