@@ -22,10 +22,9 @@ export default function AdminDashboard() {
   const [visitors, setVisitors] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // 📦 State إدارة جميع المنتجات
   const [productsList, setProductsList] = useState([])
+  const [leads, setLeads] = useState([]) // State jdid dyal Leads
   
-  // 💬 States الشات المباشر
   const [chatSessions, setChatSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
@@ -172,6 +171,11 @@ export default function AdminDashboard() {
 
     const { data: chatData } = await supabase.from('chat_sessions').select('*').order('updated_at', { ascending: false })
     setChatSessions(chatData || [])
+
+    // Fetch dyal Leads
+    const { data: leadsData } = await supabase.from('checkout_leads').select('*').order('created_at', { ascending: false })
+    setLeads(leadsData || [])
+
     setLoading(false)
   }
 
@@ -337,7 +341,6 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           
-          {/* HEADER BAR */}
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Control Panel</h1>
@@ -366,7 +369,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* TABS NAVIGATION */}
           <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
             <button
               onClick={() => setActiveTab('products')}
@@ -377,6 +379,18 @@ export default function AdminDashboard() {
               }`}
             >
               <Layers className="w-4 h-4" /> All Products Manager ({productsList.length})
+            </button>
+
+            {/* Tab Jdid dyal Leads */}
+            <button
+              onClick={() => setActiveTab('leads')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+                activeTab === 'leads' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Users className="w-4 h-4" /> Potential Buyers ({leads.length})
             </button>
 
             <button
@@ -412,7 +426,6 @@ export default function AdminDashboard() {
               <MessageSquare className="w-4 h-4" /> Contact Forms ({messages.length})
             </button>
 
-            {/* 🟢 TAB 5: HIDDEN EXPLORER */}
             <button
               onClick={() => setActiveTab('hidden')}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
@@ -436,7 +449,6 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* TAB 1: PRODUCT VISIBILITY MANAGER */}
           {activeTab === 'products' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
@@ -535,7 +547,52 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 2: VISITORS LOGS */}
+          {/* TAB 1.5: PRE-CHECKOUT LEADS */}
+          {activeTab === 'leads' && (
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-emerald-600" /> Pre-Checkout Leads
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Customers who entered their email before checkout</p>
+                </div>
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-bold">
+                  Total Leads: {leads.length}
+                </span>
+              </div>
+              
+              {leads.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">No leads captured yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                        <th className="p-4">Date</th>
+                        <th className="p-4">Name</th>
+                        <th className="p-4">Email</th>
+                        <th className="p-4">Intended Product</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {leads.map((lead) => (
+                        <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 text-xs text-gray-500">
+                            {new Date(lead.created_at).toLocaleString()}
+                          </td>
+                          <td className="p-4 font-bold text-gray-900">{lead.name}</td>
+                          <td className="p-4 font-medium text-emerald-700">{lead.email}</td>
+                          <td className="p-4 text-gray-600 text-xs">{lead.product_name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'visitors' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -606,7 +663,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 3: LIVE CHAT SUPPORT PANEL */}
           {activeTab === 'livechat' && (
             <div className="grid md:grid-cols-3 gap-6 h-[600px]">
               <div className="md:col-span-1 bg-white rounded-3xl border border-gray-100 p-4 overflow-y-auto space-y-2 shadow-sm">
@@ -713,7 +769,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 4: CONTACT FORM MESSAGES */}
           {activeTab === 'messages' && (
             <div className="grid gap-4">
               {messages.length === 0 ? (
@@ -760,12 +815,10 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 5: HIDDEN PRODUCTS EXPLORER */}
           {activeTab === 'hidden' && (
             <HiddenExplorer />
           )}
 
-          {/* TAB 6: GMC EXPORTER */}
           {activeTab === 'gmc' && (
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm max-w-2xl mx-auto text-center space-y-4">
               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
