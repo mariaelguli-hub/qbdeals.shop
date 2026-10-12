@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn } from 'lucide-react'
 import products from '../data/products.json'
+import { useCart } from '../hooks/useCart' // استيراد الهوك الخاص بالسلة
 
 const whyUsFeatures = [
   {
@@ -35,6 +36,7 @@ const whyUsFeatures = [
 export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { addToCart } = useCart() // تفعيل دالة الإضافة إلى السلة
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -46,11 +48,10 @@ export default function ProductDetails() {
   const [isHovered, setIsHovered] = useState(false)
   const imgRef = useRef(null)
 
-  // 1️⃣ جلب بيانات المنتج (من products.json أولاً، ثم من home-and-garden.csv ثانياً)
+  // جلب بيانات المنتج
   useEffect(() => {
     setLoading(true)
 
-    // البحث فـ products.json
     const foundInJson = products.find((p) => p.slug === slug || String(p.id) === slug)
 
     if (foundInJson) {
@@ -62,7 +63,6 @@ export default function ProductDetails() {
       return
     }
 
-    // البحث فـ home-and-garden.csv للجلاب الصورة الحقيقية والثمن
     const fetchFromCSV = async () => {
       try {
         const response = await fetch('/home-and-garden.csv')
@@ -124,8 +124,7 @@ export default function ProductDetails() {
                     label: 'Standard Pack',
                     users: 1,
                     price: parseFloat(itemPrice) || 135.00,
-                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00,
-                    paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00
                   }
                 ]
               }
@@ -141,7 +140,6 @@ export default function ProductDetails() {
         console.error("Error reading CSV in product page:", err)
       }
 
-      // Fallback إلا مالقاهش فـ CSV
       const formattedTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
       const fallbackProduct = {
         id: slug,
@@ -163,8 +161,7 @@ export default function ProductDetails() {
             label: 'Standard Edition',
             users: 1,
             price: 135.00,
-            comparePrice: 299.00,
-            paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+            comparePrice: 299.00
           }
         ]
       }
@@ -211,16 +208,21 @@ export default function ProductDetails() {
     )
   }
 
+  // الدالة المعدلة: إضافة المنتج للسلة وتوجيهه مباشرة لصفحة الـ Checkout
   const handleBuyNow = () => {
     const targetVariant = selectedVariant || (product.variants && product.variants[0])
-
-    if (targetVariant && targetVariant.paymentLink) {
-      window.location.href = targetVariant.paymentLink
-    } else if (product.paymentLink) {
-      window.location.href = product.paymentLink
-    } else {
-      navigate(`/checkout?id=${product.id}&variant=${targetVariant?.id || 'default'}`)
+    
+    // بناء كائن المنتج لإضافته للسلة بالثمن والفاريانت المختار
+    const cartItem = {
+      id: `${product.id}-${targetVariant?.id || 'default'}`,
+      name: `${product.name} (${targetVariant?.label || ''})`,
+      price: targetVariant?.price || 135.00,
+      image: product.image,
+      quantity: 1
     }
+
+    addToCart(cartItem) // إضافته للسلة
+    navigate('/checkout') // التوجيه الفوري لصفحة الدفع
   }
 
   const ActiveIcon = whyUsFeatures[activeTab].icon
@@ -269,7 +271,6 @@ export default function ProductDetails() {
                   }}
                 />
 
-                {/* Zoom Hint */}
                 <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
                   <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
                 </div>
@@ -525,50 +526,4 @@ export default function ProductDetails() {
 
                   <div className="relative z-10 space-y-3 text-xs text-gray-700">
                     <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
-                        <Zap className="w-3 h-3" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-gray-900">100% Activation Guarantee</span> — License activates successfully or your money back.
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
-                        <ShieldCheck className="w-3 h-3" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-gray-900">Instant Delivery by Email</span> — Receive your license key within minutes.
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-gray-900">Free Re-Activation</span> — Change or reinstall your PC anytime.
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 mt-4 pt-3 border-t border-emerald-100/80 flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-semibold">
-                    <Lock className="w-3 h-3 text-emerald-600" />
-                    <span>Secure checkout</span>
-                    <span className="text-emerald-400">•</span>
-                    <span>Encrypted payments</span>
-                    <span className="text-emerald-400">•</span>
-                    <span>Trusted by thousands</span>
-                  </div>
-                </div>
-
-              </div>
-
-            </motion.div>
-
-          </div>
-        </div>
-      </section>
-    </>
-  )
-}
+                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-
