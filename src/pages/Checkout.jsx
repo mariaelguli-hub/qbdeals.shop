@@ -186,11 +186,11 @@ export default function Checkout() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
-                  checked={formData.country === 'Canada'} 
-                  onChange={() => handleCheckboxChange('country', 'Canada')} 
+                  checked={formData.country === 'united kingdom'} 
+                  onChange={() => handleCheckboxChange('country', 'united kingdom')} 
                   className="w-4 h-4 accent-gray-800 cursor-pointer border-gray-300 rounded-sm" 
                 />
-                <span className="text-sm text-gray-900">Canada</span>
+                <span className="text-sm text-gray-900">united kingdom</span>
               </label>
             </div>
             {errors && !formData.country && (
