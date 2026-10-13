@@ -9,7 +9,7 @@ export default function ThankYou() {
   const location = useLocation()
   const [copied, setCopied] = useState(false)
 
-  // 🧠 Deep Integration: جلب البيانات الحقيقية من صفحة الدفع (Checkout State)
+  // 🧠 جلب البيانات الحقيقية من صفحة الدفع (Checkout State)
   const stateData = location.state || {}
   
   const orderId = stateData.orderId || searchParams.get('id') || `TXN-${Math.floor(100000 + Math.random() * 900000)}`
@@ -23,18 +23,32 @@ export default function ThankYou() {
     const trackedKey = `qb_tracked_${orderId}`
     const alreadyTracked = localStorage.getItem(trackedKey)
 
-    if (!alreadyTracked && typeof window !== 'undefined' && window.gtag) {
-      // 📢 إرسال حدث التحويل الحقيقي لـ Google Ads مع الـ ID والثمن الحقيقي اللي دفع الزبون
-      window.gtag('event', 'conversion', {
-        'send_to': 'AW-18323871651/ngvwCKKG0eAcEKOvwKFE',
-        'value': parseFloat(amount),
-        'currency': 'USD',
-        'transaction_id': orderId
-      })
+    if (!alreadyTracked && typeof window !== 'undefined') {
+      
+      // 📢 1. إرسال حدث التحويل لـ Google Ads
+      if (window.gtag) {
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-18323871651/ngvwCKKG0eAcEKOvwKFE',
+          'value': parseFloat(amount),
+          'currency': 'USD',
+          'transaction_id': orderId
+        })
+      }
 
+      // 🔵 2. إرسال حدث الشراء (Purchase) لـ Facebook Pixel مع الثمن
+      if (window.fbq) {
+        window.fbq('track', 'Purchase', {
+          value: parseFloat(amount),
+          currency: 'USD',
+          content_name: productName,
+          content_type: 'product'
+        })
+      }
+
+      // حفظ الـ ID فـ المتصفح باش ما يتعاودش يتسجل
       localStorage.setItem(trackedKey, 'true')
     }
-  }, [orderId, amount])
+  }, [orderId, amount, productName])
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
@@ -43,7 +57,6 @@ export default function ThankYou() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // دالة لفتح الشات في حال واجه مشكلة (بدل أن يفتح Dispute في بايبال)
   const openLiveChat = () => {
     toast('Please click the Chat icon at the bottom right of your screen.', { icon: '💬' });
   }
@@ -75,7 +88,7 @@ export default function ThankYou() {
 
           <div className="p-6 sm:p-8 space-y-6">
             
-            {/* 📧 DELIVERY STATUS INFO (Dispute Prevention) */}
+            {/* 📧 DELIVERY STATUS INFO */}
             <div className="bg-blue-50 border border-blue-100 p-5 rounded-2xl flex items-start gap-4 shadow-sm">
               <div className="bg-blue-100 p-2.5 rounded-full shrink-0 mt-0.5">
                 <Mail className="w-6 h-6 text-blue-700" />
@@ -120,7 +133,7 @@ export default function ThankYou() {
               </div>
             </div>
 
-            {/* 💬 ACTION BUTTONS (Support vs Home) */}
+            {/* 💬 ACTION BUTTONS */}
             <div className="grid sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
               <Link
                 to="/"
