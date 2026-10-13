@@ -61,7 +61,7 @@ export default function Checkout() {
                 value: formData.users
               }
             }],
-            // 👇 HADA HWA L-CODE LI KIDAYA3 DISPUTES L-CLIENT (DIGITAL GOODS PROTECT)
+            // 👇 1. الحماية ديال بايبال: هاد السطر كيقول لبايبال بلي المنتج رقمي ومافيهش شحن
             application_context: {
               shipping_preference: 'NO_SHIPPING'
             }
@@ -70,7 +70,7 @@ export default function Checkout() {
         onApprove: (data, actions) => {
           return actions.order.capture().then(async (details) => {
             
-            // 👈 1. حفظ الطلب في قاعدة البيانات بعد نجاح الدفع مباشرة
+            // حفظ الطلب في قاعدة البيانات بعد نجاح الدفع مباشرة
             try {
               await supabase.from('orders').insert([{
                 customer_name: formData.name,
@@ -85,8 +85,15 @@ export default function Checkout() {
               console.error("Error saving order to Supabase:", error);
             }
 
-            // 👈 2. توجيه الزبون لصفحة الشكر
-            navigate('/thank-you');
+            // 👇 2. التوجيه الذكي لصفحة الشكر: كيدوز المعلومات (الثمن، الإيميل، رقم الطلب) باش تخدم صفحة الشكر مزيان
+            navigate('/thank-you', { 
+              state: { 
+                orderId: details.id, 
+                amount: formData.users, 
+                email: formData.email,
+                os: formData.os 
+              } 
+            });
           });
         }
       }).render('#paypal-button-container');
