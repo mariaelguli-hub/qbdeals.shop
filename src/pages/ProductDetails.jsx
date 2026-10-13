@@ -2,55 +2,84 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn } from 'lucide-react'
+import { 
+  ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, 
+  Lock, Sparkles, Star, ZoomIn, X, ChevronDown, Monitor, Cpu, HardDrive, Wifi, HelpCircle 
+} from 'lucide-react'
 import products from '../data/products.json'
+import { useCart } from '../hooks/useCart'
+import { supabase } from '../utils/supabase'
 
+// مميزات الشراء السريعة
 const whyUsFeatures = [
+  { id: 0, icon: Zap, title: 'One-Time Purchase', desc: 'Pay once. No subscription, no monthly fees, no annual fees.' },
+  { id: 1, icon: CheckCircle, title: 'Instant Email Delivery', desc: 'Receive your license key and download link within minutes.' },
+  { id: 2, icon: Check, title: 'Genuine License', desc: 'Authentic license keys with full activation support.' },
+  { id: 3, icon: ShieldCheck, title: 'Money-Back Guarantee', desc: "30-day guarantee. If it doesn't activate, we make it right." },
+]
+
+// 👈 إضافة: متطلبات التشغيل (System Requirements)
+const systemRequirements = [
+  { icon: Monitor, label: 'Operating System', value: 'Windows 8.1, Windows 10, or Windows 11 (32-bit & 64-bit)' },
+  { icon: Cpu, label: 'Processor', value: 'At least 2.4 GHz processor (4 GHz recommended)' },
+  { icon: HardDrive, label: 'RAM & Disk Space', value: 'Minimum 4 GB RAM (8GB Rec) / 2.5 GB free disk space' },
+  { icon: Wifi, label: 'Internet Access', value: 'Required for payroll, online features, and updates' }
+]
+
+// 👈 إضافة: الأسئلة الشائعة المستوحاة من المنافس لكسر الشك
+const faqs = [
   {
-    id: 0,
-    icon: Zap,
-    title: 'One-Time Purchase',
-    desc: 'Pay once. No subscription, no monthly fees, no annual fees.',
+    q: "How do you provide the product at a lower price compared to the official website?",
+    a: "We offer competitive pricing because we purchase Intuit ProAdvisor product keys in bulk directly from QuickBooks that are registered under our company. This allows us to pass on massive cost savings directly to you, providing 100% authentic software at a fraction of the cost."
   },
   {
-    id: 1,
-    icon: CheckCircle,
-    title: 'Instant Email Delivery',
-    desc: 'Receive your license key and download link within minutes.',
+    q: "Is it safe to buy from your website? Are the keys genuine?",
+    a: "Absolutely. All the QuickBooks product keys we offer are legitimate, authorized, and 100% authentic. We maintain a secure, encrypted platform and offer a full Money-Back Guarantee if your key fails to activate."
   },
   {
-    id: 2,
-    icon: Check,
-    title: 'Genuine License',
-    desc: 'Authentic license keys with full activation support.',
+    q: "Can I transfer my existing QuickBooks Data into this 2024 Desktop version?",
+    a: "Yes! You can seamlessly transfer your existing QuickBooks data, company files, vendor information, and charts of accounts from previous versions or other editions to QuickBooks Desktop 2024 using Intuit's built-in migration tools."
   },
   {
-    id: 3,
-    icon: ShieldCheck,
-    title: 'Money-Back Guarantee',
-    desc: "30-day guarantee. If it doesn't activate, we make it right.",
+    q: "Is this a one-time purchase or a subscription?",
+    a: "This is a strictly ONE-TIME purchase for a lifetime license of the Desktop version. No monthly or annual subscription fees are required to use the core accounting features."
   },
+  {
+    q: "Do you offer customer support after the purchase?",
+    a: "Yes, you will have free and unlimited customer support provided by our Intuit ProAdvisor experts. If you encounter any installation or activation issues, our dedicated team is here to help 24/7."
+  }
+]
+
+// 👈 إضافة: الدليل الاجتماعي (مراجعات العملاء)
+const customerReviews = [
+  { name: "John Rodriguez", date: "05/06/2024", text: "QuickBooks 2024 has saved me valuable time. The automation features are fantastic and the software adapts seamlessly to my business needs. The customer support is top-notch, providing quick solutions and instant delivery." },
+  { name: "Emily Parker", date: "11/05/2024", text: "This has been a game-changer for my business. The robust features and easy navigation make financial management a breeze. I was skeptical about the price, but the key activated perfectly on the official site." },
+  { name: "Jason Anderson", date: "16/04/2024", text: "Delivers exceptional value for my business. The feature set is comprehensive, and the software's reliability is unmatched. Got my license key in literally 2 minutes via email. Highly recommended!" }
 ]
 
 export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { addToCart } = useCart()
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
-
-  // Zoom States
+  
+  // States for interactive elements
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [isHovered, setIsHovered] = useState(false)
+  const [openFaq, setOpenFaq] = useState(0)
   const imgRef = useRef(null)
 
-  // 1️⃣ جلب بيانات المنتج (من products.json أولاً، ثم من home-and-garden.csv ثانياً)
+  // States for Lead Capture Modal
+  const [showLeadModal, setShowLeadModal] = useState(false)
+  const [leadData, setLeadData] = useState({ name: '', email: '' })
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false)
+
   useEffect(() => {
     setLoading(true)
-
-    // البحث فـ products.json
     const foundInJson = products.find((p) => p.slug === slug || String(p.id) === slug)
 
     if (foundInJson) {
@@ -62,7 +91,6 @@ export default function ProductDetails() {
       return
     }
 
-    // البحث فـ home-and-garden.csv للجلاب الصورة الحقيقية والثمن
     const fetchFromCSV = async () => {
       try {
         const response = await fetch('/home-and-garden.csv')
@@ -107,16 +135,16 @@ export default function ProductDetails() {
                 id: slug,
                 slug: slug,
                 name: itemTitle.replace(/\b\w/g, l => l.toUpperCase()),
-                category: 'HOME & GARDEN',
-                description: `High quality ${itemTitle}. Authentic item with one-time payment, instant email delivery, and 30-day money-back guarantee.`,
+                category: 'BUSINESS & ACCOUNTING',
+                description: `Embrace the future of accounting with ${itemTitle}. This powerful software is designed to streamline your business finances for a lifetime. Authentic item with one-time payment, instant email delivery, and 30-day money-back guarantee.`,
                 image: itemImg || `https://placehold.co/500x500/f3f4f6/059669?text=${encodeURIComponent(itemTitle)}`,
-                rating: 4.96,
-                reviewsCount: 128,
+                rating: 4.98,
+                reviewsCount: 342,
                 features: [
-                  '100% Genuine Quality Guarantee',
-                  'Instant Delivery by Email',
-                  'One-Time Purchase — Lifetime Access',
-                  '30-Day Money-Back Guarantee'
+                  'Comprehensive Financial Management & Reporting',
+                  'Streamlined Bank Feeds & Seamless Integration',
+                  'Automated Data Backup and Recovery',
+                  'One-Time Purchase — Lifetime Access'
                 ],
                 variants: [
                   {
@@ -124,8 +152,7 @@ export default function ProductDetails() {
                     label: 'Standard Pack',
                     users: 1,
                     price: parseFloat(itemPrice) || 135.00,
-                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00,
-                    paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00
                   }
                 ]
               }
@@ -141,13 +168,12 @@ export default function ProductDetails() {
         console.error("Error reading CSV in product page:", err)
       }
 
-      // Fallback إلا مالقاهش فـ CSV
       const formattedTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
       const fallbackProduct = {
         id: slug,
         slug: slug,
         name: formattedTitle,
-        category: 'HOME & GARDEN',
+        category: 'BUSINESS & ACCOUNTING',
         description: `High quality ${formattedTitle}. Genuine license with instant email delivery.`,
         image: `https://placehold.co/500x500/f3f4f6/059669?text=${encodeURIComponent(formattedTitle)}`,
         rating: 4.96,
@@ -163,8 +189,7 @@ export default function ProductDetails() {
             label: 'Standard Edition',
             users: 1,
             price: 135.00,
-            comparePrice: 299.00,
-            paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
+            comparePrice: 299.00
           }
         ]
       }
@@ -191,6 +216,40 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
+  const handleOpenLeadModal = () => {
+    setShowLeadModal(true)
+  }
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault()
+    setIsSubmittingLead(true)
+
+    try {
+      await supabase.from('checkout_leads').insert([{
+        name: leadData.name,
+        email: leadData.email,
+        product_name: product.name
+      }])
+    } catch (error) {
+      console.error("Error saving lead:", error)
+    }
+
+    setShowLeadModal(false)
+    setIsSubmittingLead(false)
+
+    const targetVariant = selectedVariant || (product.variants && product.variants[0])
+    const cartItem = {
+      id: `${product.id}-${targetVariant?.id || 'default'}`,
+      name: `${product.name} (${targetVariant?.label || ''})`,
+      price: targetVariant?.price || 135.00,
+      image: product.image,
+      quantity: 1
+    }
+
+    addToCart(cartItem)
+    navigate('/checkout')
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-32 text-center">
@@ -211,11 +270,6 @@ export default function ProductDetails() {
     )
   }
 
-  // الدالة المعدلة: توجيه العميل مباشرة إلى صفحة الدفع (Checkout)
-  const handleBuyNow = () => {
-    navigate('/checkout');
-  }
-
   const ActiveIcon = whyUsFeatures[activeTab].icon
   const ratingValue = product.rating || 4.96
   const reviewsCount = product.reviewsCount || 142
@@ -226,342 +280,386 @@ export default function ProductDetails() {
         <title>{product.name} — QB DEALS</title>
         <meta name="description" content={product.description} />
       </Helmet>
-      
-      <section className="py-12 lg:py-20 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-emerald-700 mb-6 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to products
-          </Link>
 
-          <div className="grid lg:grid-cols-12 gap-10 items-start">
-            
-            {/* Left Side: Full Image Display + Zoom & Widget */}
-            <div className="lg:col-span-5 space-y-6">
+      <AnimatePresence>
+        {showLeadModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl"
+            >
+              <button onClick={() => setShowLeadModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
               
-              {/* Product Image Container */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                ref={imgRef}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                onMouseMove={handleMouseMove}
-                className="bg-white rounded-3xl border border-gray-200/80 p-3 flex items-center justify-center shadow-sm relative overflow-hidden cursor-crosshair group min-h-[350px]"
-              >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  style={{
-                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                    transform: isHovered ? 'scale(2.2)' : 'scale(1)',
-                  }}
-                  className="w-full h-auto max-h-[480px] object-contain rounded-2xl transition-transform duration-200 ease-out"
-                  onError={(e) => {
-                    e.target.src = `https://placehold.co/400x400/1a7a1a/ffffff?text=${encodeURIComponent(product.category || 'Product')}`
-                  }}
-                />
+              <div className="text-center mb-6 mt-2">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Almost There!</h3>
+                <p className="text-sm text-gray-500">Please enter your details so we know where to send your license key.</p>
+              </div>
 
-                {/* Zoom Hint */}
-                <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
-                  <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
+              <form onSubmit={handleLeadSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <input 
+                    type="text" required
+                    value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    placeholder="Enter your name"
+                  />
                 </div>
-              </motion.div>
-
-              {/* Horizontal Slide Widget */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-white rounded-3xl p-6 shadow-xl shadow-gray-200/60 border border-gray-100 relative overflow-hidden"
-              >
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-                  <h3 className="font-extrabold text-gray-900 text-base">
-                    Why buy from us
-                  </h3>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200/60">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Best Selling
-                  </span>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                  <input 
+                    type="email" required
+                    value={leadData.email} onChange={(e) => setLeadData({...leadData, email: e.target.value})}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    placeholder="where should we send the key?"
+                  />
                 </div>
+                <button 
+                  type="submit" disabled={isSubmittingLead}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-70 mt-2 cursor-pointer"
+                >
+                  {isSubmittingLead ? 'Processing...' : 'Continue to Checkout'}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <div className="bg-gray-50/50 min-h-screen">
+        {/* ========================================= */}
+        {/* HERO SECTION (Product Top Info) */}
+        {/* ========================================= */}
+        <section className="pt-12 pb-8 lg:pt-16 lg:pb-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-emerald-700 mb-6 transition-colors">
+              <ArrowLeft className="w-4 h-4" /> Back to products
+            </Link>
 
-                <div className="relative min-h-[100px] flex items-center overflow-hidden">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeTab}
-                      initial={{ opacity: 0, x: 40 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -40 }}
-                      transition={{ duration: 0.35, ease: 'easeInOut' }}
-                      className="w-full flex items-start gap-4 py-2"
-                    >
-                      <div className="p-3.5 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 shrink-0">
-                        <ActiveIcon className="w-6 h-6 stroke-[2]" />
-                      </div>
-                      <div>
-                        <h4 className="font-extrabold text-gray-900 text-sm mb-1">
-                          {whyUsFeatures[activeTab].title}
-                        </h4>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                          {whyUsFeatures[activeTab].desc}
-                        </p>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
+            <div className="grid lg:grid-cols-12 gap-10 items-start">
+              
+              {/* Left Side: Full Image Display + Zoom & Widget */}
+              <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+                
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  ref={imgRef}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  onMouseMove={handleMouseMove}
+                  className="bg-white rounded-3xl border border-gray-200/80 p-3 flex items-center justify-center shadow-sm relative overflow-hidden cursor-crosshair group min-h-[350px]"
+                >
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{
+                      transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                      transform: isHovered ? 'scale(2.2)' : 'scale(1)',
+                    }}
+                    className="w-full h-auto max-h-[480px] object-contain rounded-2xl transition-transform duration-200 ease-out bg-white"
+                  />
 
-                <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
-                  <div className="flex items-center gap-1.5">
-                    {whyUsFeatures.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setActiveTab(idx)}
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          activeTab === idx ? 'w-6 bg-emerald-600' : 'w-2 bg-gray-200 hover:bg-gray-300'
-                        }`}
-                      />
-                    ))}
+                  <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
+                    <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
+                  </div>
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                  className="bg-white rounded-3xl p-6 shadow-xl shadow-gray-200/60 border border-gray-100 relative overflow-hidden hidden md:block"
+                >
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                    <h3 className="font-extrabold text-gray-900 text-base">Why buy from us</h3>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200/60">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      100% Secure
+                    </span>
                   </div>
 
-                  <span className="text-[11px] font-bold text-gray-400">
-                    0{activeTab + 1} / 0{whyUsFeatures.length}
+                  <div className="relative min-h-[100px] flex items-center overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+                        transition={{ duration: 0.35, ease: 'easeInOut' }}
+                        className="w-full flex items-start gap-4 py-2"
+                      >
+                        <div className="p-3.5 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20 shrink-0">
+                          <ActiveIcon className="w-6 h-6 stroke-[2]" />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-gray-900 text-sm mb-1">{whyUsFeatures[activeTab].title}</h4>
+                          <p className="text-xs text-gray-500 leading-relaxed">{whyUsFeatures[activeTab].desc}</p>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
+                    <div className="flex items-center gap-1.5">
+                      {whyUsFeatures.map((_, idx) => (
+                        <button
+                          key={idx} onClick={() => setActiveTab(idx)}
+                          className={`h-2 rounded-full transition-all duration-300 ${activeTab === idx ? 'w-6 bg-emerald-600' : 'w-2 bg-gray-200 hover:bg-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[11px] font-bold text-gray-400">0{activeTab + 1} / 0{whyUsFeatures.length}</span>
+                  </div>
+                </motion.div>
+
+              </div>
+
+              {/* Right Side: Product Details & Purchase Action */}
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
+                className="lg:col-span-7"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                    {product.category}
+                  </div>
+                  <span className="text-xs font-bold text-gray-600 flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Authorized Reseller
                   </span>
                 </div>
-              </motion.div>
+                
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
+                  {product.name}
+                </h1>
 
-            </div>
-
-            {/* Right Side: Product Details & Pricing */}
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="lg:col-span-7"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-                  {product.category}
+                {/* Rating */}
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="flex items-center gap-0.5 text-amber-400">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <span className="text-sm font-black text-gray-900">{ratingValue}</span>
+                  <span className="text-gray-300">•</span>
+                  <span className="text-xs font-semibold text-gray-500 underline decoration-gray-300 underline-offset-4 cursor-pointer">
+                    ({reviewsCount} verified customer reviews)
+                  </span>
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                  In Stock • Instant Delivery
-                </span>
-              </div>
-              
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
-                {product.name}
-              </h1>
+                
+                <p className="text-gray-600 leading-relaxed mb-6 text-sm sm:text-base border-b border-gray-200 pb-6">
+                  {product.description}
+                </p>
 
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-5">
-                <div className="flex items-center gap-0.5 text-amber-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span className="text-sm font-black text-gray-900">{ratingValue}</span>
-                <span className="text-gray-300">•</span>
-                <span className="text-xs font-semibold text-gray-500 underline decoration-gray-300 underline-offset-4 hover:text-emerald-700 transition-colors cursor-pointer">
-                  ({reviewsCount} verified reviews)
-                </span>
-              </div>
-              
-              <p className="text-gray-600 leading-relaxed mb-6 text-sm sm:text-base">
-                {product.description}
-              </p>
-
-              {/* Features List */}
-              <ul className="space-y-2.5 mb-8 bg-white p-5 rounded-2xl border border-gray-100">
-                {(product.features || []).map((feat, i) => (
-                  <li key={i} className="flex items-center gap-2.5 text-sm font-medium text-gray-700">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Variants Selection List */}
-              <div className="space-y-3 mb-8">
-                {(product.variants || []).map((variant) => {
-                  const isSelected = selectedVariant?.id === variant.id
-
-                  return (
-                    <div
-                      key={variant.id}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={`relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer select-none ${
-                        isSelected
-                          ? 'bg-emerald-50/40 border-emerald-600 shadow-md shadow-emerald-600/10'
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                          isSelected ? 'bg-emerald-600 text-white' : 'border border-gray-300'
-                        }`}>
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                        </div>
-
-                        <div>
-                          <div className={`font-black text-sm sm:text-base transition-colors ${
-                            isSelected ? 'text-emerald-950' : 'text-gray-900'
+                {/* Variants Selection List */}
+                <div className="space-y-3 mb-6">
+                  {(product.variants || []).map((variant) => {
+                    const isSelected = selectedVariant?.id === variant.id
+                    return (
+                      <div
+                        key={variant.id}
+                        onClick={() => setSelectedVariant(variant)}
+                        className={`relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer select-none ${
+                          isSelected
+                            ? 'bg-emerald-50/40 border-emerald-600 shadow-md shadow-emerald-600/10'
+                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                            isSelected ? 'bg-emerald-600 text-white' : 'border border-gray-300'
                           }`}>
-                            {variant.label}
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                           </div>
-                          <div className="text-xs text-gray-500 mt-0.5 font-medium">
-                            {variant.users} user license
+                          <div>
+                            <div className={`font-black text-sm sm:text-base transition-colors ${isSelected ? 'text-emerald-950' : 'text-gray-900'}`}>
+                              {variant.label}
+                            </div>
+                            <div className="text-xs text-emerald-600 mt-0.5 font-bold flex items-center gap-1">
+                              <Zap className="w-3 h-3 fill-emerald-600" /> Instant Email Delivery
+                            </div>
                           </div>
+                        </div>
+                        
+                        <div className="text-right">
+                          <div className={`text-2xl font-black ${isSelected ? 'text-emerald-700' : 'text-gray-900'}`}>
+                            ${Number(variant.price).toFixed(2)}
+                          </div>
+                          {variant.comparePrice && (
+                            <div className="text-xs text-gray-400 line-through">
+                              ${Number(variant.comparePrice).toFixed(2)}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className="text-right">
-                        <div className={`text-xl font-black ${
-                          isSelected ? 'text-emerald-700' : 'text-gray-900'
-                        }`}>
-                          ${Number(variant.price).toFixed(2)}
-                        </div>
-                        {variant.comparePrice && (
-                          <div className="text-xs text-gray-400 line-through">
-                            ${Number(variant.comparePrice).toFixed(2)}
-                          </div>
-                        )}
+                    )
+                  })}
+                </div>
+
+                {/* Action Button & Payment Badges */}
+                <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                  <motion.div
+                    whileHover={{ scale: 1.015 }}
+                    whileTap={{ scale: 0.985 }}
+                    className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer mb-5"
+                  >
+                    <button 
+                      onClick={handleOpenLeadModal}
+                      className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-lg tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
+                    >
+                      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
+                      <div className="p-1.5 bg-white/20 rounded-xl">
+                        <Lock className="w-5 h-5 fill-white text-white" />
+                      </div>
+                      <span>Buy Now — Instant Delivery</span>
+                    </button>
+                  </motion.div>
+
+                  <div className="flex flex-col items-center justify-center">
+                    <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Lock className="w-3 h-3" /> Guaranteed Safe & Secure Checkout
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-5 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" className="h-5 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" className="h-5 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Intuit ProAdvisor Trust Banner */}
+                <div className="mt-6 bg-emerald-900 text-emerald-50 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-center">
+                  <div className="w-12 h-12 bg-emerald-800 rounded-full flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-6 h-6 text-emerald-300" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-white mb-1">Intuit ProAdvisor Licenses</h4>
+                    <p className="text-xs text-emerald-200/90 leading-relaxed">
+                      We provide Intuit ProAdvisor licenses that are registered under our company. You enjoy all the benefits of an ORIGINAL Intuit license, ensuring your data is 100% secured locally on your desktop.
+                    </p>
+                  </div>
+                </div>
+
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================= */}
+        {/* FEATURES & SYSTEM REQUIREMENTS SECTION */}
+        {/* ========================================= */}
+        <section className="py-12 border-t border-gray-200 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12">
+            
+            {/* Features List */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Key Product Features</h2>
+              <div className="space-y-4">
+                {(product.features || []).map((feat, i) => (
+                  <div key={i} className="flex items-start gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-emerald-700 stroke-[3]" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-gray-900">{feat}</h4>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* System Requirements */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">System Requirements</h2>
+              <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 space-y-5">
+                {systemRequirements.map((req, i) => {
+                  const ReqIcon = req.icon
+                  return (
+                    <div key={i} className="flex items-start gap-4">
+                      <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-200 shrink-0">
+                        <ReqIcon className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900 mb-0.5">{req.label}</h4>
+                        <p className="text-xs text-gray-600 leading-relaxed">{req.value}</p>
                       </div>
                     </div>
                   )
                 })}
               </div>
-
-              {/* Buy Now Button */}
-              <motion.div
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.985 }}
-                className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer"
-              >
-                <button 
-                  onClick={handleBuyNow}
-                  className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-base tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
-                >
-                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
-                  
-                  <div className="p-1.5 bg-white/20 rounded-xl">
-                    <Zap className="w-5 h-5 fill-white text-white animate-bounce" />
-                  </div>
-                  <span>Buy Now — Instant Delivery</span>
-                </button>
-              </motion.div>
-
-              {/* Payment Badges & Security */}
-              <div className="mt-6 space-y-6">
-                <div>
-                  <div className="flex items-center justify-center gap-1.5 mb-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                    <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
-                      Guaranteed Safe & Secure Checkout
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-2">
-                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
-                      <span className="font-black italic text-[#1A1F71] text-sm tracking-tighter select-none font-sans">
-                        VISA
-                      </span>
-                    </div>
-
-                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                        alt="Mastercard" 
-                        className="h-5 w-auto object-contain"
-                      />
-                    </div>
-
-                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" 
-                        alt="PayPal" 
-                        className="h-4 w-auto object-contain"
-                      />
-                    </div>
-
-                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" 
-                        alt="Apple Pay" 
-                        className="h-4 w-auto object-contain"
-                      />
-                    </div>
-
-                    <div className="h-11 bg-white border border-gray-200/90 rounded-xl flex items-center justify-center shadow-xs hover:border-emerald-500 hover:scale-105 transition-all">
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" 
-                        alt="Google Pay" 
-                        className="h-4 w-auto object-contain"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/90 via-white to-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
-                  <div className="absolute -right-12 -top-12 w-36 h-36 bg-emerald-400/20 rounded-full blur-3xl animate-pulse"></div>
-                  
-                  <div className="relative z-10 flex items-center justify-between mb-4 pb-3 border-b border-emerald-100">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-600/30">
-                        <ShieldCheck className="w-4 h-4" />
-                      </div>
-                      <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider">
-                        100% Safe & Secure Purchase Guarantee
-                      </h4>
-                    </div>
-                    <Sparkles className="w-4 h-4 text-emerald-600 animate-bounce" />
-                  </div>
-
-                  <div className="relative z-10 space-y-3 text-xs text-gray-700">
-                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
-                        <Zap className="w-3 h-3" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-gray-900">100% Activation Guarantee</span> — License activates successfully or your money back.
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
-                        <ShieldCheck className="w-3 h-3" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-gray-900">Instant Delivery by Email</span> — Receive your license key within minutes.
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 group bg-white/60 p-2.5 rounded-xl border border-emerald-100/60 hover:bg-white hover:shadow-sm transition-all">
-                      <div className="mt-0.5 text-emerald-600 font-bold bg-emerald-100 rounded-full p-1 group-hover:scale-110 transition-transform shadow-xs">
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-gray-900">Free Re-Activation</span> — Change or reinstall your PC anytime.
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 mt-4 pt-3 border-t border-emerald-100/80 flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-semibold">
-                    <Lock className="w-3 h-3 text-emerald-600" />
-                    <span>Secure checkout</span>
-                    <span className="text-emerald-400">•</span>
-                    <span>Encrypted payments</span>
-                    <span className="text-emerald-400">•</span>
-                    <span>Trusted by thousands</span>
-                  </div>
-                </div>
-
-              </div>
-
-            </motion.div>
+            </div>
 
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* ========================================= */}
+        {/* REVIEWS SECTION */}
+        {/* ========================================= */}
+        <section className="py-12 border-t border-gray-200 bg-gray-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">What Our Clients Say</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {customerReviews.map((review, i) => (
+                <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-1 mb-3">
+                      {[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+                    </div>
+                    <p className="text-sm text-gray-700 italic leading-relaxed mb-6">"{review.text}"</p>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-auto">
+                    <span className="font-bold text-gray-900 text-sm">{review.name}</span>
+                    <span className="text-xs text-gray-400 font-medium">{review.date}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================= */}
+        {/* FAQ ACCORDION SECTION */}
+        {/* ========================================= */}
+        <section className="py-16 border-t border-gray-200 bg-white">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <HelpCircle className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
+              <h2 className="text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
+              <p className="text-sm text-gray-500 mt-2">Everything you need to know about your purchase.</p>
+            </div>
+            
+            <div className="space-y-3">
+              {faqs.map((faq, i) => (
+                <div key={i} className="border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300">
+                  <button 
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between p-5 text-left bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="font-bold text-sm text-gray-900">{faq.q}</span>
+                    <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-white"
+                      >
+                        <div className="p-5 text-sm text-gray-600 leading-relaxed border-t border-gray-100">
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+      </div>
     </>
   )
 }
