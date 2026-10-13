@@ -8,7 +8,6 @@ import {
   Cpu, HardDrive, Wifi, HelpCircle, Key, Download, Award, Gift, X
 } from 'lucide-react'
 import products from '../data/products.json'
-import { useCart } from '../hooks/useCart'
 
 const whyUsFeatures = [
   { id: 0, icon: Zap, title: 'One-Time Purchase', desc: 'Pay once. No subscription, no monthly fees, no annual fees.' },
@@ -56,7 +55,6 @@ const customerReviews = [
 export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const { addToCart } = useCart()
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -72,7 +70,6 @@ export default function ProductDetails() {
   const [showStickyBar, setShowStickyBar] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [hasSeenExitModal, setHasSeenExitModal] = useState(false)
-  const [discountApplied, setDiscountApplied] = useState(false)
   
   const buyButtonRef = useRef(null)
 
@@ -203,7 +200,6 @@ export default function ProductDetails() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Show sticky bar only if the user scrolls PAST the buy button
         if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
           setShowStickyBar(true)
         } else {
@@ -248,32 +244,15 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
-  // 3. Purchase Logic (Handles normal buy and exit-discount buy)
-  const handleBuyNow = (applyExtraDiscount = false) => {
-    const targetVariant = selectedVariant || (product.variants && product.variants[0])
-    let finalPrice = targetVariant?.price || 135.00
-    
-    // Apply exit discount if claimed
-    if (applyExtraDiscount || discountApplied) {
-      finalPrice = finalPrice - 10
-    }
-
-    const cartItem = {
-      id: `${product.id}-${targetVariant?.id || 'default'}`,
-      name: `${product.name} (${targetVariant?.label || ''})`,
-      price: finalPrice,
-      image: product.image,
-      quantity: 1
-    }
-
-    addToCart(cartItem)
-    navigate('/checkout')
+  // 👈 الدالة الأصلية البسيطة التي تقوم بالتوجيه مباشرة دون أخطاء السلة (Cart)
+  const handleBuyNow = () => {
+    navigate('/checkout');
   }
 
+  // 👈 دالة الشراء بعد الحصول على التخفيض من نافذة الخروج
   const claimDiscountAndBuy = () => {
-    setDiscountApplied(true)
-    setShowExitModal(false)
-    handleBuyNow(true)
+    setShowExitModal(false);
+    navigate('/checkout');
   }
 
   if (loading) {
@@ -308,7 +287,7 @@ export default function ProductDetails() {
       </Helmet>
 
       {/* ========================================= */}
-      {/* 4. EXIT-INTENT DISCOUNT MODAL */}
+      {/* EXIT-INTENT DISCOUNT MODAL */}
       {/* ========================================= */}
       <AnimatePresence>
         {showExitModal && (
@@ -321,7 +300,7 @@ export default function ProductDetails() {
               className="bg-white rounded-3xl w-full max-w-lg p-1 relative shadow-2xl overflow-hidden"
             >
               <div className="bg-emerald-50 rounded-[22px] p-6 sm:p-8 relative">
-                <button onClick={() => setShowExitModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 transition-colors bg-white rounded-full p-1 shadow-sm">
+                <button onClick={() => setShowExitModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 transition-colors bg-white rounded-full p-1 shadow-sm cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
                 
@@ -438,7 +417,7 @@ export default function ProductDetails() {
                 className="lg:col-span-7"
               >
                 
-                {/* 3. DYNAMIC TRUST BADGE (Golden Seal) */}
+                {/* DYNAMIC TRUST BADGE (Golden Seal) */}
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 rounded-full mb-4 shadow-sm">
                   <Award className="w-4 h-4 text-amber-600" />
                   <span className="text-[11px] font-extrabold text-amber-900 tracking-wide uppercase">Verified Intuit Partner • 100% Genuine</span>
@@ -514,7 +493,7 @@ export default function ProductDetails() {
                     className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer mb-5"
                   >
                     <button 
-                      onClick={() => handleBuyNow()}
+                      onClick={handleBuyNow}
                       className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-lg tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
                     >
                       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
@@ -712,7 +691,7 @@ export default function ProductDetails() {
       </div>
 
       {/* ========================================= */}
-      {/* 1. STICKY "BUY NOW" BOTTOM BAR */}
+      {/* STICKY "BUY NOW" BOTTOM BAR */}
       {/* ========================================= */}
       <AnimatePresence>
         {showStickyBar && (
@@ -739,7 +718,7 @@ export default function ProductDetails() {
                   <div className="text-xl font-black text-emerald-700">${Number(selectedVariant?.price || 135).toFixed(2)}</div>
                 </div>
                 <button 
-                  onClick={() => handleBuyNow()}
+                  onClick={handleBuyNow}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer"
                 >
                   <Lock className="w-4 h-4" /> Buy Now
