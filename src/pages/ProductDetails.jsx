@@ -4,7 +4,8 @@ import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, 
-  Lock, Sparkles, Star, ZoomIn, ChevronDown, Monitor, Cpu, HardDrive, Wifi, HelpCircle, Key, Download
+  Lock, Sparkles, Star, ZoomIn, ChevronDown, Monitor, 
+  Cpu, HardDrive, Wifi, HelpCircle, Key, Download, Award, Gift, X
 } from 'lucide-react'
 import products from '../data/products.json'
 import { useCart } from '../hooks/useCart'
@@ -66,6 +67,14 @@ export default function ProductDetails() {
   const [isHovered, setIsHovered] = useState(false)
   const [openFaq, setOpenFaq] = useState(0)
   const imgRef = useRef(null)
+
+  // High-Level Conversion States
+  const [showStickyBar, setShowStickyBar] = useState(false)
+  const [showExitModal, setShowExitModal] = useState(false)
+  const [hasSeenExitModal, setHasSeenExitModal] = useState(false)
+  const [discountApplied, setDiscountApplied] = useState(false)
+  
+  const buyButtonRef = useRef(null)
 
   useEffect(() => {
     setLoading(true)
@@ -190,6 +199,40 @@ export default function ProductDetails() {
     fetchFromCSV()
   }, [slug])
 
+  // 1. Intersection Observer for Sticky Bar
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show sticky bar only if the user scrolls PAST the buy button
+        if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+          setShowStickyBar(true)
+        } else {
+          setShowStickyBar(false)
+        }
+      },
+      { threshold: 0, rootMargin: "-100px 0px 0px 0px" }
+    )
+
+    if (buyButtonRef.current) {
+      observer.observe(buyButtonRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [loading])
+
+  // 2. Exit Intent Logic
+  useEffect(() => {
+    const handleMouseLeave = (e) => {
+      if (e.clientY <= 0 && !hasSeenExitModal) {
+        setShowExitModal(true)
+        setHasSeenExitModal(true)
+      }
+    }
+
+    document.addEventListener('mouseleave', handleMouseLeave)
+    return () => document.removeEventListener('mouseleave', handleMouseLeave)
+  }, [hasSeenExitModal])
+
   const handleMouseMove = (e) => {
     if (!imgRef.current) return
     const { left, top, width, height } = imgRef.current.getBoundingClientRect()
@@ -205,20 +248,32 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
-  // 👈 Dala Jdida: katsift nichan l checkout bla modal
-  const handleBuyNow = () => {
+  // 3. Purchase Logic (Handles normal buy and exit-discount buy)
+  const handleBuyNow = (applyExtraDiscount = false) => {
     const targetVariant = selectedVariant || (product.variants && product.variants[0])
+    let finalPrice = targetVariant?.price || 135.00
+    
+    // Apply exit discount if claimed
+    if (applyExtraDiscount || discountApplied) {
+      finalPrice = finalPrice - 10
+    }
+
     const cartItem = {
       id: `${product.id}-${targetVariant?.id || 'default'}`,
       name: `${product.name} (${targetVariant?.label || ''})`,
-      price: targetVariant?.price || 135.00,
+      price: finalPrice,
       image: product.image,
       quantity: 1
     }
 
-    // katzid f sella u katsayft l checkout
     addToCart(cartItem)
     navigate('/checkout')
+  }
+
+  const claimDiscountAndBuy = () => {
+    setDiscountApplied(true)
+    setShowExitModal(false)
+    handleBuyNow(true)
   }
 
   if (loading) {
@@ -242,7 +297,7 @@ export default function ProductDetails() {
   }
 
   const ActiveIcon = whyUsFeatures[activeTab].icon
-  const ratingValue = product.rating || 4.96
+  const ratingValue = product.rating || 4.98
   const reviewsCount = product.reviewsCount || 142
 
   return (
@@ -251,8 +306,57 @@ export default function ProductDetails() {
         <title>{product.name} — QB DEALS</title>
         <meta name="description" content={product.description} />
       </Helmet>
+
+      {/* ========================================= */}
+      {/* 4. EXIT-INTENT DISCOUNT MODAL */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="bg-white rounded-3xl w-full max-w-lg p-1 relative shadow-2xl overflow-hidden"
+            >
+              <div className="bg-emerald-50 rounded-[22px] p-6 sm:p-8 relative">
+                <button onClick={() => setShowExitModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 transition-colors bg-white rounded-full p-1 shadow-sm">
+                  <X className="w-5 h-5" />
+                </button>
+                
+                <div className="text-center mb-6 mt-2">
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30">
+                    <Gift className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Wait! Don't leave yet.</h3>
+                  <p className="text-base text-gray-600 font-medium">Take an extra <strong className="text-emerald-700 text-lg">$10 OFF</strong> your license today. This offer expires when you close this window.</p>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-dashed border-emerald-300 p-4 text-center mb-6 shadow-sm">
+                  <span className="text-xs text-gray-500 uppercase tracking-widest font-bold">Your Secret Code:</span>
+                  <div className="text-2xl font-black text-emerald-600 tracking-wider mt-1">SAVE10NOW</div>
+                </div>
+
+                <button 
+                  onClick={claimDiscountAndBuy}
+                  className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-black text-lg py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex justify-center items-center gap-2 cursor-pointer"
+                >
+                  <CheckCircle className="w-5 h-5" /> Claim $10 Off & Checkout
+                </button>
+                <button 
+                  onClick={() => setShowExitModal(false)}
+                  className="w-full text-center mt-4 text-sm font-bold text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  No thanks, I'll pay full price.
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      <div className="bg-gray-50/50 min-h-screen">
+      <div className="bg-gray-50/50 min-h-screen pb-20">
         <section className="pt-12 pb-8 lg:pt-16 lg:pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-emerald-700 mb-6 transition-colors">
@@ -333,15 +437,13 @@ export default function ProductDetails() {
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
                 className="lg:col-span-7"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                    {product.category}
-                  </div>
-                  <span className="text-xs font-bold text-gray-600 flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Authorized Reseller
-                  </span>
-                </div>
                 
+                {/* 3. DYNAMIC TRUST BADGE (Golden Seal) */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 rounded-full mb-4 shadow-sm">
+                  <Award className="w-4 h-4 text-amber-600" />
+                  <span className="text-[11px] font-extrabold text-amber-900 tracking-wide uppercase">Verified Intuit Partner • 100% Genuine</span>
+                </div>
+
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">
                   {product.name}
                 </h1>
@@ -405,17 +507,14 @@ export default function ProductDetails() {
                   })}
                 </div>
 
-                {/* ========================================================= */}
-                {/* Buy Button (Direct Checkout - No Modal) */}
-                {/* ========================================================= */}
-                <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-6">
+                {/* Buy Button Container */}
+                <div ref={buyButtonRef} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-6 scroll-mt-24">
                   <motion.div
                     whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}
                     className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer mb-5"
                   >
-                    {/* 👈 hnaya bdlna onClick l handleBuyNow bach iddik nichan l checkout */}
                     <button 
-                      onClick={handleBuyNow}
+                      onClick={() => handleBuyNow()}
                       className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-lg tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
                     >
                       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
@@ -438,7 +537,6 @@ export default function ProductDetails() {
                     </div>
                   </div>
                 </div>
-                {/* ========================================================= */}
 
                 {/* HOW YOU WILL GET YOUR PRODUCT */}
                 <div className="bg-[#f8fafd] border border-blue-100 rounded-3xl p-6 shadow-sm">
@@ -612,6 +710,46 @@ export default function ProductDetails() {
         </section>
 
       </div>
+
+      {/* ========================================= */}
+      {/* 1. STICKY "BUY NOW" BOTTOM BAR */}
+      {/* ========================================= */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] z-40 p-4 sm:px-6 lg:px-8"
+          >
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+              <div className="hidden sm:flex items-center gap-4">
+                <img src={product.image} alt={product.name} className="w-12 h-12 object-contain rounded-lg border border-gray-100" />
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{product.name}</h4>
+                  <div className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> In Stock - Instant Delivery
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between w-full sm:w-auto gap-6">
+                <div className="text-right">
+                  <div className="text-sm text-gray-500 line-through">${Number(selectedVariant?.comparePrice || 299).toFixed(2)}</div>
+                  <div className="text-xl font-black text-emerald-700">${Number(selectedVariant?.price || 135).toFixed(2)}</div>
+                </div>
+                <button 
+                  onClick={() => handleBuyNow()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-xl transition-all shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer"
+                >
+                  <Lock className="w-4 h-4" /> Buy Now
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </>
   )
 }
