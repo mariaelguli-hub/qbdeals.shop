@@ -3,7 +3,8 @@ import { Helmet } from 'react-helmet-async'
 import { 
   Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, 
   Users, Clock, Compass, ShieldAlert, Send, LogOut, Download, 
-  FileSpreadsheet, ExternalLink, Layers, CheckCircle, EyeOff as EyeOffIcon
+  FileSpreadsheet, ExternalLink, Layers, CheckCircle, EyeOff as EyeOffIcon,
+  ShoppingCart // 👈 تمت إضافة أيقونة السلة
 } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
@@ -17,13 +18,13 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
-  const [activeTab, setActiveTab] = useState('products')
+  const [activeTab, setActiveTab] = useState('orders') // 👈 جعلنا تبويب الطلبات هو الافتراضي
   const [messages, setMessages] = useState([])
   const [visitors, setVisitors] = useState([])
   const [loading, setLoading] = useState(false)
 
   const [productsList, setProductsList] = useState([])
-  const [leads, setLeads] = useState([]) // State jdid dyal Leads
+  const [orders, setOrders] = useState([]) // 👈 State جديد للطلبات
   
   const [chatSessions, setChatSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
@@ -172,9 +173,9 @@ export default function AdminDashboard() {
     const { data: chatData } = await supabase.from('chat_sessions').select('*').order('updated_at', { ascending: false })
     setChatSessions(chatData || [])
 
-    // Fetch dyal Leads
-    const { data: leadsData } = await supabase.from('checkout_leads').select('*').order('created_at', { ascending: false })
-    setLeads(leadsData || [])
+    // 👈 جلب بيانات الطلبات (Orders)
+    const { data: ordersData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
+    setOrders(ordersData || [])
 
     setLoading(false)
   }
@@ -341,6 +342,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-6">
           
+          {/* HEADER BAR */}
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Control Panel</h1>
@@ -369,7 +371,20 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* TABS NAVIGATION */}
           <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
+            {/* 👈 زر التبويب الجديد للطلبات */}
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+                activeTab === 'orders' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" /> Orders ({orders.length})
+            </button>
+
             <button
               onClick={() => setActiveTab('products')}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
@@ -379,18 +394,6 @@ export default function AdminDashboard() {
               }`}
             >
               <Layers className="w-4 h-4" /> All Products Manager ({productsList.length})
-            </button>
-
-            {/* Tab Jdid dyal Leads */}
-            <button
-              onClick={() => setActiveTab('leads')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
-                activeTab === 'leads' 
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              <Users className="w-4 h-4" /> Potential Buyers ({leads.length})
             </button>
 
             <button
@@ -449,6 +452,71 @@ export default function AdminDashboard() {
             </button>
           </div>
 
+          {/* 👈 تبويب الطلبات (Orders Tab Content) */}
+          {activeTab === 'orders' && (
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-emerald-600" /> Confirmed Orders
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">List of all successful payments via PayPal</p>
+                </div>
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-bold border border-emerald-100">
+                  Total Revenue: ${orders.reduce((acc, curr) => acc + Number(curr.amount_paid), 0).toFixed(2)}
+                </span>
+              </div>
+              
+              {orders.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">No orders received yet. Waiting for the first sale! 🚀</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                        <th className="p-4">Date</th>
+                        <th className="p-4">Customer Info</th>
+                        <th className="p-4">OS & Country</th>
+                        <th className="p-4">Amount</th>
+                        <th className="p-4">PayPal Order ID</th>
+                        <th className="p-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {orders.map((order) => (
+                        <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 text-xs text-gray-500">
+                            {new Date(order.created_at).toLocaleString()}
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-gray-900">{order.customer_name}</div>
+                            <div className="text-xs text-emerald-700 font-medium">{order.email}</div>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-semibold text-gray-800">{order.os_type}</div>
+                            <div className="text-xs text-gray-500">{order.country}</div>
+                          </td>
+                          <td className="p-4 font-black text-emerald-600">
+                            ${Number(order.amount_paid).toFixed(2)}
+                          </td>
+                          <td className="p-4 text-xs font-mono text-gray-500">
+                            {order.paypal_order_id}
+                          </td>
+                          <td className="p-4">
+                            <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-bold border border-emerald-100">
+                              <CheckCircle className="w-3 h-3" /> {order.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 1: PRODUCT VISIBILITY MANAGER */}
           {activeTab === 'products' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
@@ -547,52 +615,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 1.5: PRE-CHECKOUT LEADS */}
-          {activeTab === 'leads' && (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-emerald-600" /> Pre-Checkout Leads
-                  </h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Customers who entered their email before checkout</p>
-                </div>
-                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-bold">
-                  Total Leads: {leads.length}
-                </span>
-              </div>
-              
-              {leads.length === 0 ? (
-                <div className="p-12 text-center text-gray-500">No leads captured yet.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
-                        <th className="p-4">Date</th>
-                        <th className="p-4">Name</th>
-                        <th className="p-4">Email</th>
-                        <th className="p-4">Intended Product</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {leads.map((lead) => (
-                        <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4 text-xs text-gray-500">
-                            {new Date(lead.created_at).toLocaleString()}
-                          </td>
-                          <td className="p-4 font-bold text-gray-900">{lead.name}</td>
-                          <td className="p-4 font-medium text-emerald-700">{lead.email}</td>
-                          <td className="p-4 text-gray-600 text-xs">{lead.product_name}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* TAB 2: VISITORS LOGS */}
           {activeTab === 'visitors' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -663,6 +686,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* TAB 3: LIVE CHAT SUPPORT PANEL */}
           {activeTab === 'livechat' && (
             <div className="grid md:grid-cols-3 gap-6 h-[600px]">
               <div className="md:col-span-1 bg-white rounded-3xl border border-gray-100 p-4 overflow-y-auto space-y-2 shadow-sm">
@@ -769,6 +793,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* TAB 4: CONTACT FORM MESSAGES */}
           {activeTab === 'messages' && (
             <div className="grid gap-4">
               {messages.length === 0 ? (
@@ -815,10 +840,12 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* TAB 5: HIDDEN PRODUCTS EXPLORER */}
           {activeTab === 'hidden' && (
             <HiddenExplorer />
           )}
 
+          {/* TAB 6: GMC EXPORTER */}
           {activeTab === 'gmc' && (
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm max-w-2xl mx-auto text-center space-y-4">
               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
