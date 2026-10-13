@@ -211,10 +211,10 @@ export default function Checkout() {
               }`}
             >
               <option value="" disabled>Click to choose</option>
-              <option value="200">1 User {'----->'} 200 $</option>
-              <option value="250">2 Users {'----->'} 250 $</option>
-              <option value="300">3 Users {'----->'} 300 $</option>
-              <option value="350">5 Users {'----->'} 350 $</option>
+              <option value="199">1 User {'----->'} 199 $</option>
+              <option value="249">2 Users {'----->'} 249 $</option>
+              <option value="299">3 Users {'----->'} 299 $</option>
+              <option value="349">5 Users {'----->'} 349 $</option>
             </select>
             {errors && !formData.users && (
               <div className="mt-0.5 p-2 bg-[#fdeded] text-[#d32f2f] text-xs">This field is required. Please select a value.</div>
