@@ -19,13 +19,13 @@ export default function ThankYou() {
   const productName = `QuickBooks ${osType} License 2024`
 
   useEffect(() => {
-    // 🔒 منع تكرار إرسال التراكينغ لو دار الزبون Refresh
+    // 🔒 حماية قوية لمنع تكرار إرسال التراكينغ لو أعمل الزبون Refresh
     const trackedKey = `qb_tracked_${orderId}`
     const alreadyTracked = localStorage.getItem(trackedKey)
 
     if (!alreadyTracked && typeof window !== 'undefined') {
       
-      // 📢 1. إرسال حدث التحويل لـ Google Ads (متصفح)
+      // 📢 1. إرسال حدث التحويل لـ Google Ads
       if (window.gtag) {
         window.gtag('event', 'conversion', {
           'send_to': 'AW-18323871651/ngvwCKKG0eAcEKOvwKFE',
@@ -35,7 +35,7 @@ export default function ThankYou() {
         })
       }
 
-      // 🔵 2. إرسال حدث الشراء (Purchase) لـ Facebook Pixel (متصفح)
+      // 🔵 2. إرسال حدث الشراء (Purchase) لـ Facebook Pixel مع الثمن الحقيقي
       if (window.fbq) {
         window.fbq('track', 'Purchase', {
           value: parseFloat(amount),
@@ -45,22 +45,10 @@ export default function ThankYou() {
         })
       }
 
-      // 🛡️ 3. إرسال طلب آمن لـ Serverless API الخاص بنا لتوثيق الـ Purchase الحقيقي منعاً للتزوير (CAPI)
-      fetch('/api/verify-purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId,
-          amount,
-          email: customerEmail,
-          osType
-        })
-      }).catch(err => console.log('Server CAPI error:', err));
-
-      // حفظ الـ ID فـ المتصفح باش ما يتعاودش يتسجل
+      // حفظ الـ ID في متصفح الزبون باش ما يتعاودش يتسجل نهائياً
       localStorage.setItem(trackedKey, 'true')
     }
-  }, [orderId, amount, customerEmail, osType, productName])
+  }, [orderId, amount, productName])
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
