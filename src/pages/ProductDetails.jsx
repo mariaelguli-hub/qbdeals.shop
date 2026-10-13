@@ -3,14 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, 
-  Lock, Sparkles, Star, ZoomIn, X, ChevronDown, Monitor, Cpu, HardDrive, Wifi, HelpCircle 
+  ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, 
+  Lock, Sparkles, Star, ZoomIn, ChevronDown, Monitor, Cpu, HardDrive, Wifi, HelpCircle, Key, Download
 } from 'lucide-react'
 import products from '../data/products.json'
 import { useCart } from '../hooks/useCart'
-import { supabase } from '../utils/supabase'
 
-// مميزات الشراء السريعة
 const whyUsFeatures = [
   { id: 0, icon: Zap, title: 'One-Time Purchase', desc: 'Pay once. No subscription, no monthly fees, no annual fees.' },
   { id: 1, icon: CheckCircle, title: 'Instant Email Delivery', desc: 'Receive your license key and download link within minutes.' },
@@ -18,7 +16,6 @@ const whyUsFeatures = [
   { id: 3, icon: ShieldCheck, title: 'Money-Back Guarantee', desc: "30-day guarantee. If it doesn't activate, we make it right." },
 ]
 
-// 👈 إضافة: متطلبات التشغيل (System Requirements)
 const systemRequirements = [
   { icon: Monitor, label: 'Operating System', value: 'Windows 8.1, Windows 10, or Windows 11 (32-bit & 64-bit)' },
   { icon: Cpu, label: 'Processor', value: 'At least 2.4 GHz processor (4 GHz recommended)' },
@@ -26,7 +23,6 @@ const systemRequirements = [
   { icon: Wifi, label: 'Internet Access', value: 'Required for payroll, online features, and updates' }
 ]
 
-// 👈 إضافة: الأسئلة الشائعة المستوحاة من المنافس لكسر الشك
 const faqs = [
   {
     q: "How do you provide the product at a lower price compared to the official website?",
@@ -50,7 +46,6 @@ const faqs = [
   }
 ]
 
-// 👈 إضافة: الدليل الاجتماعي (مراجعات العملاء)
 const customerReviews = [
   { name: "John Rodriguez", date: "05/06/2024", text: "QuickBooks 2024 has saved me valuable time. The automation features are fantastic and the software adapts seamlessly to my business needs. The customer support is top-notch, providing quick solutions and instant delivery." },
   { name: "Emily Parker", date: "11/05/2024", text: "This has been a game-changer for my business. The robust features and easy navigation make financial management a breeze. I was skeptical about the price, but the key activated perfectly on the official site." },
@@ -67,16 +62,10 @@ export default function ProductDetails() {
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
   
-  // States for interactive elements
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [isHovered, setIsHovered] = useState(false)
   const [openFaq, setOpenFaq] = useState(0)
   const imgRef = useRef(null)
-
-  // States for Lead Capture Modal
-  const [showLeadModal, setShowLeadModal] = useState(false)
-  const [leadData, setLeadData] = useState({ name: '', email: '' })
-  const [isSubmittingLead, setIsSubmittingLead] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -216,27 +205,8 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleOpenLeadModal = () => {
-    setShowLeadModal(true)
-  }
-
-  const handleLeadSubmit = async (e) => {
-    e.preventDefault()
-    setIsSubmittingLead(true)
-
-    try {
-      await supabase.from('checkout_leads').insert([{
-        name: leadData.name,
-        email: leadData.email,
-        product_name: product.name
-      }])
-    } catch (error) {
-      console.error("Error saving lead:", error)
-    }
-
-    setShowLeadModal(false)
-    setIsSubmittingLead(false)
-
+  // 👈 Dala Jdida: katsift nichan l checkout bla modal
+  const handleBuyNow = () => {
     const targetVariant = selectedVariant || (product.variants && product.variants[0])
     const cartItem = {
       id: `${product.id}-${targetVariant?.id || 'default'}`,
@@ -246,6 +216,7 @@ export default function ProductDetails() {
       quantity: 1
     }
 
+    // katzid f sella u katsayft l checkout
     addToCart(cartItem)
     navigate('/checkout')
   }
@@ -280,61 +251,8 @@ export default function ProductDetails() {
         <title>{product.name} — QB DEALS</title>
         <meta name="description" content={product.description} />
       </Helmet>
-
-      <AnimatePresence>
-        {showLeadModal && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl"
-            >
-              <button onClick={() => setShowLeadModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
-              
-              <div className="text-center mb-6 mt-2">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Almost There!</h3>
-                <p className="text-sm text-gray-500">Please enter your details so we know where to send your license key.</p>
-              </div>
-
-              <form onSubmit={handleLeadSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input 
-                    type="text" required
-                    value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    placeholder="Enter your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input 
-                    type="email" required
-                    value={leadData.email} onChange={(e) => setLeadData({...leadData, email: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    placeholder="where should we send the key?"
-                  />
-                </div>
-                <button 
-                  type="submit" disabled={isSubmittingLead}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-70 mt-2 cursor-pointer"
-                >
-                  {isSubmittingLead ? 'Processing...' : 'Continue to Checkout'}
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       
       <div className="bg-gray-50/50 min-h-screen">
-        {/* ========================================= */}
-        {/* HERO SECTION (Product Top Info) */}
-        {/* ========================================= */}
         <section className="pt-12 pb-8 lg:pt-16 lg:pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-emerald-700 mb-6 transition-colors">
@@ -343,9 +261,8 @@ export default function ProductDetails() {
 
             <div className="grid lg:grid-cols-12 gap-10 items-start">
               
-              {/* Left Side: Full Image Display + Zoom & Widget */}
+              {/* Left Side: Image & Features Widget */}
               <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-                
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   ref={imgRef}
@@ -363,7 +280,6 @@ export default function ProductDetails() {
                     }}
                     className="w-full h-auto max-h-[480px] object-contain rounded-2xl transition-transform duration-200 ease-out bg-white"
                   />
-
                   <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
                     <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
                   </div>
@@ -380,7 +296,6 @@ export default function ProductDetails() {
                       100% Secure
                     </span>
                   </div>
-
                   <div className="relative min-h-[100px] flex items-center overflow-hidden">
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -399,7 +314,6 @@ export default function ProductDetails() {
                       </motion.div>
                     </AnimatePresence>
                   </div>
-
                   <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
                     <div className="flex items-center gap-1.5">
                       {whyUsFeatures.map((_, idx) => (
@@ -412,10 +326,9 @@ export default function ProductDetails() {
                     <span className="text-[11px] font-bold text-gray-400">0{activeTab + 1} / 0{whyUsFeatures.length}</span>
                   </div>
                 </motion.div>
-
               </div>
 
-              {/* Right Side: Product Details & Purchase Action */}
+              {/* Right Side: Details & Actions */}
               <motion.div 
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
                 className="lg:col-span-7"
@@ -433,12 +346,9 @@ export default function ProductDetails() {
                   {product.name}
                 </h1>
 
-                {/* Rating */}
                 <div className="flex items-center gap-2 mb-5">
                   <div className="flex items-center gap-0.5 text-amber-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
                   </div>
                   <span className="text-sm font-black text-gray-900">{ratingValue}</span>
                   <span className="text-gray-300">•</span>
@@ -451,7 +361,6 @@ export default function ProductDetails() {
                   {product.description}
                 </p>
 
-                {/* Variants Selection List */}
                 <div className="space-y-3 mb-6">
                   {(product.variants || []).map((variant) => {
                     const isSelected = selectedVariant?.id === variant.id
@@ -496,15 +405,17 @@ export default function ProductDetails() {
                   })}
                 </div>
 
-                {/* Action Button & Payment Badges */}
-                <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                {/* ========================================================= */}
+                {/* Buy Button (Direct Checkout - No Modal) */}
+                {/* ========================================================= */}
+                <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-6">
                   <motion.div
-                    whileHover={{ scale: 1.015 }}
-                    whileTap={{ scale: 0.985 }}
+                    whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}
                     className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer mb-5"
                   >
+                    {/* 👈 hnaya bdlna onClick l handleBuyNow bach iddik nichan l checkout */}
                     <button 
-                      onClick={handleOpenLeadModal}
+                      onClick={handleBuyNow}
                       className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-lg tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
                     >
                       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
@@ -515,21 +426,72 @@ export default function ProductDetails() {
                     </button>
                   </motion.div>
 
-                  <div className="flex flex-col items-center justify-center">
-                    <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <div className="flex flex-col items-center justify-center pt-1">
+                    <p className="text-[11px] font-extrabold text-[#8fa4b5] uppercase tracking-widest mb-3 flex items-center gap-2">
                       <Lock className="w-3 h-3" /> Guaranteed Safe & Secure Checkout
                     </p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-5 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" className="h-5 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" className="h-5 w-auto object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all" />
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto object-contain" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-5 w-auto object-contain" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" className="h-5 w-auto object-contain" />
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="Google Pay" className="h-5 w-auto object-contain" />
+                    </div>
+                  </div>
+                </div>
+                {/* ========================================================= */}
+
+                {/* HOW YOU WILL GET YOUR PRODUCT */}
+                <div className="bg-[#f8fafd] border border-blue-100 rounded-3xl p-6 shadow-sm">
+                  <h3 className="text-lg font-black text-[#1a365d] mb-2 flex items-center gap-2">
+                    <Download className="w-5 h-5 text-blue-600" /> How you will get your product?
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-6">
+                    After making the purchase, you will get the activation license <strong className="text-emerald-600 font-extrabold">INSTANTLY (within minutes)</strong> via email.
+                  </p>
+
+                  <div className="grid sm:grid-cols-2 gap-6 pt-5 border-t border-blue-200/60">
+                    <div>
+                      <h4 className="font-extrabold text-[#1a365d] text-sm mb-4 leading-snug">
+                        We provide 100% authentic Intuit QuickBooks license keys at a very affordable price.
+                      </h4>
+                      <ul className="space-y-3">
+                        <li className="flex items-start gap-2.5 text-sm text-gray-700 font-medium">
+                          <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 mt-0.5" />
+                          <span>The official product download link.</span>
+                        </li>
+                        <li className="flex items-start gap-2.5 text-sm text-gray-700 font-medium">
+                          <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 mt-0.5" />
+                          <span>We provide you the original key to activate the product without any issues.</span>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-full -z-0" />
+                      <div className="relative z-10">
+                        <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                          <Monitor className="w-3.5 h-3.5" /> Version USA & UK (Mac & Windows)
+                        </div>
+                        <div className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+                          <Key className="w-4 h-4 text-gray-500" /> License Key format:
+                        </div>
+                        <div className="space-y-2 font-mono text-xs bg-gray-50 p-3 rounded-xl border border-gray-100">
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200 border-dashed">
+                            <span className="text-gray-500 font-sans font-medium">License Number:</span>
+                            <span className="font-black text-[#1a365d] tracking-wider">XXXX-XXXX-XXXX-XXX</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-1">
+                            <span className="text-gray-500 font-sans font-medium">Product Number:</span>
+                            <span className="font-black text-[#1a365d] tracking-wider">XXX-XXX</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Intuit ProAdvisor Trust Banner */}
-                <div className="mt-6 bg-emerald-900 text-emerald-50 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-center">
+                {/* ProAdvisor Banner */}
+                <div className="mt-6 bg-emerald-900 text-emerald-50 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-center shadow-lg shadow-emerald-900/10">
                   <div className="w-12 h-12 bg-emerald-800 rounded-full flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-6 h-6 text-emerald-300" />
                   </div>
@@ -546,13 +508,9 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* ========================================= */}
         {/* FEATURES & SYSTEM REQUIREMENTS SECTION */}
-        {/* ========================================= */}
         <section className="py-12 border-t border-gray-200 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12">
-            
-            {/* Features List */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Key Product Features</h2>
               <div className="space-y-4">
@@ -569,7 +527,6 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {/* System Requirements */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">System Requirements</h2>
               <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 space-y-5">
@@ -589,13 +546,10 @@ export default function ProductDetails() {
                 })}
               </div>
             </div>
-
           </div>
         </section>
 
-        {/* ========================================= */}
         {/* REVIEWS SECTION */}
-        {/* ========================================= */}
         <section className="py-12 border-t border-gray-200 bg-gray-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">What Our Clients Say</h2>
@@ -618,9 +572,7 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* ========================================= */}
         {/* FAQ ACCORDION SECTION */}
-        {/* ========================================= */}
         <section className="py-16 border-t border-gray-200 bg-white">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
