@@ -2,10 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn, X } from 'lucide-react'
+import { ArrowLeft, Check, Zap, ShieldCheck, CheckCircle, RefreshCw, Lock, Sparkles, Star, ZoomIn } from 'lucide-react'
 import products from '../data/products.json'
-import { useCart } from '../hooks/useCart'
-import { supabase } from '../utils/supabase'
 
 const whyUsFeatures = [
   {
@@ -37,25 +35,22 @@ const whyUsFeatures = [
 export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const { addToCart } = useCart()
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [activeTab, setActiveTab] = useState(0)
 
+  // Zoom States
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [isHovered, setIsHovered] = useState(false)
   const imgRef = useRef(null)
 
-  // States dyal Lead Capture (Popup)
-  const [showLeadModal, setShowLeadModal] = useState(false)
-  const [leadData, setLeadData] = useState({ name: '', email: '' })
-  const [isSubmittingLead, setIsSubmittingLead] = useState(false)
-
+  // 1️⃣ جلب بيانات المنتج (من products.json أولاً، ثم من home-and-garden.csv ثانياً)
   useEffect(() => {
     setLoading(true)
 
+    // البحث فـ products.json
     const foundInJson = products.find((p) => p.slug === slug || String(p.id) === slug)
 
     if (foundInJson) {
@@ -67,6 +62,7 @@ export default function ProductDetails() {
       return
     }
 
+    // البحث فـ home-and-garden.csv للجلاب الصورة الحقيقية والثمن
     const fetchFromCSV = async () => {
       try {
         const response = await fetch('/home-and-garden.csv')
@@ -128,7 +124,8 @@ export default function ProductDetails() {
                     label: 'Standard Pack',
                     users: 1,
                     price: parseFloat(itemPrice) || 135.00,
-                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00
+                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00,
+                    paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
                   }
                 ]
               }
@@ -144,6 +141,7 @@ export default function ProductDetails() {
         console.error("Error reading CSV in product page:", err)
       }
 
+      // Fallback إلا مالقاهش فـ CSV
       const formattedTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
       const fallbackProduct = {
         id: slug,
@@ -165,7 +163,8 @@ export default function ProductDetails() {
             label: 'Standard Edition',
             users: 1,
             price: 135.00,
-            comparePrice: 299.00
+            comparePrice: 299.00,
+            paymentLink: 'https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D'
           }
         ]
       }
@@ -192,40 +191,6 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleOpenLeadModal = () => {
-    setShowLeadModal(true)
-  }
-
-  const handleLeadSubmit = async (e) => {
-    e.preventDefault()
-    setIsSubmittingLead(true)
-
-    try {
-      await supabase.from('checkout_leads').insert([{
-        name: leadData.name,
-        email: leadData.email,
-        product_name: product.name
-      }])
-    } catch (error) {
-      console.error("Error saving lead:", error)
-    }
-
-    setShowLeadModal(false)
-    setIsSubmittingLead(false)
-
-    const targetVariant = selectedVariant || (product.variants && product.variants[0])
-    const cartItem = {
-      id: `${product.id}-${targetVariant?.id || 'default'}`,
-      name: `${product.name} (${targetVariant?.label || ''})`,
-      price: targetVariant?.price || 135.00,
-      image: product.image,
-      quantity: 1
-    }
-
-    addToCart(cartItem)
-    navigate('/checkout')
-  }
-
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-32 text-center">
@@ -246,6 +211,11 @@ export default function ProductDetails() {
     )
   }
 
+  // الدالة المعدلة: توجيه العميل مباشرة إلى صفحة الدفع (Checkout)
+  const handleBuyNow = () => {
+    navigate('/checkout');
+  }
+
   const ActiveIcon = whyUsFeatures[activeTab].icon
   const ratingValue = product.rating || 4.96
   const reviewsCount = product.reviewsCount || 142
@@ -256,56 +226,6 @@ export default function ProductDetails() {
         <title>{product.name} — QB DEALS</title>
         <meta name="description" content={product.description} />
       </Helmet>
-
-      <AnimatePresence>
-        {showLeadModal && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl"
-            >
-              <button onClick={() => setShowLeadModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
-              
-              <div className="text-center mb-6 mt-2">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Almost There!</h3>
-                <p className="text-sm text-gray-500">Please enter your details so we know where to send your license key.</p>
-              </div>
-
-              <form onSubmit={handleLeadSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input 
-                    type="text" required
-                    value={leadData.name} onChange={(e) => setLeadData({...leadData, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    placeholder="Enter your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input 
-                    type="email" required
-                    value={leadData.email} onChange={(e) => setLeadData({...leadData, email: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    placeholder="where should we send the key?"
-                  />
-                </div>
-                <button 
-                  type="submit" disabled={isSubmittingLead}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-70 mt-2 cursor-pointer"
-                >
-                  {isSubmittingLead ? 'Processing...' : 'Continue to Checkout'}
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       
       <section className="py-12 lg:py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -316,8 +236,10 @@ export default function ProductDetails() {
 
           <div className="grid lg:grid-cols-12 gap-10 items-start">
             
+            {/* Left Side: Full Image Display + Zoom & Widget */}
             <div className="lg:col-span-5 space-y-6">
               
+              {/* Product Image Container */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -340,11 +262,13 @@ export default function ProductDetails() {
                   }}
                 />
 
+                {/* Zoom Hint */}
                 <div className={`absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-xs transition-opacity duration-300 pointer-events-none ${isHovered ? 'opacity-0' : 'opacity-100'}`}>
                   <ZoomIn className="w-3.5 h-3.5" /> Hover to zoom
                 </div>
               </motion.div>
 
+              {/* Horizontal Slide Widget */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -407,6 +331,7 @@ export default function ProductDetails() {
 
             </div>
 
+            {/* Right Side: Product Details & Pricing */}
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -427,6 +352,7 @@ export default function ProductDetails() {
                 {product.name}
               </h1>
 
+              {/* Rating */}
               <div className="flex items-center gap-2 mb-5">
                 <div className="flex items-center gap-0.5 text-amber-400">
                   {[...Array(5)].map((_, i) => (
@@ -444,6 +370,7 @@ export default function ProductDetails() {
                 {product.description}
               </p>
 
+              {/* Features List */}
               <ul className="space-y-2.5 mb-8 bg-white p-5 rounded-2xl border border-gray-100">
                 {(product.features || []).map((feat, i) => (
                   <li key={i} className="flex items-center gap-2.5 text-sm font-medium text-gray-700">
@@ -453,6 +380,7 @@ export default function ProductDetails() {
                 ))}
               </ul>
 
+              {/* Variants Selection List */}
               <div className="space-y-3 mb-8">
                 {(product.variants || []).map((variant) => {
                   const isSelected = selectedVariant?.id === variant.id
@@ -503,13 +431,14 @@ export default function ProductDetails() {
                 })}
               </div>
 
+              {/* Buy Now Button */}
               <motion.div
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
                 className="relative overflow-hidden rounded-2xl shadow-xl shadow-emerald-600/30 group cursor-pointer"
               >
                 <button 
-                  onClick={handleOpenLeadModal}
+                  onClick={handleBuyNow}
                   className="w-full relative py-4 px-6 bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600 text-white font-black text-base tracking-wide flex items-center justify-center gap-3 transition-all duration-300 cursor-pointer"
                 >
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform transform skew-x-12" />
@@ -521,6 +450,7 @@ export default function ProductDetails() {
                 </button>
               </motion.div>
 
+              {/* Payment Badges & Security */}
               <div className="mt-6 space-y-6">
                 <div>
                   <div className="flex items-center justify-center gap-1.5 mb-2.5">
