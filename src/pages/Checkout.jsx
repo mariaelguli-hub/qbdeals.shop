@@ -1,197 +1,242 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../hooks/useCart';
 
 export default function Checkout() {
-  const { cartItems, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    country: 'Morocco'
-  });
-
   const [sdkLoaded, setSdkLoaded] = useState(false);
 
-  // Charger PayPal SDK
+  // حالة الفورم لتخزين البيانات
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    os: '',      // 'Mac' أو 'Windows'
+    country: '', // 'United States' أو 'Canada'
+    users: ''    // السعر المختار
+  });
+
+  // حالة لتتبع الأخطاء عند الضغط على زر الدفع
+  const [errors, setErrors] = useState(false);
+
+  // تحميل مكتبة باي بال
   useEffect(() => {
     if (window.paypal) {
       setSdkLoaded(true);
       return;
     }
-
     const script = document.createElement('script');
-    // 3wed CLIENT_ID b l-Client ID dial PayPal Business dyalk
+    // Client ID الخاص بك الذي أرسلته مسبقاً
     script.src = "https://www.paypal.com/sdk/js?client-id=BAA7g-TRxn1tHm2l97rTyP5TGgoFv80wXtF89v2Dde2gDAMUbqeYsIynyUNA9udOSIiXBTWJnZnj89DDuE&currency=USD";
     script.async = true;
     script.onload = () => setSdkLoaded(true);
     document.body.appendChild(script);
   }, []);
 
-  // Render PayPal Buttons f l-Checkout Card
-  useEffect(() => {
-    if (sdkLoaded && window.paypal) {
-      const container = document.getElementById('paypal-button-container');
-      if (container) {
-        container.innerHTML = '';
-        
-        window.paypal.Buttons({
-          createOrder: (data, actions) => {
-            return actions.order.create({
-              purchase_units: [{
-                amount: {
-                  value: cartTotal.toFixed(2)
-                }
-              }]
-            });
-          },
-          onApprove: (data, actions) => {
-            return actions.order.capture().then((details) => {
-              clearCart();
-              navigate('/thank-you');
-            });
-          },
-          onError: (err) => {
-            console.error('PayPal Error:', err);
-            alert('Waqeate mochkil f amaliyat l-dafa3, 3awd mahawol.');
-          }
-        }).render('#paypal-button-container');
-      }
-    }
-  }, [sdkLoaded, cartTotal, clearCart, navigate]);
-
+  // دالة لتحديث المدخلات
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Ila bghiti t-khdm l-methode l-3adiya wla l-form submission l-adiyya
+  // دالة لتحديث مربعات الاختيار (Checkboxes) لتعمل مثل الراديو
+  const handleCheckboxChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
   };
 
+  // التحقق من أن جميع الحقول ممتلئة
+  const validateForm = () => {
+    return formData.name && formData.email && formData.os && formData.country && formData.users;
+  };
+
+  // دمج أزرار باي بال
+  useEffect(() => {
+    if (sdkLoaded && window.paypal) {
+      const container = document.getElementById('paypal-button-container');
+      if (container) container.innerHTML = '';
+      
+      window.paypal.Buttons({
+        // عند الضغط على زر باي بال، نتحقق من الأخطاء أولاً
+        onClick: (data, actions) => {
+          if (!validateForm()) {
+            setErrors(true);
+            return actions.reject(); // إيقاف فتح نافذة باي بال إذا كان هناك خطأ
+          }
+          setErrors(false);
+          return actions.resolve(); // إكمال العملية إذا كانت البيانات صحيحة
+        },
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: formData.users // السعر الذي اختاره الزبون
+              }
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then((details) => {
+            navigate('/thank-you');
+          });
+        }
+      }).render('#paypal-button-container');
+    }
+  }, [sdkLoaded, formData, navigate]);
+
+  // حساب المجموع (Total)
+  const total = formData.users ? parseFloat(formData.users).toFixed(2) : "0.00";
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout</h1>
+    <div className="min-h-screen bg-white py-12 px-4 flex justify-center font-sans">
+      <div className="w-full max-w-2xl">
+        
+        {/* صندوق الخطأ العلوي يظهر فقط إذا كانت هناك أخطاء */}
+        {errors && !validateForm() && (
+          <div className="mb-6 p-4 bg-[#fdeded] border-l-4 border-[#d32f2f] text-[#d32f2f] text-sm">
+            Please correct the errors before submission.
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* L-Form dial Ma3lomat l-Chahin (Billing & Shipping) */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Ma3lomat l-Zaboun</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">L-Ism l-Awwal</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">L-Ism l-Aakhir</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">L- العنوان (Address)</label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">L-Madina (City)</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Postal Code</label>
-                  <input
-                    type="text"
-                    name="postalCode"
-                    value={formData.postalCode}
-                    onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                  />
-                </div>
-              </div>
-            </form>
+        <form className="space-y-6">
+          {/* حقل الاسم */}
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-1">
+              Name <span className="text-[#d32f2f]">*</span>
+            </label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Your name"
+              value={formData.name}
+              onChange={handleChange}
+              className={`w-full p-2.5 border rounded outline-none text-sm ${
+                errors && !formData.name ? 'border-[#d32f2f] bg-[#fdeded]' : 'border-gray-300'
+              }`}
+            />
+            {errors && !formData.name && (
+              <div className="mt-0.5 p-2 bg-[#fdeded] text-[#d32f2f] text-xs">Name is required.</div>
+            )}
           </div>
 
-          {/* Product Card & Checkout Payment Summary */}
-          <div className="bg-white p-6 rounded-lg shadow-sm h-fit">
-            <h2 className="text-xl font-semibold mb-4">Molakhas l-Talabiya (Order Summary)</h2>
-            
-            <div className="divide-y divide-gray-200 mb-4 max-h-60 overflow-y-auto">
-              {cartItems.map((item) => (
-                <div key={item.id} className="py-3 flex justify-between items-center">
-                  <div className="flex items-center space-x-3">
-                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />}
-                    <div>
-                      <p className="font-medium text-gray-800">{item.name}</p>
-                      <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                    </div>
-                  </div>
-                  <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t pt-4 mb-6">
-              <div className="flex justify-between font-bold text-lg text-gray-900">
-                <span>Total:</span>
-                <span>${cartTotal.toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* PayPal Checkout Buttons f l-Card */}
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Ikhtar Tariqat l-Adaf (Payment Method)</h3>
-              <div id="paypal-button-container"></div>
-            </div>
+          {/* حقل الإيميل */}
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-1">
+              Email Address <span className="text-[#d32f2f]">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Your email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full p-2.5 border rounded outline-none text-sm ${
+                errors && !formData.email ? 'border-[#d32f2f] bg-[#fdeded]' : 'border-gray-300'
+              }`}
+            />
+            {errors && !formData.email && (
+              <div className="mt-0.5 p-2 bg-[#fdeded] text-[#d32f2f] text-xs">This field is required. Please input a valid email.</div>
+            )}
           </div>
-        </div>
+
+          {/* حقل Mac / Windows */}
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2">
+              Mac / Windows <span className="text-[#d32f2f]">*</span>
+            </label>
+            <div className={`flex gap-6 p-2 -ml-2 rounded ${errors && !formData.os ? 'bg-[#fdeded] border border-[#d32f2f]' : ''}`}>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={formData.os === 'Mac'} 
+                  onChange={() => handleCheckboxChange('os', 'Mac')} 
+                  className="w-4 h-4 accent-gray-800 cursor-pointer border-gray-300 rounded-sm" 
+                />
+                <span className="text-sm text-gray-900">Mac</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={formData.os === 'Windows'} 
+                  onChange={() => handleCheckboxChange('os', 'Windows')} 
+                  className="w-4 h-4 accent-gray-800 cursor-pointer border-gray-300 rounded-sm" 
+                />
+                <span className="text-sm text-gray-900">Windows</span>
+              </label>
+            </div>
+            {errors && !formData.os && (
+              <div className="mt-0.5 p-2 bg-[#fdeded] text-[#d32f2f] text-xs">This field is required. Please select a value.</div>
+            )}
+          </div>
+
+          {/* حقل Country */}
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2">
+              Country <span className="text-[#d32f2f]">*</span>
+            </label>
+            <div className={`flex gap-6 p-2 -ml-2 rounded ${errors && !formData.country ? 'bg-[#fdeded] border border-[#d32f2f]' : ''}`}>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={formData.country === 'United States'} 
+                  onChange={() => handleCheckboxChange('country', 'United States')} 
+                  className="w-4 h-4 accent-gray-800 cursor-pointer border-gray-300 rounded-sm" 
+                />
+                <span className="text-sm text-gray-900">United States</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={formData.country === 'Canada'} 
+                  onChange={() => handleCheckboxChange('country', 'Canada')} 
+                  className="w-4 h-4 accent-gray-800 cursor-pointer border-gray-300 rounded-sm" 
+                />
+                <span className="text-sm text-gray-900">Canada</span>
+              </label>
+            </div>
+            {errors && !formData.country && (
+              <div className="mt-0.5 p-2 bg-[#fdeded] text-[#d32f2f] text-xs">This field is required. Please select a value.</div>
+            )}
+          </div>
+
+          {/* قائمة اختيار عدد المستخدمين مع خصم 49 دولار */}
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-1">
+              How many users ? <span className="text-[#d32f2f]">*</span>
+            </label>
+            <select
+              name="users"
+              value={formData.users}
+              onChange={handleChange}
+              className={`w-full p-2.5 border rounded outline-none text-sm appearance-none bg-white ${
+                errors && !formData.users ? 'border-[#d32f2f] bg-[#fdeded]' : 'border-gray-300'
+              }`}
+            >
+              <option value="" disabled>Click to choose</option>
+              <option value="200">1 User {'----->'} 200 $</option>
+              <option value="250">2 Users {'----->'} 250 $</option>
+              <option value="300">3 Users {'----->'} 300 $</option>
+              <option value="350">5 Users {'----->'} 350 $</option>
+            </select>
+            {errors && !formData.users && (
+              <div className="mt-0.5 p-2 bg-[#fdeded] text-[#d32f2f] text-xs">This field is required. Please select a value.</div>
+            )}
+          </div>
+
+          {/* المجموع الإجمالي (Total) */}
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-1">
+              Total ($)
+            </label>
+            <input
+              type="text"
+              readOnly
+              value={total}
+              className="w-full p-2.5 border border-gray-300 rounded bg-[#f3f4f6] outline-none text-sm"
+            />
+          </div>
+
+          {/* أزرار PayPal */}
+          <div className="mt-8 pt-4 border-t border-gray-200">
+            <div id="paypal-button-container" className="w-full"></div>
+          </div>
+        </form>
       </div>
     </div>
   );
