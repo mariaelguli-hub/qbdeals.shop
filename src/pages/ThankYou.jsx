@@ -25,7 +25,7 @@ export default function ThankYou() {
 
     if (!alreadyTracked && typeof window !== 'undefined') {
       
-      // 📢 1. إرسال حدث التحويل لـ Google Ads
+      // 📢 1. إرسال حدث التحويل لـ Google Ads (متصفح)
       if (window.gtag) {
         window.gtag('event', 'conversion', {
           'send_to': 'AW-18323871651/ngvwCKKG0eAcEKOvwKFE',
@@ -35,7 +35,7 @@ export default function ThankYou() {
         })
       }
 
-      // 🔵 2. إرسال حدث الشراء (Purchase) لـ Facebook Pixel مع الثمن
+      // 🔵 2. إرسال حدث الشراء (Purchase) لـ Facebook Pixel (متصفح)
       if (window.fbq) {
         window.fbq('track', 'Purchase', {
           value: parseFloat(amount),
@@ -45,10 +45,22 @@ export default function ThankYou() {
         })
       }
 
+      // 🛡️ 3. إرسال طلب آمن لـ Serverless API الخاص بنا لتوثيق الـ Purchase الحقيقي منعاً للتزوير (CAPI)
+      fetch('/api/verify-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          amount,
+          email: customerEmail,
+          osType
+        })
+      }).catch(err => console.log('Server CAPI error:', err));
+
       // حفظ الـ ID فـ المتصفح باش ما يتعاودش يتسجل
       localStorage.setItem(trackedKey, 'true')
     }
-  }, [orderId, amount, productName])
+  }, [orderId, amount, customerEmail, osType, productName])
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
