@@ -4,7 +4,7 @@ import {
   Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, 
   Users, Clock, Compass, ShieldAlert, Send, LogOut, Download, 
   FileSpreadsheet, ExternalLink, Layers, CheckCircle, EyeOff as EyeOffIcon,
-  ShoppingCart // 👈 تمت إضافة أيقونة السلة
+  ShoppingCart, Paperclip, Bot, Image as ImageIcon, Loader2 // 👈 أيقونات جديدة للشات
 } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
@@ -18,19 +18,24 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
-  const [activeTab, setActiveTab] = useState('orders') // 👈 جعلنا تبويب الطلبات هو الافتراضي
+  const [activeTab, setActiveTab] = useState('orders')
   const [messages, setMessages] = useState([])
   const [visitors, setVisitors] = useState([])
   const [loading, setLoading] = useState(false)
 
   const [productsList, setProductsList] = useState([])
-  const [orders, setOrders] = useState([]) // 👈 State جديد للطلبات
+  const [orders, setOrders] = useState([]) 
+  const [leads, setLeads] = useState([]) 
   
+  // 💬 States الشات المباشر
   const [chatSessions, setChatSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
   const [replyInput, setReplyInput] = useState('')
+  const [isUploading, setIsUploading] = useState(false) // 👈 حالة الرفع للمرفقات
+  
   const chatEndRef = useRef(null)
+  const fileInputRef = useRef(null) // 👈 مرجع لزر رفع الملفات
 
   const parseCSVLine = (text) => {
     const lines = []
@@ -173,9 +178,11 @@ export default function AdminDashboard() {
     const { data: chatData } = await supabase.from('chat_sessions').select('*').order('updated_at', { ascending: false })
     setChatSessions(chatData || [])
 
-    // 👈 جلب بيانات الطلبات (Orders)
     const { data: ordersData } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
     setOrders(ordersData || [])
+
+    const { data: leadsData } = await supabase.from('checkout_leads').select('*').order('created_at', { ascending: false })
+    setLeads(leadsData || [])
 
     setLoading(false)
   }
@@ -239,6 +246,10 @@ export default function AdminDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
+  // ==========================================
+  // 👇 تحديثات قسم الشات (Live Chat & Attachments)
+  // ==========================================
+
   const handleSendAgentReply = async (e) => {
     e.preventDefault()
     if (!replyInput.trim() || !selectedSession) return
@@ -246,13 +257,74 @@ export default function AdminDashboard() {
     setReplyInput('')
 
     const agentMsg = { session_id: selectedSession.id, sender: 'agent', message: messageText, created_at: new Date().toISOString() }
+    
+    // التحديث الفوري في الواجهة (Optimistic UI Update)
     setChatMessages(prev => [...prev, agentMsg])
 
     await supabase.from('chat_messages').insert([agentMsg])
     await supabase.from('chat_sessions').update({ status: 'agent', updated_at: new Date().toISOString() }).eq('id', selectedSession.id)
     setSelectedSession(prev => ({ ...prev, status: 'agent' }))
-    toast.success('Reply sent!')
   }
+
+  // 👈 دالة رفع الصور/الملفات في الشات
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file || !selectedSession) return
+
+    setIsUploading(true)
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const filePath = `${selectedSession.id}/${fileName}`
+
+    try {
+      // الرفع إلى Supabase Storage (يجب أن يكون لديك Bucket باسم chat_attachments)
+      const { error: uploadError, data } = await supabase.storage
+        .from('chat_attachments')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      // الحصول على الرابط العام للصورة
+      const { data: publicUrlData } = supabase.storage
+        .from('chat_attachments')
+        .getPublicUrl(filePath)
+
+      const imageUrl = publicUrlData.publicUrl
+
+      // إرسال رسالة تحتوي على الصورة
+      const agentMsg = { 
+        session_id: selectedSession.id, 
+        sender: 'agent', 
+        message: 'Sent an attachment', 
+        image_url: imageUrl,
+        created_at: new Date().toISOString() 
+      }
+      
+      setChatMessages(prev => [...prev, agentMsg])
+      await supabase.from('chat_messages').insert([agentMsg])
+      await supabase.from('chat_sessions').update({ status: 'agent', updated_at: new Date().toISOString() }).eq('id', selectedSession.id)
+      setSelectedSession(prev => ({ ...prev, status: 'agent' }))
+
+    } catch (err) {
+      console.error("Upload Error:", err)
+      toast.error('Failed to upload image. Make sure "chat_attachments" bucket exists.')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  // 👈 دالة إعادة المحادثة للذكاء الاصطناعي
+  const handleHandoverToAI = async () => {
+    if (!selectedSession) return
+    await supabase.from('chat_sessions').update({ status: 'ai', updated_at: new Date().toISOString() }).eq('id', selectedSession.id)
+    setSelectedSession(prev => ({ ...prev, status: 'ai' }))
+    toast.success("Handed over to AI Bot")
+  }
+
+  // ==========================================
+  // 👆 نهاية تحديثات الشات
+  // ==========================================
 
   const handleEndSessionFromAdmin = async () => {
     if (!selectedSession || !window.confirm("End conversation?")) return
@@ -373,7 +445,6 @@ export default function AdminDashboard() {
 
           {/* TABS NAVIGATION */}
           <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
-            {/* 👈 زر التبويب الجديد للطلبات */}
             <button
               onClick={() => setActiveTab('orders')}
               className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
@@ -393,7 +464,18 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <Layers className="w-4 h-4" /> All Products Manager ({productsList.length})
+              <Layers className="w-4 h-4" /> All Products ({productsList.length})
+            </button>
+
+            <button
+              onClick={() => setActiveTab('leads')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+                activeTab === 'leads' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Users className="w-4 h-4" /> Abandoned Carts ({leads.length})
             </button>
 
             <button
@@ -404,7 +486,7 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <Users className="w-4 h-4" /> Visitor Logs ({visitors.length})
+              <Compass className="w-4 h-4" /> Visitors ({visitors.length})
             </button>
 
             <button
@@ -415,7 +497,7 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <MessageSquare className="w-4 h-4" /> Live Chat Support ({chatSessions.length})
+              <MessageSquare className="w-4 h-4" /> Live Chat ({chatSessions.length})
             </button>
 
             <button
@@ -426,7 +508,7 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <MessageSquare className="w-4 h-4" /> Contact Forms ({messages.length})
+              <MessageSquare className="w-4 h-4" /> Forms ({messages.length})
             </button>
 
             <button
@@ -437,7 +519,7 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <EyeOffIcon className="w-4 h-4" /> Hidden Explorer
+              <EyeOffIcon className="w-4 h-4" /> Explorer
             </button>
 
             <button
@@ -448,11 +530,11 @@ export default function AdminDashboard() {
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4" /> GMC Exporter
+              <FileSpreadsheet className="w-4 h-4" /> GMC
             </button>
           </div>
 
-          {/* 👈 تبويب الطلبات (Orders Tab Content) */}
+          {/* TAB ORDERS */}
           {activeTab === 'orders' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -516,7 +598,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 1: PRODUCT VISIBILITY MANAGER */}
+          {/* TAB PRODUCTS */}
           {activeTab === 'products' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
@@ -615,7 +697,53 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 2: VISITORS LOGS */}
+          {/* TAB LEADS */}
+          {activeTab === 'leads' && (
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-emerald-600" /> Abandoned Checkouts
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Customers who clicked PayPal but didn't finish paying</p>
+                </div>
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-bold">
+                  Total Leads: {leads.length}
+                </span>
+              </div>
+              
+              {leads.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">No leads captured yet.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                        <th className="p-4">Date</th>
+                        <th className="p-4">Name</th>
+                        <th className="p-4">Email</th>
+                        <th className="p-4">Intended Product</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {leads.map((lead) => (
+                        <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 text-xs text-gray-500">
+                            {new Date(lead.created_at).toLocaleString()}
+                          </td>
+                          <td className="p-4 font-bold text-gray-900">{lead.name}</td>
+                          <td className="p-4 font-medium text-emerald-700">{lead.email}</td>
+                          <td className="p-4 text-gray-600 text-xs">{lead.product_name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB VISITORS */}
           {activeTab === 'visitors' && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -686,7 +814,9 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 3: LIVE CHAT SUPPORT PANEL */}
+          {/* ========================================================= */}
+          {/* 👇 قسم الشات تم التعديل عليه (Attachments & AI Handover) */}
+          {/* ========================================================= */}
           {activeTab === 'livechat' && (
             <div className="grid md:grid-cols-3 gap-6 h-[600px]">
               <div className="md:col-span-1 bg-white rounded-3xl border border-gray-100 p-4 overflow-y-auto space-y-2 shadow-sm">
@@ -720,25 +850,38 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="md:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden">
+              <div className="md:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden relative">
                 {selectedSession ? (
                   <>
+                    {/* Chat Header */}
                     <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                       <div>
                         <h4 className="font-bold text-sm text-gray-900">Session ID: {selectedSession.id}</h4>
                         <p className="text-xs text-emerald-600 font-medium">Status: {selectedSession.status?.toUpperCase()}</p>
                       </div>
 
-                      {selectedSession.status !== 'ended' && (
-                        <button
-                          onClick={handleEndSessionFromAdmin}
-                          className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                        >
-                          <LogOut className="w-3.5 h-3.5" /> End Conversation
-                        </button>
-                      )}
+                      <div className="flex gap-2">
+                        {/* 👈 زر إرجاع المحادثة للذكاء الاصطناعي */}
+                        {selectedSession.status === 'agent' && (
+                          <button
+                            onClick={handleHandoverToAI}
+                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <Bot className="w-3.5 h-3.5" /> Give to AI
+                          </button>
+                        )}
+                        {selectedSession.status !== 'ended' && (
+                          <button
+                            onClick={handleEndSessionFromAdmin}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <LogOut className="w-3.5 h-3.5" /> End Chat
+                          </button>
+                        )}
+                      </div>
                     </div>
 
+                    {/* Chat Messages Area */}
                     <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50/30 text-xs">
                       {chatMessages.map((m, idx) => (
                         <div key={m.id || idx} className={`flex ${m.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
@@ -752,36 +895,64 @@ export default function AdminDashboard() {
                             <div className="text-[10px] opacity-75 font-bold mb-1 uppercase">
                               {m.sender === 'agent' ? 'You (Agent)' : m.sender === 'user' ? 'Visitor' : 'AI Bot'}
                             </div>
+                            {/* 👈 عرض المرفقات إذا وجدت */}
                             {m.image_url && (
-                              <img src={m.image_url} alt="Uploaded" className="rounded-xl max-h-40 w-full object-cover mb-2" />
+                              <a href={m.image_url} target="_blank" rel="noreferrer">
+                                <img src={m.image_url} alt="Attachment" className="rounded-xl max-h-48 w-auto object-cover mb-2 border border-black/10" />
+                              </a>
                             )}
-                            <p>{m.message}</p>
+                            <p className="whitespace-pre-wrap leading-relaxed">{m.message}</p>
                           </div>
                         </div>
                       ))}
                       <div ref={chatEndRef} />
                     </div>
 
+                    {/* Chat Input Area */}
                     {selectedSession.status === 'ended' ? (
                       <div className="p-3 bg-gray-100 text-center text-xs text-gray-500 font-semibold">
                         This session has been closed.
                       </div>
                     ) : (
-                      <form onSubmit={handleSendAgentReply} className="p-3 border-t border-gray-100 flex gap-2">
-                        <input
-                          type="text"
-                          value={replyInput}
-                          onChange={(e) => setReplyInput(e.target.value)}
-                          placeholder="Reply to visitor as Live Agent..."
-                          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
-                        />
-                        <button
-                          type="submit"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Send className="w-3.5 h-3.5" /> Reply
-                        </button>
-                      </form>
+                      <div className="p-3 border-t border-gray-100 bg-white">
+                        <form onSubmit={handleSendAgentReply} className="flex gap-2 items-center relative">
+                          
+                          {/* 👈 زر رفع الملفات المخفي والمرئي */}
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            ref={fileInputRef} 
+                            onChange={handleImageUpload} 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                            className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                            title="Attach Image"
+                          >
+                            {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+                          </button>
+
+                          <input
+                            type="text"
+                            value={replyInput}
+                            onChange={(e) => setReplyInput(e.target.value)}
+                            placeholder="Type a message..."
+                            disabled={isUploading}
+                            className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          />
+                          
+                          <button
+                            type="submit"
+                            disabled={isUploading || (!replyInput.trim())}
+                            className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white px-5 py-3 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+                        </form>
+                      </div>
                     )}
                   </>
                 ) : (
@@ -792,6 +963,10 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+          {/* ========================================================= */}
+          {/* 👆 نهاية قسم الشات المعدل */}
+          {/* ========================================================= */}
+
 
           {/* TAB 4: CONTACT FORM MESSAGES */}
           {activeTab === 'messages' && (
