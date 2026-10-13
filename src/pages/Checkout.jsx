@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../utils/supabase'; // 👈 استدعاء قاعدة البيانات
+import { supabase } from '../utils/supabase';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -60,7 +60,11 @@ export default function Checkout() {
               amount: {
                 value: formData.users
               }
-            }]
+            }],
+            // 👇 HADA HWA L-CODE LI KIDAYA3 DISPUTES L-CLIENT (DIGITAL GOODS PROTECT)
+            application_context: {
+              shipping_preference: 'NO_SHIPPING'
+            }
           });
         },
         onApprove: (data, actions) => {
