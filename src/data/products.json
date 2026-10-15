@@ -18,8 +18,8 @@
       { 
         "id": "pro-single", 
         "label": "Single User", 
-        "price": 135, 
-        "comparePrice": 685, 
+        "price": 199, 
+        "comparePrice": 799, 
         "users": 1, 
         "bestselling": false,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
@@ -27,8 +27,8 @@
       { 
         "id": "pro-3users", 
         "label": "3 Users", 
-        "price": 149, 
-        "comparePrice": 799, 
+        "price": 299, 
+        "comparePrice": 999, 
         "users": 3, 
         "bestselling": true,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#PJGSYFNV2RG7PXYB"
@@ -55,8 +55,8 @@
       { 
         "id": "mac-single", 
         "label": "Single User", 
-        "price": 159, 
-        "comparePrice": 685, 
+        "price": 199, 
+        "comparePrice": 799, 
         "users": 1, 
         "bestselling": true,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#UJ7YKLQBHWT7FALF"
@@ -83,8 +83,8 @@
       { 
         "id": "ent-acc-single", 
         "label": "Single User", 
-        "price": 137, 
-        "comparePrice": 685, 
+        "price": 199, 
+        "comparePrice": 899, 
         "users": 1, 
         "bestselling": false,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
@@ -92,8 +92,8 @@
       { 
         "id": "ent-acc-5users", 
         "label": "5 Users", 
-        "price": 153, 
-        "comparePrice": 899, 
+        "price": 349, 
+        "comparePrice": 1299, 
         "users": 5, 
         "bestselling": true,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
@@ -120,8 +120,8 @@
       { 
         "id": "ent-sol-single", 
         "label": "Single User", 
-        "price": 145, 
-        "comparePrice": 725, 
+        "price": 199, 
+        "comparePrice": 899, 
         "users": 1, 
         "bestselling": false,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
@@ -129,8 +129,8 @@
       { 
         "id": "ent-sol-5users", 
         "label": "5 Users", 
-        "price": 157, 
-        "comparePrice": 949, 
+        "price": 349, 
+        "comparePrice": 1299, 
         "users": 5, 
         "bestselling": true,
         "paymentLink": "https://href.li/?https://www.paypal.com/invoice/p/#F5ZSB7TZBXCZXS2D"
