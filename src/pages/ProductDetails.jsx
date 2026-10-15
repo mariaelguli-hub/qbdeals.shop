@@ -52,6 +52,52 @@ const customerReviews = [
   { name: "Jason Anderson", date: "16/04/2024", text: "Delivers exceptional value for my business. The feature set is comprehensive, and the software's reliability is unmatched. Got my license key in literally 2 minutes via email. Highly recommended!" }
 ]
 
+const updateProductPrices = (prod) => {
+  if (!prod || !prod.variants) return prod
+
+  const updatedVariants = prod.variants.map((variant) => {
+    const labelLower = (variant.label || '').toLowerCase()
+    const oldPrice = Number(variant.price)
+
+    if (variant.users === 5 || labelLower.includes('5 user') || oldPrice === 153) {
+      return {
+        ...variant,
+        price: 349.00,
+        comparePrice: 1199.00
+      }
+    }
+
+    if (variant.users === 3 || labelLower.includes('3 user') || oldPrice === 149) {
+      return {
+        ...variant,
+        price: 299.00,
+        comparePrice: 999.00
+      }
+    }
+
+    if (
+      variant.users === 1 ||
+      labelLower.includes('single') ||
+      labelLower.includes('1 user') ||
+      labelLower.includes('standard') ||
+      [135, 137, 159].includes(oldPrice)
+    ) {
+      return {
+        ...variant,
+        price: 199.00,
+        comparePrice: 799.00
+      }
+    }
+
+    return variant
+  })
+
+  return {
+    ...prod,
+    variants: updatedVariants
+  }
+}
+
 export default function ProductDetails() {
   const { slug } = useParams()
   const navigate = useNavigate()
@@ -66,7 +112,6 @@ export default function ProductDetails() {
   const [openFaq, setOpenFaq] = useState(0)
   const imgRef = useRef(null)
 
-  // High-Level Conversion States
   const [showStickyBar, setShowStickyBar] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [hasSeenExitModal, setHasSeenExitModal] = useState(false)
@@ -78,9 +123,10 @@ export default function ProductDetails() {
     const foundInJson = products.find((p) => p.slug === slug || String(p.id) === slug)
 
     if (foundInJson) {
-      setProduct(foundInJson)
-      if (foundInJson.variants && foundInJson.variants.length > 0) {
-        setSelectedVariant(foundInJson.variants[0])
+      const updatedProduct = updateProductPrices(foundInJson)
+      setProduct(updatedProduct)
+      if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+        setSelectedVariant(updatedProduct.variants[0])
       }
       setLoading(false)
       return
@@ -121,12 +167,12 @@ export default function ProductDetails() {
 
             if (itemHandle === slug) {
               const itemTitle = (titleIdx !== -1 && row[titleIdx]) ? row[titleIdx].replace(/^"|"$/g, '') : slug.replace(/-/g, ' ')
-              let itemPrice = (priceIdx !== -1 && row[priceIdx]) ? row[priceIdx].replace(/[^0-9.]/g, '') : '135.00'
-              if (!itemPrice || itemPrice === '0') itemPrice = '135.00'
+              let itemPrice = (priceIdx !== -1 && row[priceIdx]) ? row[priceIdx].replace(/[^0-9.]/g, '') : '199.00'
+              if (!itemPrice || itemPrice === '0') itemPrice = '199.00'
               
               const itemImg = (imgIdx !== -1 && row[imgIdx]) ? row[imgIdx].replace(/^"|"$/g, '') : ''
 
-              const csvProduct = {
+              const csvProduct = updateProductPrices({
                 id: slug,
                 slug: slug,
                 name: itemTitle.replace(/\b\w/g, l => l.toUpperCase()),
@@ -146,11 +192,11 @@ export default function ProductDetails() {
                     id: 'standard-edition',
                     label: 'Standard Pack',
                     users: 1,
-                    price: parseFloat(itemPrice) || 135.00,
-                    comparePrice: (parseFloat(itemPrice) * 2.2) || 299.00
+                    price: parseFloat(itemPrice) || 199.00,
+                    comparePrice: 799.00
                   }
                 ]
-              }
+              })
 
               setProduct(csvProduct)
               setSelectedVariant(csvProduct.variants[0])
@@ -183,8 +229,8 @@ export default function ProductDetails() {
             id: 'standard-item',
             label: 'Standard Edition',
             users: 1,
-            price: 135.00,
-            comparePrice: 299.00
+            price: 199.00,
+            comparePrice: 799.00
           }
         ]
       }
@@ -196,7 +242,6 @@ export default function ProductDetails() {
     fetchFromCSV()
   }, [slug])
 
-  // 1. Intersection Observer for Sticky Bar
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -216,7 +261,6 @@ export default function ProductDetails() {
     return () => observer.disconnect()
   }, [loading])
 
-  // 2. Exit Intent Logic
   useEffect(() => {
     const handleMouseLeave = (e) => {
       if (e.clientY <= 0 && !hasSeenExitModal) {
@@ -244,12 +288,10 @@ export default function ProductDetails() {
     return () => clearInterval(interval)
   }, [])
 
-  // 👈 الدالة الأصلية البسيطة التي تقوم بالتوجيه مباشرة دون أخطاء السلة (Cart)
   const handleBuyNow = () => {
     navigate('/checkout');
   }
 
-  // 👈 دالة الشراء بعد الحصول على التخفيض من نافذة الخروج
   const claimDiscountAndBuy = () => {
     setShowExitModal(false);
     navigate('/checkout');
@@ -286,9 +328,6 @@ export default function ProductDetails() {
         <meta name="description" content={product.description} />
       </Helmet>
 
-      {/* ========================================= */}
-      {/* EXIT-INTENT DISCOUNT MODAL */}
-      {/* ========================================= */}
       <AnimatePresence>
         {showExitModal && (
           <motion.div 
@@ -344,7 +383,6 @@ export default function ProductDetails() {
 
             <div className="grid lg:grid-cols-12 gap-10 items-start">
               
-              {/* Left Side: Image & Features Widget */}
               <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -411,13 +449,11 @@ export default function ProductDetails() {
                 </motion.div>
               </div>
 
-              {/* Right Side: Details & Actions */}
               <motion.div 
                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
                 className="lg:col-span-7"
               >
                 
-                {/* DYNAMIC TRUST BADGE (Golden Seal) */}
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 rounded-full mb-4 shadow-sm">
                   <Award className="w-4 h-4 text-amber-600" />
                   <span className="text-[11px] font-extrabold text-amber-900 tracking-wide uppercase">Verified Intuit Partner • 100% Genuine</span>
@@ -486,7 +522,6 @@ export default function ProductDetails() {
                   })}
                 </div>
 
-                {/* Buy Button Container */}
                 <div ref={buyButtonRef} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-6 scroll-mt-24">
                   <motion.div
                     whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}
@@ -517,7 +552,6 @@ export default function ProductDetails() {
                   </div>
                 </div>
 
-                {/* HOW YOU WILL GET YOUR PRODUCT */}
                 <div className="bg-[#f8fafd] border border-blue-100 rounded-3xl p-6 shadow-sm">
                   <h3 className="text-lg font-black text-[#1a365d] mb-2 flex items-center gap-2">
                     <Download className="w-5 h-5 text-blue-600" /> How you will get your product?
@@ -567,7 +601,6 @@ export default function ProductDetails() {
                   </div>
                 </div>
 
-                {/* ProAdvisor Banner */}
                 <div className="mt-6 bg-emerald-900 text-emerald-50 p-5 rounded-2xl flex flex-col sm:flex-row gap-4 items-center shadow-lg shadow-emerald-900/10">
                   <div className="w-12 h-12 bg-emerald-800 rounded-full flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-6 h-6 text-emerald-300" />
@@ -585,7 +618,6 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* FEATURES & SYSTEM REQUIREMENTS SECTION */}
         <section className="py-12 border-t border-gray-200 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12">
             <div>
@@ -626,7 +658,6 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* REVIEWS SECTION */}
         <section className="py-12 border-t border-gray-200 bg-gray-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">What Our Clients Say</h2>
@@ -649,7 +680,6 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* FAQ ACCORDION SECTION */}
         <section className="py-16 border-t border-gray-200 bg-white">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
@@ -690,9 +720,6 @@ export default function ProductDetails() {
 
       </div>
 
-      {/* ========================================= */}
-      {/* STICKY "BUY NOW" BOTTOM BAR */}
-      {/* ========================================= */}
       <AnimatePresence>
         {showStickyBar && (
           <motion.div
@@ -714,8 +741,8 @@ export default function ProductDetails() {
               
               <div className="flex items-center justify-between w-full sm:w-auto gap-6">
                 <div className="text-right">
-                  <div className="text-sm text-gray-500 line-through">${Number(selectedVariant?.comparePrice || 299).toFixed(2)}</div>
-                  <div className="text-xl font-black text-emerald-700">${Number(selectedVariant?.price || 135).toFixed(2)}</div>
+                  <div className="text-sm text-gray-500 line-through">${Number(selectedVariant?.comparePrice || 799).toFixed(2)}</div>
+                  <div className="text-xl font-black text-emerald-700">${Number(selectedVariant?.price || 199).toFixed(2)}</div>
                 </div>
                 <button 
                   onClick={handleBuyNow}
