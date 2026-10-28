@@ -37,8 +37,10 @@ jobs:
           VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
         run: npm run build
 
-      - name: Copy CNAME to dist
-        run: cp CNAME dist/ || true
+      - name: Copy CNAME and create 404.html in dist
+        run: |
+          cp CNAME dist/ || true
+          cp dist/index.html dist/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
