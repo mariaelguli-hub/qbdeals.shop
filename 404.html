@@ -4,13 +4,29 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TaxUSA — Genuine QuickBooks Desktop Licenses</title>
-    <meta name="description" content="Buy genuine QuickBooks Desktop 2024 licenses with one-time payment. Instant email delivery, 30-day money-back guarantee. No subscription." />
+    <title>QB Deals — Genuine QuickBooks Desktop Licenses</title>
+    <meta name="description" content="Buy genuine QuickBooks Desktop 2024 licenses with one-time payment. Instant email delivery, 90-day money-back guarantee. No subscription." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- 🔀 Script خاص بـ BrowserRouter مع GitHub Pages لتفادي خطأ 404 عند التحديث (Refresh) -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // This script takes the current URL and redirects it to the index.html page
+      // while preserving the path so React Router can handle it.
+      var pathSegmentsToKeep = 0; // عدلها لـ 1 إلا كان السيت كايتناسق تحت Subpath، أما في Custom Domain فخليها 0
+      
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?p=/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
