@@ -16,6 +16,25 @@ export default function Checkout() {
 
   const [errors, setErrors] = useState(false);
 
+  // 🎯 1. تتبع الدخول لصفحة الدفع (InitiateCheckout) لـ Meta Pixel و Google Ads
+  useEffect(() => {
+    if (window.fbq) {
+      window.fbq('track', 'PageView');
+      window.fbq('track', 'InitiateCheckout', {
+        value: 199.00,
+        currency: 'USD',
+        content_name: 'QuickBooks Desktop 2024 License',
+        num_items: 1
+      });
+    }
+    if (window.gtag) {
+      window.gtag('event', 'begin_checkout', {
+        value: 199.00,
+        currency: 'USD'
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (window.paypal) {
       setSdkLoaded(true);
@@ -69,7 +88,25 @@ export default function Checkout() {
         },
         onApprove: (data, actions) => {
           return actions.order.capture().then(async (details) => {
-            
+            const paidAmount = parseFloat(formData.users) || 199.00;
+
+            // 🎯 2. تسجيل عملية الشراء (Purchase) مباشرة بعد نجاح الدفع في PayPal
+            if (window.fbq) {
+              window.fbq('track', 'Purchase', {
+                value: paidAmount,
+                currency: 'USD',
+                content_name: `QuickBooks Desktop (${formData.os})`,
+                order_id: details.id
+              });
+            }
+            if (window.gtag) {
+              window.gtag('event', 'purchase', {
+                transaction_id: details.id,
+                value: paidAmount,
+                currency: 'USD'
+              });
+            }
+
             // حفظ الطلب في قاعدة البيانات بعد نجاح الدفع مباشرة
             try {
               await supabase.from('orders').insert([{
@@ -77,7 +114,7 @@ export default function Checkout() {
                 email: formData.email,
                 os_type: formData.os,
                 country: formData.country,
-                amount_paid: parseFloat(formData.users),
+                amount_paid: paidAmount,
                 paypal_order_id: details.id,
                 status: 'Completed'
               }]);
@@ -85,7 +122,7 @@ export default function Checkout() {
               console.error("Error saving order to Supabase:", error);
             }
 
-            // 👇 2. التوجيه الذكي لصفحة الشكر: كيدوز المعلومات (الثمن، الإيميل، رقم الطلب) باش تخدم صفحة الشكر مزيان
+            // 👇 3. التوجيه الذكي لصفحة الشكر: كيدوز المعلومات (الثمن، الإيميل، رقم الطلب) باش تخدم صفحة الشكر مزيان
             navigate('/thank-you', { 
               state: { 
                 orderId: details.id, 
