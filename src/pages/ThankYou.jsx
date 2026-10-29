@@ -13,7 +13,7 @@ export default function ThankYou() {
   const stateData = location.state || {}
   
   const orderId = stateData.orderId || searchParams.get('id') || `TXN-${Math.floor(100000 + Math.random() * 900000)}`
-  const amount = stateData.amount || searchParams.get('amount') || '135.00'
+  const amount = stateData.amount || searchParams.get('amount') || '199.00'
   const customerEmail = stateData.email || searchParams.get('email') || 'your email inbox'
   const osType = stateData.os || 'Desktop'
   const productName = `QuickBooks ${osType} License 2024`
