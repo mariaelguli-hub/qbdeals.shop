@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { 
   Trash2, RefreshCw, MessageSquare, Lock, Eye, EyeOff, Globe, 
   Users, Clock, Compass, ShieldAlert, Send, LogOut, Download, 
   FileSpreadsheet, ExternalLink, Layers, CheckCircle, EyeOff as EyeOffIcon,
-  ShoppingCart, Paperclip, Bot, Image as ImageIcon, Loader2 // 👈 أيقونات جديدة للشات
+  ShoppingCart, Bot, Image as ImageIcon, Loader2, Flame, Search, Sparkles, Copy, Check, Activity
 } from 'lucide-react'
 import { supabase } from '../utils/supabase'
 import { toast } from 'react-hot-toast'
@@ -18,24 +18,32 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   
-  const [activeTab, setActiveTab] = useState('orders')
+  const [activeTab, setActiveTab] = useState('visitors')
   const [messages, setMessages] = useState([])
   const [visitors, setVisitors] = useState([])
   const [loading, setLoading] = useState(false)
+  const [cleaningDb, setCleaningDb] = useState(false)
 
   const [productsList, setProductsList] = useState([])
   const [orders, setOrders] = useState([]) 
   const [leads, setLeads] = useState([]) 
+
+  // 🎯 States خاصة بـ Pro Visitors Control Panel
+  const [visitorFilter, setVisitorFilter] = useState('all') // 'all' | 'online' | 'checkout' | 'product' | 'us_uk'
+  const [hideAdminAndMorocco, setHideAdminAndMorocco] = useState(true)
+  const [hideZeroSecBots, setHideZeroSecBots] = useState(false)
+  const [visitorSearch, setVisitorSearch] = useState('')
+  const [copiedIp, setCopiedIp] = useState(null)
   
   // 💬 States الشات المباشر
   const [chatSessions, setChatSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
   const [replyInput, setReplyInput] = useState('')
-  const [isUploading, setIsUploading] = useState(false) // 👈 حالة الرفع للمرفقات
+  const [isUploading, setIsUploading] = useState(false)
   
   const chatEndRef = useRef(null)
-  const fileInputRef = useRef(null) // 👈 مرجع لزر رفع الملفات
+  const fileInputRef = useRef(null)
 
   const parseCSVLine = (text) => {
     const lines = []
@@ -131,6 +139,9 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
+    // 🚫 منع متصفح الأدمن من التسجيل فـ جدول الزوار أوتوماتيكياً
+    localStorage.setItem('qb_ignore_tracking', 'true')
+
     if (localStorage.getItem('qb_admin_auth') === 'true') {
       setIsAuthenticated(true)
     }
@@ -142,6 +153,7 @@ export default function AdminDashboard() {
     if (passwordInput === ADMIN_PASSWORD) {
       setIsAuthenticated(true)
       localStorage.setItem('qb_admin_auth', 'true')
+      localStorage.setItem('qb_ignore_tracking', 'true')
       toast.success('Access Granted!')
     } else {
       toast.error('Incorrect Password!')
@@ -172,7 +184,8 @@ export default function AdminDashboard() {
     const { data: msgData } = await supabase.from('messages').select('*').order('created_at', { ascending: false })
     setMessages(msgData || [])
 
-    const { data: visData } = await supabase.from('visitors').select('*').order('last_seen', { ascending: false }).limit(100)
+    // 🚀 جلب حتى 2000 سجل بدون بلوكاج ديال 100
+    const { data: visData } = await supabase.from('visitors').select('*').order('last_seen', { ascending: false }).limit(2000)
     setVisitors(visData || [])
 
     const { data: chatData } = await supabase.from('chat_sessions').select('*').order('updated_at', { ascending: false })
@@ -190,10 +203,197 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchData()
-      const interval = setInterval(fetchData, 8000)
+      const interval = setInterval(fetchData, 6000)
       return () => clearInterval(interval)
     }
   }, [isAuthenticated])
+
+  // ==========================================
+  // 🧠 محرك تجميع الزوار الفريدين (Unique Visitors Engine)
+  // ==========================================
+  const { allUniqueVisitors, filteredVisitors, stats, duplicateIdsToClean, adminOrMoroccoIdsToClean } = useMemo(() => {
+    const ipMap = new Map()
+    const dupIds = []
+    const adminMoroccoIds = []
+    const now = Date.now()
+
+    visitors.forEach((row) => {
+      const ip = (row.ip_address || 'Unknown').trim()
+      const loc = (row.location || 'Unknown').trim()
+      const pageStr = row.current_page || '/'
+      const isMorOrAdmin = /morocco|casablanca|rabat|marrakech|tangier|beni mellal|fes/i.test(loc) || pageStr.includes('/admin')
+
+      if (isMorOrAdmin) {
+        adminMoroccoIds.push(row.id)
+      }
+
+      const rawPages = pageStr.split(' ➔ ').map(p => p.trim()).filter(Boolean)
+
+      if (!ipMap.has(ip)) {
+        ipMap.set(ip, {
+          primaryId: row.id,
+          allIds: [row.id],
+          ip_address: ip,
+          location: loc,
+          last_seen: row.last_seen,
+          time_spent: Number(row.time_spent) || 0,
+          pages: [...rawPages],
+          hits: 1,
+          isMorOrAdmin
+        })
+      } else {
+        // هذا السطر مكرر لنفس الـ IP -> ندمج بياناته ونحفظ الـ ID ديالو للتنظيف
+        dupIds.push(row.id)
+        const existing = ipMap.get(ip)
+        existing.allIds.push(row.id)
+        existing.hits += 1
+        existing.time_spent += (Number(row.time_spent) || 0)
+
+        if (existing.location === 'Unknown' && loc !== 'Unknown') {
+          existing.location = loc
+        }
+        if (isMorOrAdmin) {
+          existing.isMorOrAdmin = true
+        }
+
+        // الاحتفاظ بأحدث توقيت ظهور
+        if (new Date(row.last_seen) > new Date(existing.last_seen)) {
+          existing.last_seen = row.last_seen
+        }
+
+        // دمج مسار الصفحات بدون تكرار متتالي
+        rawPages.forEach(p => {
+          if (!existing.pages.includes(p)) {
+            existing.pages.push(p)
+          }
+        })
+      }
+    })
+
+    const uniqueList = Array.from(ipMap.values()).map(v => {
+      const diffSec = Math.floor((now - new Date(v.last_seen).getTime()) / 1000)
+      const isOnline = diffSec >= 0 && diffSec <= 65 // متصل في آخر 65 ثانية
+      const joinedPages = v.pages.join(' ➔ ')
+
+      let stage = 'browsing'
+      if (joinedPages.includes('/thank-you')) stage = 'purchased'
+      else if (joinedPages.includes('/checkout')) stage = 'checkout'
+      else if (joinedPages.includes('/cart')) stage = 'cart'
+      else if (joinedPages.includes('/product/')) stage = 'product'
+
+      const isTier1 = /united states|usa|united kingdom|uk|canada|australia/i.test(v.location)
+
+      return {
+        ...v,
+        isOnline,
+        diffSec,
+        stage,
+        isTier1,
+        journey: v.pages.slice(-4).join(' ➔ '),
+        lastPage: v.pages[v.pages.length - 1] || '/'
+      }
+    })
+
+    // تطبيق الفلاتر المختارة
+    let baseList = uniqueList
+    if (hideAdminAndMorocco) {
+      baseList = baseList.filter(v => !v.isMorOrAdmin)
+    }
+    if (hideZeroSecBots) {
+      baseList = baseList.filter(v => v.time_spent > 0 || v.isOnline || v.stage === 'checkout' || v.stage === 'purchased')
+    }
+
+    const kpiStats = {
+      onlineNow: baseList.filter(v => v.isOnline).length,
+      totalUnique: baseList.length,
+      tier1Count: baseList.filter(v => v.isTier1).length,
+      highIntentCount: baseList.filter(v => v.stage === 'checkout' || v.stage === 'product' || v.stage === 'cart' || v.stage === 'purchased').length,
+      checkoutCount: baseList.filter(v => v.stage === 'checkout' || v.stage === 'purchased').length
+    }
+
+    let finalFiltered = baseList
+    if (visitorFilter === 'online') {
+      finalFiltered = finalFiltered.filter(v => v.isOnline)
+    } else if (visitorFilter === 'checkout') {
+      finalFiltered = finalFiltered.filter(v => v.stage === 'checkout' || v.stage === 'cart' || v.stage === 'purchased')
+    } else if (visitorFilter === 'product') {
+      finalFiltered = finalFiltered.filter(v => v.stage === 'product' || v.stage === 'checkout' || v.stage === 'purchased')
+    } else if (visitorFilter === 'us_uk') {
+      finalFiltered = finalFiltered.filter(v => v.isTier1)
+    }
+
+    if (visitorSearch.trim()) {
+      const q = visitorSearch.toLowerCase().trim()
+      finalFiltered = finalFiltered.filter(v => 
+        v.ip_address.toLowerCase().includes(q) ||
+        v.location.toLowerCase().includes(q) ||
+        v.journey.toLowerCase().includes(q)
+      )
+    }
+
+    return {
+      allUniqueVisitors: uniqueList,
+      filteredVisitors: finalFiltered,
+      stats: kpiStats,
+      duplicateIdsToClean: dupIds,
+      adminOrMoroccoIdsToClean: adminMoroccoIds
+    }
+  }, [visitors, hideAdminAndMorocco, hideZeroSecBots, visitorFilter, visitorSearch])
+
+  // 🧹 دالة تنظيف قاعدة البيانات من التكرار وزيارات الأدمن/المغرب بضغطة واحدة
+  const handleCleanDatabase = async () => {
+    const idsToDelete = [...new Set([...duplicateIdsToClean, ...adminOrMoroccoIdsToClean])]
+    if (idsToDelete.length === 0) {
+      toast.success('Database is already 100% clean & unique!')
+      return
+    }
+    if (!window.confirm(`Clean ${idsToDelete.length} duplicate & Admin/Morocco logs from database?`)) return
+
+    setCleaningDb(true)
+    try {
+      // مسح على شكل دفعات (Chunks) لتفادي أي خطأ في الرابط
+      const chunkSize = 100
+      for (let i = 0; i < idsToDelete.length; i += chunkSize) {
+        const chunk = idsToDelete.slice(i, i + chunkSize)
+        await supabase.from('visitors').delete().in('id', chunk)
+      }
+      toast.success(`Cleaned ${idsToDelete.length} redundant logs!`)
+      await fetchData()
+    } catch (err) {
+      console.error(err)
+      toast.error('Error cleaning database')
+    } finally {
+      setCleaningDb(false)
+    }
+  }
+
+  // مسح زائر كامل بجميع السطور المرتبطة بـ IP ديالو
+  const deleteUniqueVisitor = async (allIds, ip) => {
+    const { error } = await supabase.from('visitors').delete().in('id', allIds)
+    if (!error) {
+      setVisitors(prev => prev.filter(v => !allIds.includes(v.id)))
+      toast.success(`Removed visitor ${ip}`)
+    }
+  }
+
+  const copyIp = (ip) => {
+    navigator.clipboard.writeText(ip)
+    setCopiedIp(ip)
+    toast.success(`Copied IP: ${ip}`)
+    setTimeout(() => setCopiedIp(null), 2000)
+  }
+
+  const formatRelativeTime = (dateStr, isOnline) => {
+    if (isOnline) return 'Just now'
+    const sec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+    if (sec < 60) return `${sec}s ago`
+    const min = Math.floor(sec / 60)
+    if (min < 60) return `${min}m ago`
+    const hrs = Math.floor(min / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    const days = Math.floor(hrs / 24)
+    return `${days}d ago`
+  }
 
   const exportGmcCsv = () => {
     try {
@@ -201,8 +401,9 @@ export default function AdminDashboard() {
       const headers = ['id', 'title', 'description', 'link', 'image_link', 'availability', 'price', 'brand', 'condition', 'google_product_category']
       const rows = (productsList || []).map((p) => {
         const cleanDesc = (p.description || p.name || '').replace(/"/g, '""')
-        const priceFormatted = `${Number(p.variants?.[0]?.price || p.price || 135).toFixed(2)} USD`
-        const productLink = `${domain}/#/product/${p.slug || p.id}`
+        const priceFormatted = `${Number(p.variants?.[0]?.price || p.price || 199).toFixed(2)} USD`
+        // ✅ رابط نقي بدون #
+        const productLink = `${domain}/product/${p.slug || p.id}`
         const imageLink = p.image && p.image.startsWith('http') ? p.image : `${domain}${p.image || '/images/qb-pro-plus-2024.webp'}`
 
         return [
@@ -246,10 +447,6 @@ export default function AdminDashboard() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
-  // ==========================================
-  // 👇 تحديثات قسم الشات (Live Chat & Attachments)
-  // ==========================================
-
   const handleSendAgentReply = async (e) => {
     e.preventDefault()
     if (!replyInput.trim() || !selectedSession) return
@@ -257,8 +454,6 @@ export default function AdminDashboard() {
     setReplyInput('')
 
     const agentMsg = { session_id: selectedSession.id, sender: 'agent', message: messageText, created_at: new Date().toISOString() }
-    
-    // التحديث الفوري في الواجهة (Optimistic UI Update)
     setChatMessages(prev => [...prev, agentMsg])
 
     await supabase.from('chat_messages').insert([agentMsg])
@@ -266,7 +461,6 @@ export default function AdminDashboard() {
     setSelectedSession(prev => ({ ...prev, status: 'agent' }))
   }
 
-  // 👈 دالة رفع الصور/الملفات في الشات
   const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (!file || !selectedSession) return
@@ -277,21 +471,18 @@ export default function AdminDashboard() {
     const filePath = `${selectedSession.id}/${fileName}`
 
     try {
-      // الرفع إلى Supabase Storage (يجب أن يكون لديك Bucket باسم chat_attachments)
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('chat_attachments')
         .upload(filePath, file)
 
       if (uploadError) throw uploadError
 
-      // الحصول على الرابط العام للصورة
       const { data: publicUrlData } = supabase.storage
         .from('chat_attachments')
         .getPublicUrl(filePath)
 
       const imageUrl = publicUrlData.publicUrl
 
-      // إرسال رسالة تحتوي على الصورة
       const agentMsg = { 
         session_id: selectedSession.id, 
         sender: 'agent', 
@@ -314,17 +505,12 @@ export default function AdminDashboard() {
     }
   }
 
-  // 👈 دالة إعادة المحادثة للذكاء الاصطناعي
   const handleHandoverToAI = async () => {
     if (!selectedSession) return
     await supabase.from('chat_sessions').update({ status: 'ai', updated_at: new Date().toISOString() }).eq('id', selectedSession.id)
     setSelectedSession(prev => ({ ...prev, status: 'ai' }))
     toast.success("Handed over to AI Bot")
   }
-
-  // ==========================================
-  // 👆 نهاية تحديثات الشات
-  // ==========================================
 
   const handleEndSessionFromAdmin = async () => {
     if (!selectedSession || !window.confirm("End conversation?")) return
@@ -339,14 +525,6 @@ export default function AdminDashboard() {
     setSelectedSession(prev => ({ ...prev, status: 'ended' }))
     setChatSessions(prev => prev.map(s => s.id === selectedSession.id ? { ...s, status: 'ended' } : s))
     toast.success("Conversation ended!")
-  }
-
-  const deleteVisitor = async (id) => {
-    const { error } = await supabase.from('visitors').delete().eq('id', id)
-    if (!error) {
-      setVisitors(visitors.filter(v => v.id !== id))
-      toast.success('Visitor log removed')
-    }
   }
 
   const deleteMessage = async (id) => {
@@ -411,16 +589,34 @@ export default function AdminDashboard() {
     <>
       <Helmet><title>Admin Control Panel — QB DEALS</title></Helmet>
 
-      <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <div className="min-h-screen bg-gray-50/50 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-6">
           
           {/* HEADER BAR */}
           <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Control Panel</h1>
-              <p className="text-xs text-gray-500">Manage store visibility, visitors, live chat & GMC feed</p>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-emerald-600/20">
+                QB
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Control Panel</h1>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    {stats.onlineNow} Live Now
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">Real-Time Visitor Intelligence, Orders & Live Support</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button 
+                onClick={fetchData}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                title="Refresh Live Data"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-600' : ''}`} /> Refresh
+              </button>
               <button 
                 onClick={() => loadAndMergeAllProducts(true)}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
@@ -430,13 +626,13 @@ export default function AdminDashboard() {
               </button>
               <button 
                 onClick={exportGmcCsv}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-extrabold transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-extrabold transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
               >
-                <Download className="w-4 h-4" /> Export GMC Feed (.CSV)
+                <Download className="w-4 h-4" /> Export GMC (.CSV)
               </button>
               <button 
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-medium transition-all cursor-pointer"
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
               >
                 Logout
               </button>
@@ -444,10 +640,26 @@ export default function AdminDashboard() {
           </div>
 
           {/* TABS NAVIGATION */}
-          <div className="flex flex-wrap gap-3 border-b border-gray-200 pb-2">
+          <div className="flex flex-wrap gap-2.5 border-b border-gray-200 pb-3">
+            <button
+              onClick={() => setActiveTab('visitors')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                activeTab === 'visitors' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Compass className="w-4 h-4" /> Unique Visitors ({stats.totalUnique})
+              {stats.onlineNow > 0 && (
+                <span className="ml-1 px-1.5 py-0.2 bg-white text-emerald-700 rounded-full text-[11px] font-black">
+                  {stats.onlineNow} live
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => setActiveTab('orders')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 activeTab === 'orders' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -457,19 +669,8 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab('products')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
-                activeTab === 'products' 
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              <Layers className="w-4 h-4" /> All Products ({productsList.length})
-            </button>
-
-            <button
               onClick={() => setActiveTab('leads')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 activeTab === 'leads' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -479,19 +680,8 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => setActiveTab('visitors')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
-                activeTab === 'visitors' 
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-              }`}
-            >
-              <Compass className="w-4 h-4" /> Visitors ({visitors.length})
-            </button>
-
-            <button
               onClick={() => setActiveTab('livechat')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 activeTab === 'livechat' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -501,8 +691,19 @@ export default function AdminDashboard() {
             </button>
 
             <button
+              onClick={() => setActiveTab('products')}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                activeTab === 'products' 
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" /> All Products ({productsList.length})
+            </button>
+
+            <button
               onClick={() => setActiveTab('messages')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 activeTab === 'messages' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -513,7 +714,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setActiveTab('hidden')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 activeTab === 'hidden' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -524,7 +725,7 @@ export default function AdminDashboard() {
 
             <button
               onClick={() => setActiveTab('gmc')}
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 activeTab === 'gmc' 
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -533,6 +734,331 @@ export default function AdminDashboard() {
               <FileSpreadsheet className="w-4 h-4" /> GMC
             </button>
           </div>
+
+          {/* ========================================================= */}
+          {/* 🚀 PRO VISITORS CONTROL PANEL (100% UNIQUE & REAL-TIME)   */}
+          {/* ========================================================= */}
+          {activeTab === 'visitors' && (
+            <div className="space-y-5">
+              
+              {/* 1. TOP KPI CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div 
+                  onClick={() => setVisitorFilter('online')}
+                  className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm cursor-pointer hover:border-emerald-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Live Online Now</span>
+                    <span className="flex h-3 w-3 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-gray-900">{stats.onlineNow}</span>
+                    <span className="text-xs text-emerald-600 font-bold">Active in last 60s</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setVisitorFilter('all')}
+                  className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm cursor-pointer hover:border-blue-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Unique Visitors</span>
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-gray-900">{stats.totalUnique}</span>
+                    <span className="text-xs text-gray-500 font-medium">Deduplicated IPs</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setVisitorFilter('us_uk')}
+                  className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm cursor-pointer hover:border-indigo-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">US / UK / CA Traffic</span>
+                    <Globe className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-gray-900">{stats.tier1Count}</span>
+                    <span className="text-xs text-indigo-600 font-bold">
+                      {stats.totalUnique > 0 ? `${Math.round((stats.tier1Count / stats.totalUnique) * 100)}% of traffic` : 'Target Market'}
+                    </span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setVisitorFilter('checkout')}
+                  className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm cursor-pointer hover:border-amber-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Reached Checkout</span>
+                    <Flame className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-amber-600">{stats.checkoutCount}</span>
+                    <span className="text-xs text-gray-500 font-medium">({stats.highIntentCount} viewed product)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. SMART FILTERS & DB CLEANER BAR */}
+              <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  
+                  {/* Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => setVisitorFilter('all')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        visitorFilter === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      All Unique ({stats.totalUnique})
+                    </button>
+                    <button
+                      onClick={() => setVisitorFilter('online')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        visitorFilter === 'online' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-current" /> Online Now ({stats.onlineNow})
+                    </button>
+                    <button
+                      onClick={() => setVisitorFilter('checkout')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        visitorFilter === 'checkout' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                      }`}
+                    >
+                      🔥 In Checkout ({stats.checkoutCount})
+                    </button>
+                    <button
+                      onClick={() => setVisitorFilter('product')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        visitorFilter === 'product' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                      }`}
+                    >
+                      👀 Viewed Product ({stats.highIntentCount})
+                    </button>
+                    <button
+                      onClick={() => setVisitorFilter('us_uk')}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        visitorFilter === 'us_uk' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100'
+                      }`}
+                    >
+                      🇺🇸 US & UK Only ({stats.tier1Count})
+                    </button>
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative min-w-[240px] flex-1 sm:flex-initial">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-2.5" />
+                    <input
+                      type="text"
+                      value={visitorSearch}
+                      onChange={(e) => setVisitorSearch(e.target.value)}
+                      placeholder="Search IP, country, city or page..."
+                      className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Smart Exclusion Toggles & 1-Click DB Cleaner */}
+                <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={hideAdminAndMorocco}
+                        onChange={(e) => setHideAdminAndMorocco(e.target.checked)}
+                        className="rounded accent-emerald-600 w-3.5 h-3.5 cursor-pointer"
+                      />
+                      <span>🚫 Exclude Morocco & Admin Visits</span>
+                    </label>
+
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={hideZeroSecBots}
+                        onChange={(e) => setHideZeroSecBots(e.target.checked)}
+                        className="rounded accent-emerald-600 w-3.5 h-3.5 cursor-pointer"
+                      />
+                      <span>🤖 Hide 0s Bounce / Crawlers</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {(duplicateIdsToClean.length > 0 || adminOrMoroccoIdsToClean.length > 0) && (
+                      <button
+                        onClick={handleCleanDatabase}
+                        disabled={cleaningDb}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        {cleaningDb 
+                          ? 'Cleaning Database...' 
+                          : `Clean ${[...new Set([...duplicateIdsToClean, ...adminOrMoroccoIdsToClean])].length} Duplicate / Admin Logs`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. PRO VISITORS TABLE */}
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                {filteredVisitors.length === 0 ? (
+                  <div className="p-12 text-center space-y-2">
+                    <Compass className="w-10 h-10 text-gray-300 mx-auto" />
+                    <div className="text-sm font-bold text-gray-700">No matching visitors found</div>
+                    <p className="text-xs text-gray-400">Try changing your active filter or unchecking the exclusion toggles above.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wider border-b border-gray-100">
+                          <th className="p-4">Status & Last Seen</th>
+                          <th className="p-4">Unique Visitor IP</th>
+                          <th className="p-4">Location</th>
+                          <th className="p-4">Funnel Stage & Page Journey</th>
+                          <th className="p-4">Total Time</th>
+                          <th className="p-4 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {filteredVisitors.map((v) => (
+                          <tr 
+                            key={v.ip_address} 
+                            className={`transition-colors ${
+                              v.isOnline 
+                                ? 'bg-emerald-50/40 hover:bg-emerald-50/70' 
+                                : v.stage === 'checkout' 
+                                ? 'bg-amber-50/20 hover:bg-amber-50/40' 
+                                : 'hover:bg-gray-50/60'
+                            }`}
+                          >
+                            {/* STATUS & TIME */}
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                {v.isOnline ? (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-600 text-white shadow-sm">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                                    ONLINE NOW
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-bold text-gray-800">
+                                    {formatRelativeTime(v.last_seen, false)}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-gray-400 mt-0.5">
+                                {new Date(v.last_seen).toLocaleString()}
+                              </div>
+                            </td>
+
+                            {/* UNIQUE IP + COPY */}
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200">
+                                  {v.ip_address}
+                                </span>
+                                <button
+                                  onClick={() => copyIp(v.ip_address)}
+                                  className="p-1 text-gray-400 hover:text-emerald-600 rounded-md cursor-pointer"
+                                  title="Copy IP"
+                                >
+                                  {copiedIp === v.ip_address ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                              {v.hits > 1 && (
+                                <span className="inline-block mt-1 text-[10px] font-bold text-gray-400">
+                                  {v.hits} page logs merged
+                                </span>
+                              )}
+                            </td>
+
+                            {/* LOCATION */}
+                            <td className="p-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border ${
+                                v.isTier1 
+                                  ? 'bg-indigo-50 text-indigo-900 border-indigo-200' 
+                                  : 'bg-gray-100 text-gray-700 border-gray-200'
+                              }`}>
+                                <Globe className={`w-3.5 h-3.5 ${v.isTier1 ? 'text-indigo-600' : 'text-gray-500'}`} />
+                                {v.location || 'Unknown'}
+                              </span>
+                            </td>
+
+                            {/* FUNNEL STAGE & PAGE JOURNEY */}
+                            <td className="p-4 max-w-md">
+                              <div className="flex items-center gap-2 mb-1">
+                                {v.stage === 'purchased' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    💰 PURCHASED
+                                  </span>
+                                )}
+                                {v.stage === 'checkout' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                    🔥 IN CHECKOUT
+                                  </span>
+                                )}
+                                {v.stage === 'cart' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-100 text-orange-800">
+                                    🛒 IN CART
+                                  </span>
+                                )}
+                                {v.stage === 'product' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800">
+                                    👀 VIEWING PRODUCT
+                                  </span>
+                                )}
+                                {v.stage === 'browsing' && (
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 text-gray-600">
+                                    🌐 BROWSING
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs font-mono text-gray-600 break-all bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-100">
+                                {v.journey}
+                              </div>
+                            </td>
+
+                            {/* TIME SPENT */}
+                            <td className="p-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold ${
+                                v.time_spent >= 60 
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                  : v.time_spent >= 15 
+                                  ? 'bg-blue-50 text-blue-700' 
+                                  : 'bg-gray-100 text-gray-500'
+                              }`}>
+                                <Clock className="w-3.5 h-3.5" />
+                                {formatTime(v.time_spent)}
+                              </span>
+                            </td>
+
+                            {/* DELETE ACTION */}
+                            <td className="p-4 text-right whitespace-nowrap">
+                              <button 
+                                onClick={() => deleteUniqueVisitor(v.allIds, v.ip_address)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                                title="Delete all logs for this IP"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* TAB ORDERS */}
           {activeTab === 'orders' && (
@@ -631,7 +1157,8 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {productsList.map((product) => {
-                      const productLink = `/#/product/${product.slug || product.id}`
+                      // ✅ رابط نقي بدون #
+                      const productLink = `/product/${product.slug || product.id}`
                       return (
                         <tr 
                           key={product.id || product.slug} 
@@ -652,7 +1179,7 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="p-4 font-extrabold text-emerald-600 text-xs sm:text-sm">
-                            ${product.variants?.[0]?.price || product.price || 135} USD
+                            ${product.variants?.[0]?.price || product.price || 199} USD
                           </td>
                           <td className="p-4">
                             {product.hidden ? (
@@ -743,80 +1270,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB VISITORS */}
-          {activeTab === 'visitors' && (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                  <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Compass className="w-5 h-5 text-emerald-600" /> Visitor History Logs
-                  </h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Complete tracking log for all site visits</p>
-                </div>
-                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-bold">
-                  Total Tracked: {visitors.length}
-                </span>
-              </div>
-
-              {visitors.length === 0 ? (
-                <div className="p-12 text-center text-gray-500">No visitors tracked yet.</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
-                        <th className="p-4">Visit Date & Time</th>
-                        <th className="p-4">Visitor IP</th>
-                        <th className="p-4">Location</th>
-                        <th className="p-4">Visited Page</th>
-                        <th className="p-4">Time Spent</th>
-                        <th className="p-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {visitors.map((v) => (
-                        <tr key={v.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4 text-xs text-gray-500 font-medium">
-                            {new Date(v.last_seen).toLocaleString()}
-                          </td>
-                          <td className="p-4 font-mono text-xs font-semibold text-gray-900">
-                            {v.ip_address || 'Unknown'}
-                          </td>
-                          <td className="p-4 text-gray-600">
-                            <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg text-xs font-medium">
-                              <Globe className="w-3.5 h-3.5 text-emerald-600" /> {v.location || 'Unknown'}
-                            </span>
-                          </td>
-                          <td className="p-4 font-medium text-emerald-700">
-                            <span className="bg-gray-100 px-2.5 py-1 rounded-md text-xs font-mono">
-                              {v.current_page || '/'}
-                            </span>
-                          </td>
-                          <td className="p-4 text-gray-600 font-medium">
-                            <span className="inline-flex items-center gap-1 text-xs">
-                              <Clock className="w-3.5 h-3.5 text-gray-400" /> {formatTime(v.time_spent)}
-                            </span>
-                          </td>
-                          <td className="p-4 text-right">
-                            <button 
-                              onClick={() => deleteVisitor(v.id)}
-                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ========================================================= */}
-          {/* 👇 قسم الشات تم التعديل عليه (Attachments & AI Handover) */}
-          {/* ========================================================= */}
+          {/* TAB LIVE CHAT */}
           {activeTab === 'livechat' && (
             <div className="grid md:grid-cols-3 gap-6 h-[600px]">
               <div className="md:col-span-1 bg-white rounded-3xl border border-gray-100 p-4 overflow-y-auto space-y-2 shadow-sm">
@@ -853,7 +1307,6 @@ export default function AdminDashboard() {
               <div className="md:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col overflow-hidden relative">
                 {selectedSession ? (
                   <>
-                    {/* Chat Header */}
                     <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                       <div>
                         <h4 className="font-bold text-sm text-gray-900">Session ID: {selectedSession.id}</h4>
@@ -861,7 +1314,6 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex gap-2">
-                        {/* 👈 زر إرجاع المحادثة للذكاء الاصطناعي */}
                         {selectedSession.status === 'agent' && (
                           <button
                             onClick={handleHandoverToAI}
@@ -881,7 +1333,6 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
-                    {/* Chat Messages Area */}
                     <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50/30 text-xs">
                       {chatMessages.map((m, idx) => (
                         <div key={m.id || idx} className={`flex ${m.sender === 'agent' ? 'justify-end' : 'justify-start'}`}>
@@ -895,7 +1346,6 @@ export default function AdminDashboard() {
                             <div className="text-[10px] opacity-75 font-bold mb-1 uppercase">
                               {m.sender === 'agent' ? 'You (Agent)' : m.sender === 'user' ? 'Visitor' : 'AI Bot'}
                             </div>
-                            {/* 👈 عرض المرفقات إذا وجدت */}
                             {m.image_url && (
                               <a href={m.image_url} target="_blank" rel="noreferrer">
                                 <img src={m.image_url} alt="Attachment" className="rounded-xl max-h-48 w-auto object-cover mb-2 border border-black/10" />
@@ -908,7 +1358,6 @@ export default function AdminDashboard() {
                       <div ref={chatEndRef} />
                     </div>
 
-                    {/* Chat Input Area */}
                     {selectedSession.status === 'ended' ? (
                       <div className="p-3 bg-gray-100 text-center text-xs text-gray-500 font-semibold">
                         This session has been closed.
@@ -916,8 +1365,6 @@ export default function AdminDashboard() {
                     ) : (
                       <div className="p-3 border-t border-gray-100 bg-white">
                         <form onSubmit={handleSendAgentReply} className="flex gap-2 items-center relative">
-                          
-                          {/* 👈 زر رفع الملفات المخفي والمرئي */}
                           <input 
                             type="file" 
                             accept="image/*" 
@@ -963,12 +1410,8 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-          {/* ========================================================= */}
-          {/* 👆 نهاية قسم الشات المعدل */}
-          {/* ========================================================= */}
 
-
-          {/* TAB 4: CONTACT FORM MESSAGES */}
+          {/* TAB CONTACT FORM MESSAGES */}
           {activeTab === 'messages' && (
             <div className="grid gap-4">
               {messages.length === 0 ? (
@@ -1015,12 +1458,12 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* TAB 5: HIDDEN PRODUCTS EXPLORER */}
+          {/* TAB HIDDEN PRODUCTS EXPLORER */}
           {activeTab === 'hidden' && (
             <HiddenExplorer />
           )}
 
-          {/* TAB 6: GMC EXPORTER */}
+          {/* TAB GMC EXPORTER */}
           {activeTab === 'gmc' && (
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm max-w-2xl mx-auto text-center space-y-4">
               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
@@ -1029,7 +1472,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Google Merchant Center Feed Exporter</h2>
                 <p className="text-xs text-gray-500 mt-1 max-w-md mx-auto">
-                  Export all store products formatted strictly according to Google Merchant Center specification (USD prices, full URLs, in_stock status).
+                  Export all store products formatted strictly according to Google Merchant Center specification (USD prices, clean BrowserRouter URLs, in_stock status).
                 </p>
               </div>
 
