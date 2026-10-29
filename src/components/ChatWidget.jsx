@@ -21,7 +21,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  // دالة لجلب الرسائل وتحديث الـ State
+  // 📥 دالة لجلب الرسائل وتحديث الـ State
   const fetchMessages = async (currentSessionId) => {
     if (!currentSessionId) return
     const { data: existingMsg } = await supabase
@@ -30,7 +30,7 @@ export default function ChatWidget() {
       .eq('session_id', currentSessionId)
       .order('created_at', { ascending: true })
 
-    if (existingMsg) {
+    if (existingMsg && existingMsg.length > 0) {
       setMessages(existingMsg)
     }
 
@@ -45,25 +45,14 @@ export default function ChatWidget() {
     }
   }
 
-  const initChat = async (forceNew = false) => {
+  // 🚀 تهيئة الشات بدون إنشاء سيسيون وهمية حتى يحدث أول تفاعل
+  const initChat = async () => {
     let savedSessionId = localStorage.getItem('qb_chat_session')
     
-    if (!savedSessionId || forceNew) {
-      const { data } = await supabase
-        .from('chat_sessions')
-        .insert([{ status: 'bot' }])
-        .select()
-
-      if (data && data[0]) {
-        savedSessionId = data[0].id
-        localStorage.setItem('qb_chat_session', savedSessionId)
-      }
-    }
-
-    setSessionId(savedSessionId)
-
-    if (savedSessionId && !forceNew) {
+    if (savedSessionId) {
+      setSessionId(savedSessionId)
       await fetchMessages(savedSessionId)
+      
       const { data: existingMsg } = await supabase
         .from('chat_messages')
         .select('*')
@@ -72,10 +61,9 @@ export default function ChatWidget() {
       if (existingMsg && existingMsg.length > 0) {
         return
       }
-    } else {
-      setSessionStatus('bot')
     }
 
+    // رسالة الترحيب الأولية للزائر (محلية في الواجهة حتى يرسل رسالته الأولى)
     setMessages([
       {
         id: 'welcome',
@@ -83,17 +71,17 @@ export default function ChatWidget() {
         message: 'Hello! 👋 Welcome to QB DEALS. How can I assist you with your QuickBooks Desktop license today?'
       }
     ])
+    setSessionStatus('bot')
   }
 
   useEffect(() => {
     initChat()
   }, [])
 
-  // 📡 دمج Realtime مع التحديث التلقائي (Polling) لضمان ظهور الرسائل فوراً بدون Refresh
+  // 📡 دمج Realtime مع التحديث التلقائي (Polling)
   useEffect(() => {
     if (!sessionId) return
 
-    // تحديث دوري كل ثانيتين لضمان ظهور رسائل الأدمن والعميل فوراً حتى لو توقف الـ Realtime
     const interval = setInterval(() => {
       fetchMessages(sessionId)
     }, 2000)
@@ -139,7 +127,8 @@ export default function ChatWidget() {
       }
 
       localStorage.removeItem('qb_chat_session')
-      await initChat(true)
+      setSessionId(null)
+      await initChat()
     }
   }
 
@@ -196,7 +185,7 @@ export default function ChatWidget() {
           messages: [
             {
               role: "system",
-              content: "You are a helpful sales assistant for QB DEALS (qbdeals.com). We sell genuine QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024 licenses as one-time payments with instant email delivery (5-15 mins). Answer questions naturally, concisely, and accurately based on user queries. Direct them to the Products section for purchases."
+              content: "You are a helpful sales assistant for QB DEALS (qbdeals.shop). We sell genuine QuickBooks Pro Plus 2024, QuickBooks Plus 2024 Mac, and QuickBooks Enterprise 2024 licenses as one-time payments with instant email delivery (5-15 mins). Answer questions naturally, concisely, and accurately based on user queries. Direct them to the Products section for purchases."
             },
             {
               role: "user",
@@ -219,10 +208,29 @@ export default function ChatWidget() {
 
   const handleSend = async (textToSend = null) => {
     const messageContent = textToSend || inputMessage
-    if ((!messageContent.trim() && !selectedImage) || !sessionId || sessionStatus === 'ended') return
+    if ((!messageContent.trim() && !selectedImage) || sessionStatus === 'ended') return
+
+    let currentSessionId = sessionId
+
+    // 🛡️ إنشاء السيسيون في قاعدة البيانات فقط عند إرسال أول رسالة حقيقية (Zero Ghost Sessions)
+    if (!currentSessionId) {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .insert([{ status: 'bot' }])
+        .select()
+
+      if (data && data[0]) {
+        currentSessionId = data[0].id
+        setSessionId(currentSessionId)
+        localStorage.setItem('qb_chat_session', currentSessionId)
+      } else {
+        console.error("Failed to create chat session:", error)
+        return
+      }
+    }
 
     const userMessage = {
-      session_id: sessionId,
+      session_id: currentSessionId,
       sender: 'user',
       message: messageContent,
       image_url: selectedImage,
@@ -232,21 +240,18 @@ export default function ChatWidget() {
     setInputMessage('')
     setSelectedImage(null)
 
-    // إرسال الرسالة لقاعدة البيانات
     await supabase.from('chat_messages').insert([userMessage])
-    await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', sessionId)
+    await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', currentSessionId)
     
-    // جلب الرسائل فوراً لتظهر للمستخدم في الحين
-    await fetchMessages(sessionId)
+    await fetchMessages(currentSessionId)
 
-    // الـ Chatbot يجيب فقط إذا كانت الحالة 'bot'
     if (sessionStatus === 'bot') {
       setIsTyping(true)
 
       const responseText = await fetchOpenRouterAI(messageContent)
 
       const botMessage = {
-        session_id: sessionId,
+        session_id: currentSessionId,
         sender: 'bot',
         message: responseText,
         created_at: new Date().toISOString()
@@ -254,7 +259,7 @@ export default function ChatWidget() {
 
       setIsTyping(false)
       await supabase.from('chat_messages').insert([botMessage])
-      await fetchMessages(sessionId)
+      await fetchMessages(currentSessionId)
     }
   }
 
