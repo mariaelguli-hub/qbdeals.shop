@@ -9,11 +9,15 @@ export default function VisitorTracker() {
     let currentLogId = null
     let timer = null
 
+    // 🔵 إرسال PageView لـ Meta Pixel عند كل تنقل بين الصفحات في React
+    if (window.fbq) {
+      window.fbq('track', 'PageView')
+    }
+
     const recordNewVisit = async () => {
       let userIp = 'Unknown'
       let userLoc = 'Unknown'
 
-      // 🌐 1. جلب الـ IP من أسرع سيرفر مفتوح (ipify raw / cloudflare)
       try {
         const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) })
         const data = await res.json()
@@ -26,7 +30,6 @@ export default function VisitorTracker() {
         } catch (e2) {}
       }
 
-      // 📍 2. جلب الموقع بـ API موثوق وخفيف جداً
       if (userIp !== 'Unknown') {
         try {
           const locRes = await fetch(`https://ipwho.is/${userIp}`, { signal: AbortSignal.timeout(3000) })
@@ -38,7 +41,6 @@ export default function VisitorTracker() {
         } catch (e) {}
       }
 
-      // 📝 3. إدخال السجل فـ Supabase
       const { data } = await supabase
         .from('visitors')
         .insert([
@@ -59,7 +61,6 @@ export default function VisitorTracker() {
 
     recordNewVisit()
 
-    // ⏱️ تحديث الوقت كل 5 ثوانٍ
     let spent = 0
     timer = setInterval(async () => {
       if (currentLogId) {
